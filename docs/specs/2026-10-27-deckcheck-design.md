@@ -127,7 +127,7 @@ recorded in this spec.
 - The Yaris (CCSA) ran with 0 errors, but it could not be refereed by LS-DYNA Student (too large).
 - Recommended route B1: dynars parser plus deckcheck's own reference and position layer.
 
-See `docs/m0-assessment.md`. Route choice pending Chintan.
+See `docs/m0-assessment.md`. **Route chosen by Chintan 2026-10-28: B1** (dynars parser + deckcheck's own reference and position layer; fixes offered upstream). Sections 2, 4, 5 and 11 to be revised for B1 before the M1 plan.
 
 ## 8. Test corpus
 
