@@ -1,0 +1,44 @@
+{
+ "CONTACT.surfa typ=0": {
+  "(ambiguous)": 1,
+  "SET_PART": 1
+ },
+ "CONTACT.surfa typ=2": {
+  "(ambiguous)": 14,
+  "SET_PART": 3
+ },
+ "CONTACT.surfa typ=3": {
+  "PART": 5,
+  "(ambiguous)": 4,
+  "(zero/blank)": 3
+ },
+ "CONTACT.surfa typ=4": {
+  "(ambiguous)": 8,
+  "SET_NODE": 9
+ },
+ "CONTACT.surfa typ=5": {
+  "(zero/blank)": 1
+ },
+ "CONTACT.surfb typ=0": {
+  "(zero/blank)": 14,
+  "(ambiguous)": 3
+ },
+ "CONTACT.surfb typ=2": {
+  "(ambiguous)": 22,
+  "SET_PART": 1,
+  "(zero/blank)": 1
+ },
+ "CONTACT.surfb typ=3": {
+  "PART": 2,
+  "(ambiguous)": 3,
+  "(zero/blank)": 3
+ },
+ "INITIAL_VELOCITY_GENERATION.id typ=1": {
+  "(ambiguous)": 2,
+  "SET_PART": 3
+ },
+ "INITIAL_VELOCITY_GENERATION.id typ=3": {
+  "(ambiguous)": 8,
+  "SET_NODE": 1
+ }
+}

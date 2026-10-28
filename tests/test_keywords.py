@@ -47,3 +47,20 @@ def test_resolve_unknown_is_none():
 def test_resolve_rejects_non_option_remainder():
     # MAT_ELASTIC exists; "_BANANA" is not one of its options, so this is not MAT_ELASTIC.
     assert resolve("*MAT_ELASTIC_BANANA") is None
+
+
+from deckcheck.keywords import load, overrides  # noqa: E402
+
+TARGETS = ("field", "card", "option")
+
+
+def test_every_override_targets_real_keywords_and_has_evidence():
+    data = load()["keywords"]
+    for o in overrides()["override"]:
+        assert ("keyword" in o) != ("keyword_prefix" in o), o
+        if "keyword" in o:
+            assert o["keyword"] in data, o
+        else:
+            assert any(k.startswith(o["keyword_prefix"]) for k in data), o
+        assert sum(t in o for t in TARGETS) == 1, o
+        assert o["evidence"] and o["reason"] and o["set"], o

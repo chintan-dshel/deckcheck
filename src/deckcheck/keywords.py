@@ -1,6 +1,7 @@
 """Keyword data extracted from pydyna (ansys-dyna-core, MIT; see NOTICE). Read-only at runtime."""
 import functools
 import json
+import tomllib
 from dataclasses import dataclass
 from importlib import resources
 
@@ -50,3 +51,8 @@ def resolve(line: str) -> Resolved | None:
             if opts is not None:
                 return Resolved(key, opts, fmt)
     return None
+
+
+@functools.cache
+def overrides() -> dict:
+    return tomllib.loads(resources.files("deckcheck.data").joinpath("overrides.toml").read_text(encoding="utf-8"))
