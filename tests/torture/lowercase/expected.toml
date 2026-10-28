@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "Lowercase keywords and a _TITLE variant."

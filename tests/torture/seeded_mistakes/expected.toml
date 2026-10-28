@@ -1,0 +1,9 @@
+lsdyna_valid = false
+findings = [
+  {rule = "include_missing", line = 2},
+  {rule = "references_resolve", line = 4},
+  {rule = "duplicate_ids", line = 4},
+  {rule = "duplicate_ids", line = 9},
+  {rule = "unreferenced_entities", line = 20},
+]
+note = "Missing include, PART 1 -> MAT 99 undefined, PART 1 defined twice, MAT 7 unused."

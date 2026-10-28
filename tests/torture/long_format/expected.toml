@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "One keyword in long format via the + suffix. If LS-DYNA rejects the suffix (Task 3), switch to *KEYWORD LONG=S on line 1 and record which form LS-DYNA accepts."

@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "Tabs between values. LS-DYNA's own behaviour is the truth: if Task 3 shows it rejects tabs, set lsdyna_valid = false and record that tabs are an error deckcheck should flag (a DC003 candidate)."

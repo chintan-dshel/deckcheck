@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "Clean one-element model; every other case is a variation of this one."
