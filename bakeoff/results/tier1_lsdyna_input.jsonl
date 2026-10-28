@@ -1,0 +1,15 @@
+{"name": "lsdyna-doc-benchmarks-b01_crash-bumper_100k", "lsdyna_input": "accepted", "lsdyna_errors": ""}
+{"name": "lsdyna-doc-benchmarks-b04_stamping-cross_member_op10", "lsdyna_input": "accepted", "lsdyna_errors": ""}
+{"name": "lsdyna-doc-examples-implicit_cabin_test-cabload_run", "lsdyna_input": "accepted", "lsdyna_errors": ""}
+{"name": "lsdyna-doc-examples-implicit_postbuckling-step_1_linear_buckl-b3_frame_linear_buckl", "lsdyna_input": "accepted", "lsdyna_errors": ""}
+{"name": "lsdyna-doc-examples-implicit_postbuckling-step_2_postbuckl-b4_postbuckling_frame", "lsdyna_input": "accepted", "lsdyna_errors": ""}
+{"name": "lsdyna-doc-examples-implicit_stress_submodelling-submodel-beam_sub", "lsdyna_input": "rejected", "lsdyna_errors": "*** Error 21122 (STR+1122); *** Error 41179 (SOL+1179)"}
+{"name": "lsdyna-doc-guidelines-explicit-ex02_crash_box-run", "lsdyna_input": "accepted", "lsdyna_errors": ""}
+{"name": "lsdyna-doc-guidelines-explicit-ex03_deep_drawing-forming-run", "lsdyna_input": "accepted", "lsdyna_errors": ""}
+{"name": "lsdyna-doc-guidelines-explicit-ex09_vehicle_initialization_for_crash-run", "lsdyna_input": "accepted", "lsdyna_errors": ""}
+{"name": "lsdyna-doc-guidelines-implicit-examples-bolts001", "lsdyna_input": "rejected", "lsdyna_errors": "*** Error 10087 (KEY+87); *** Error 10133 (KEY+133)"}
+{"name": "lsdyna-doc-guidelines-implicit-examples-eigen001", "lsdyna_input": "rejected", "lsdyna_errors": "*** Error 10087 (KEY+87); *** Error 10133 (KEY+133)"}
+{"name": "lsdyna-doc-guidelines-implicit-examples-doorstiff001", "lsdyna_input": "rejected", "lsdyna_errors": "*** Error 10087 (KEY+87); *** Error 10133 (KEY+133)"}
+{"name": "lsdyna-doc-guidelines-implicit-frequency_domain-psd_fatigue_example-set_4", "lsdyna_input": "accepted", "lsdyna_errors": ""}
+{"name": "lsdyna-doc-tutorial-3.crashbox-crashbox_results", "lsdyna_input": "accepted", "lsdyna_errors": ""}
+{"name": "lsdyna-doc-tutorial-9.icfd_with_fsi-main_fsi", "lsdyna_input": "accepted", "lsdyna_errors": ""}
