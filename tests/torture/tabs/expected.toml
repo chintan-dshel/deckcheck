@@ -1,3 +1,3 @@
-lsdyna_valid = true
+lsdyna_valid = false
 findings = []
-note = "Tabs between values. LS-DYNA's own behaviour is the truth: if Task 3 shows it rejects tabs, set lsdyna_valid = false and record that tabs are an error deckcheck should flag (a DC003 candidate)."
+note = "Tabs between values. LS-DYNA Student R16.1 (2026-10-28) misreads the tab-separated MAT_ELASTIC card: 'PART ID 1 with SECTION ID 1 and MATERIAL ID 1 does not exist', Error 10133, error termination. Tabs are a silent card misread, a DC003 candidate deckcheck should flag."
