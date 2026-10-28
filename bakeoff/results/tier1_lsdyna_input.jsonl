@@ -13,3 +13,4 @@
 {"name": "lsdyna-doc-guidelines-implicit-frequency_domain-psd_fatigue_example-set_4", "lsdyna_input": "accepted", "lsdyna_errors": ""}
 {"name": "lsdyna-doc-tutorial-3.crashbox-crashbox_results", "lsdyna_input": "accepted", "lsdyna_errors": ""}
 {"name": "lsdyna-doc-tutorial-9.icfd_with_fsi-main_fsi", "lsdyna_input": "accepted", "lsdyna_errors": ""}
+{"name": "lsdyna-doc-guidelines-implicit-examples-bolts001", "cwd": "parent (guidelines/implicit), i=EXAMPLES/bolts001.key", "lsdyna_input": "accepted", "lsdyna_errors": "", "note": "manual rerun 2026-10-28 04:06: initialization completed, normal termination"}
