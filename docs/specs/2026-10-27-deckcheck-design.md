@@ -200,7 +200,8 @@ Tests:
 
 - Resolved in M0: terms for the corpus decks (`docs/corpus-terms.md`); pydyna is MIT (`ansys-dyna-core` 0.12.1
   metadata), so its field database may be extracted and shipped with attribution; memory cap 2 GB on the dev laptop.
-- Does pydyna's data mark sign-encoded references (negative id = curve) and `*INCLUDE_TRANSFORM` offsets? If not,
-  the overrides file carries them. Answered in M1's first task.
+- Does pydyna's data mark sign-encoded references and `*INCLUDE_TRANSFORM` offsets? **Answered in M1a (2026-10-28):
+  no to both.** A negative CN needed an override; transform offsets are plain fields that M1b applies by name
+  (`docs/m1a-keyword-data.md`).
 - Which LS-DYNA `*INCLUDE` search order applies when `*INCLUDE_PATH` and `*INCLUDE_PATH_RELATIVE` are combined?
   Decided by LS-DYNA itself on torture decks in M1, not from memory.

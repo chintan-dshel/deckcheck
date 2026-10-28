@@ -8,16 +8,19 @@ version = "0.0.1"
 description = "A linter for LS-DYNA keyword decks"
 license = "Apache-2.0"
 requires-python = ">=3.10"
-dependencies = ["dynars==1.1.0"]
+dependencies = []
 
 [project.optional-dependencies]
-bakeoff = ["psutil>=5.9"]
+bakeoff = ["dynars==1.1.0", "psutil>=5.9"]
 dev = ["pytest>=8"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/deckcheck"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"NOTICE" = "deckcheck/NOTICE"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-markers = ["lsdyna: needs the local LS-DYNA Student install"]
+markers = ["lsdyna: needs the local LS-DYNA Student install", "extract: needs .venv-extract (ansys-dyna-core)"]

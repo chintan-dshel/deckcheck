@@ -1,0 +1,144 @@
+
+== BOUNDARY_SPC_SET: _ID option card placement (bolts001.key:78-81)
+   options: [('ID', 'pre/2')]
+   links:   {'cid': 'DEFINE_COORDINATE_SYSTEM', 'nsid': 'SET_NODE'}
+   card        opt=None   cond=False ['nsid', 'cid', 'dofx', 'dofy', 'dofz', 'dofrx', 'dofry', 'dofrz']
+   card        opt=ID     cond=False ['id', 'heading']
+
+== CONTACT_DRAWBEAD: _ID option + set types (cross_member_op10.dyn)
+   options: [('ID', 'pre/2'), ('MPP', 'pre/1'), ('A', 'post/1'), ('B', 'post/2'), ('C', 'post/3'), ('D', 'post/4'), ('E', 'post/5'), ('F', 'post/6'), ('G', 'post/7')]
+   links:   {'lcidnf': 'DEFINE_CURVE', 'lcidrf': 'DEFINE_CURVE', 'point1': 'NODE', 'point2': 'NODE', 'saboxid': 'DEFINE_BOX', 'sbboxid': 'DEFINE_BOX'}
+   card        opt=None   cond=False ['surfa', 'surfb', 'surfatyp', 'surfbtyp', 'saboxid', 'sbboxid', 'sapr', 'sbpr']
+   card        opt=None   cond=False ['fs', 'fd', 'dc', 'vc', 'vdc', 'penchk', 'bt', 'dt']
+   card        opt=None   cond=False ['sfsa', 'sfsb', 'sast', 'sbst', 'sfsat', 'sfsbt', 'fsf', 'vsf']
+   card        opt=None   cond=False ['lcidrf', 'lcidnf', 'dbdth', 'dfscl', 'numint', 'dbpid', 'eloff', 'nbead']
+   card        opt=None   cond=False ['point1', 'point2', 'width', 'effhgt']
+   card        opt=ID     cond=False ['cid', 'heading']
+   card        opt=MPP    cond=False ['ignore', 'bckt', 'lcbckt', 'ns2trk', 'inititr', 'parmax', 'unused', 'cparm8']
+   card        opt=MPP    cond=True  ['mpp2', 'chksegs', 'pensf', 'grpable']
+   card        opt=A      cond=False ['soft', 'sofscl', 'lcidab', 'maxpar', 'sbopt', 'depth', 'bsort', 'frcfrq']
+   card        opt=B      cond=False ['penmax', 'thkopt', 'shlthk', 'snlog', 'isym', 'i2d3d', 'sldthk', 'sldstf']
+   card        opt=C      cond=False ['igap', 'ignore', 'dprfac', 'dtstif', 'edgek', 'flangl', 'cid_rcf']
+   card        opt=D      cond=False ['q2tri', 'dtpchk', 'sfnbr', 'fnlscl', 'dnlscl', 'tcso', 'tiedid', 'shledg']
+   card        opt=E      cond=False ['sharec', 'cparm8', 'ipback', 'srnde', 'fricsf', 'icor', 'ftorq', 'region']
+   card        opt=F      cond=False ['pstiff', 'ignroff', 'fstol', '_2dbinr', 'ssftyp', 'swtpr', 'tetfac']
+   card        opt=G      cond=False ['shloff']
+
+== CONTACT_AUTOMATIC_SINGLE_SURFACE_MORTAR: ssid kind depends on sstyp (bolts001.key:288-291)
+   options: [('ID', 'pre/2'), ('MPP', 'pre/1'), ('A', 'post/1'), ('B', 'post/2'), ('C', 'post/3'), ('D', 'post/4'), ('E', 'post/5'), ('F', 'post/6'), ('G', 'post/7')]
+   links:   {'saboxid': 'DEFINE_BOX', 'sbboxid': 'DEFINE_BOX'}
+   card        opt=None   cond=False ['surfa', 'surfb', 'surfatyp', 'surfbtyp', 'saboxid', 'sbboxid', 'sapr', 'sbpr']
+   card        opt=None   cond=False ['fs', 'fd', 'dc', 'vc', 'vdc', 'penchk', 'bt', 'dt']
+   card        opt=None   cond=False ['sfsa', 'sfsb', 'sast', 'sbst', 'sfsat', 'sfsbt', 'fsf', 'vsf']
+   card        opt=ID     cond=False ['cid', 'heading']
+   card        opt=MPP    cond=False ['ignore', 'bckt', 'lcbckt', 'ns2trk', 'inititr', 'parmax', 'unused', 'cparm8']
+   card        opt=MPP    cond=True  ['mpp2', 'chksegs', 'pensf', 'grpable']
+   card        opt=A      cond=False ['soft', 'sofscl', 'lcidab', 'maxpar', 'sbopt', 'depth', 'bsort', 'frcfrq']
+   card        opt=B      cond=False ['penmax', 'thkopt', 'shlthk', 'snlog', 'isym', 'i2d3d', 'sldthk', 'sldstf']
+   card        opt=C      cond=False ['igap', 'ignore', 'dprfac', 'dtstif', 'edgek', 'flangl', 'cid_rcf']
+   card        opt=D      cond=False ['q2tri', 'dtpchk', 'sfnbr', 'fnlscl', 'dnlscl', 'tcso', 'tiedid', 'shledg']
+   card        opt=E      cond=False ['sharec', 'cparm8', 'ipback', 'srnde', 'fricsf', 'icor', 'ftorq', 'region']
+   card        opt=F      cond=False ['pstiff', 'ignroff', 'fstol', '_2dbinr', 'ssftyp', 'swtpr', 'tetfac']
+   card        opt=G      cond=False ['shloff']
+
+== CONTACT_AUTOMATIC_NODES_TO_SURFACE: ssid/msid kind depends on sstyp/mstyp
+   options: [('ID', 'pre/2'), ('MPP', 'pre/1'), ('A', 'post/1'), ('B', 'post/2'), ('C', 'post/3'), ('D', 'post/4'), ('E', 'post/5'), ('F', 'post/6'), ('G', 'post/7')]
+   links:   {'saboxid': 'DEFINE_BOX', 'sbboxid': 'DEFINE_BOX'}
+   card        opt=None   cond=False ['surfa', 'surfb', 'surfatyp', 'surfbtyp', 'saboxid', 'sbboxid', 'sapr', 'sbpr']
+   card        opt=None   cond=False ['fs', 'fd', 'dc', 'vc', 'vdc', 'penchk', 'bt', 'dt']
+   card        opt=None   cond=False ['sfsa', 'sfsb', 'sast', 'sbst', 'sfsat', 'sfsbt', 'fsf', 'vsf']
+   card        opt=ID     cond=False ['cid', 'heading']
+   card        opt=MPP    cond=False ['ignore', 'bckt', 'lcbckt', 'ns2trk', 'inititr', 'parmax', 'unused', 'cparm8']
+   card        opt=MPP    cond=True  ['mpp2', 'chksegs', 'pensf', 'grpable']
+   card        opt=A      cond=False ['soft', 'sofscl', 'lcidab', 'maxpar', 'sbopt', 'depth', 'bsort', 'frcfrq']
+   card        opt=B      cond=False ['penmax', 'thkopt', 'shlthk', 'snlog', 'isym', 'i2d3d', 'sldthk', 'sldstf']
+   card        opt=C      cond=False ['igap', 'ignore', 'dprfac', 'dtstif', 'edgek', 'flangl', 'cid_rcf']
+   card        opt=D      cond=False ['q2tri', 'dtpchk', 'sfnbr', 'fnlscl', 'dnlscl', 'tcso', 'tiedid', 'shledg']
+   card        opt=E      cond=False ['sharec', 'cparm8', 'ipback', 'srnde', 'fricsf', 'icor', 'ftorq', 'region']
+   card        opt=F      cond=False ['pstiff', 'ignroff', 'fstol', '_2dbinr', 'ssftyp', 'swtpr', 'tetfac']
+   card        opt=G      cond=False ['shloff']
+
+== ICFD_PART: defines ICFD part ids (tutorial 9 main_fsi)
+   options: [('TITLE', 'pre/1')]
+   links:   {}
+   table       opt=None   cond=False ['pid', 'secid', 'mid']
+   card        opt=TITLE  cond=False ['title']
+
+== ICFD_PART_VOL: references ICFD parts
+   options: [('TITLE', 'pre/1')]
+   links:   {}
+   card        opt=None   cond=False ['pid', 'secid', 'mid']
+   table       opt=None   cond=False ['spid1', 'spid2', 'spid3', 'spid4', 'spid5', 'spid6', 'spid7', 'spid8']
+   card        opt=TITLE  cond=False ['title']
+
+== MESH_VOLUME: references ICFD parts
+   options: []
+   links:   {}
+   card        opt=None   cond=False ['volid']
+   series      opt=None   cond=False []
+
+== PART_INERTIA: defines PART (torture part_inertia)
+   options: []
+   links:   {'cid': 'DEFINE_COORDINATE_SYSTEM', 'hgid': 'HOURGLASS', 'mid': 'MAT', 'nodeid': 'NODE', 'secid': 'SECTION'}
+   card        opt=None   cond=False ['title']
+   card        opt=None   cond=False ['pid', 'secid', 'mid', 'eosid', 'hgid', 'grav', 'adpopt', 'tmid']
+   card        opt=None   cond=False ['xc', 'yc', 'zc', 'tm', 'ircs', 'nodeid']
+   card        opt=None   cond=False ['ixx', 'ixy', 'ixz', 'iyy', 'iyz', 'izz']
+   card        opt=None   cond=False ['vtx', 'vty', 'vtz', 'vrx', 'vry', 'vrz']
+   card        opt=None   cond=False ['xl', 'yl', 'zl', 'xlip', 'ylip', 'zlip', 'cid']
+
+== PART: heading then ids; blank heading line (torture blank_title)
+   options: []
+   links:   {'hgid': 'HOURGLASS', 'mid': 'MAT', 'secid': 'SECTION'}
+   table_group opt=None   cond=False ['heading', 'pid', 'secid', 'mid', 'eosid', 'hgid', 'grav', 'adpopt', 'tmid']
+
+== BOUNDARY_PRESCRIBED_MOTION_RIGID: pid is a PART, not a NODE (EX09)
+   options: [('ID', 'pre/2')]
+   links:   {'lrb': 'PART', 'node1': 'NODE', 'node2': 'NODE', 'vid': 'DEFINE_VECTOR'}
+   card        opt=None   cond=False ['pid', 'dof', 'vad', 'lcid', 'sf', 'vid', 'death', 'birth']
+   card        opt=None   cond=True  ['offset1', 'offset2', 'lrb', 'node1', 'node2']
+   card        opt=ID     cond=False ['id', 'heading']
+
+== CONTROL_IMPLICIT_SOLUTION: arcctl = 0 means off (beam_sub.key:66)
+   options: []
+   links:   {'arcctl': 'NODE'}
+   card        opt=None   cond=False ['nsolvr', 'ilimit', 'maxref', 'dctol', 'ectol', 'rctol', 'lstol', 'abstol']
+   card        opt=None   cond=False ['dnorm', 'diverg', 'istif', 'nlprint', 'nlnorm', 'd3itctl', 'cpchk']
+   card        opt=None   cond=True  ['dmtol', 'emtol', 'rmtol', 'unused', 'nttol', 'nrtol', 'rttol', 'rrtol']
+   card        opt=None   cond=False ['arcctl', 'arcdir', 'arclen', 'arcmth', 'arcdmp', 'arcpsi', 'arcalf', 'arctim']
+   card        opt=None   cond=False ['lsmtd', 'lsdir', 'irad', 'srad', 'awgt', 'sred']
+
+== DEFINE_TABLE: series lcid -> DEFINE_CURVE (crashbox.k:153339)
+   options: [('TITLE', 'pre/1')]
+   links:   {}
+   card        opt=None   cond=False ['tbid', 'sfa', 'offa']
+   series      opt=None   cond=False []
+   card        opt=TITLE  cond=False ['title']
+
+== AIRBAG_SIMPLE_PRESSURE_VOLUME: negative cn = curve |cn| (BARRIER_DELAY_20MS.k:38195)
+   options: []
+   links:   {'lcid': 'DEFINE_CURVE', 'lciddr': 'DEFINE_CURVE'}
+   card        opt=None   cond=False ['sid', 'sidtyp', 'rbid', 'vsca', 'psca', 'vini', 'mwd', 'spsf']
+   card        opt=None   cond=False ['cn', 'beta', 'lcid', 'lciddr']
+
+== INCLUDE_TRANSFORM: tranid -> DEFINE_TRANSFORMATION (Yaris combine.key:101)
+   options: []
+   links:   {'tranid': 'DEFINE_TRANSFORMATION'}
+   card        opt=None   cond=False ['filename']
+   card        opt=None   cond=False ['idnoff', 'ideoff', 'idpoff', 'idmoff', 'idsoff', 'idfoff', 'iddoff']
+   card        opt=None   cond=False ['idroff', 'unused', 'prefix', 'suffix']
+   card        opt=None   cond=False ['fctmas', 'fcttim', 'fctlen', 'fcttem', 'incout1', 'fctchg']
+   card        opt=None   cond=False ['tranid']
+
+== RIGIDWALL_PLANAR: nsid -> SET_NODE (Yaris combine.key:238)
+   options: [('ID', 'pre/2')]
+   links:   {'boxid': 'DEFINE_BOX', 'nsid': 'SET_NODE', 'nsidex': 'SET_NODE'}
+   card        opt=None   cond=False ['nsid', 'nsidex', 'boxid', 'offset', 'birth', 'death', 'rwksf']
+   card        opt=None   cond=False ['xt', 'yt', 'zt', 'xh', 'yh', 'zh', 'fric', 'wvel']
+   card        opt=ID     cond=False ['id', 'title']
+
+== INITIAL_VELOCITY_GENERATION: nsid/pid kind depends on styp (Yaris set-yaris:224)
+   options: []
+   links:   {'icid': 'DEFINE_COORDINATE_SYSTEM'}
+   card        opt=None   cond=False ['id', 'styp', 'omega', 'vx', 'vy', 'vz', 'ivatn', 'icid']
+   card        opt=None   cond=False ['xc', 'yc', 'zc', 'nx', 'ny', 'nz', 'phase', 'irigid']
