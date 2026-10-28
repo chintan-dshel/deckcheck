@@ -52,7 +52,18 @@ are confirmed false by mechanism:
 
 Not classified: the remaining 101. Any of them sharing a mechanism above is false; the rest may be genuine leftovers.
 
-## Not yet run
+# Tier 2 — VIVA+ 50M seated v2.0.2, 2026-10-28
 
-- Tier 2: VIVA+ (downloaded, hash-pinned, not run: Chintan asked for tier 1 first) and the CCSA vehicle (pending
-  his download).
+Evidence: `results/corpus_tier2.jsonl`.
+
+| Rule | Findings | Real | False alarm |
+|---|---|---|---|
+| include_missing (Error) | 16 | 0 | 16 |
+
+The root deck sets `*INCLUDE_PATH ../common/` (and `..\common\`). All 16 body-region includes (`vivaplus-10-Head.k`
+… `vivaplus-materials.k`) are present in `model/common/`. dynars ignores `*INCLUDE_PATH` (the same defect as torture
+case `include_path`, where LS-DYNA reads the include), so it parsed **2 files** of the model (root + nodes) and
+reported the body as missing. No other rule could see the model's parts, materials or contacts. Parse 0.45 s, peak
+152.5 MB; round-trip 2/2; edit not tried (no `*PART` in the two files it loaded).
+
+Not run: the CCSA vehicle (pending Chintan's download).
