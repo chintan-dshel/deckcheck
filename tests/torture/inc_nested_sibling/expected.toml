@@ -1,0 +1,7 @@
+lsdyna_valid = false
+findings = []
+note = "Q: is a nested include searched in the including file's folder? LS-DYNA R16.1 Student 2026-10-28: rejected; Error 10087 'File b.k does not exist' (sub/b.k exists). Not searched."
+
+[resolver]
+files = ["main.k", "sub/a.k"]
+problems = [{kind = "missing", file = "sub/a.k", line = 3, name = "b.k"}]

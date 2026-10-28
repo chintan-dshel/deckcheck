@@ -7,3 +7,7 @@ findings = [
   {rule = "unreferenced_entities", line = 20},
 ]
 note = "Missing include, PART 1 -> MAT 99 undefined, PART 1 defined twice, MAT 7 unused."
+
+[resolver]
+files = ["main.k"]
+problems = [{kind = "missing", file = "main.k", line = 3, name = "missing_file.k"}]

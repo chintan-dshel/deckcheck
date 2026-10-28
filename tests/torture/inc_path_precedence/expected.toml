@@ -1,0 +1,6 @@
+lsdyna_valid = false
+findings = []
+note = "Q: does an *INCLUDE_PATH folder win over the main deck's folder? LS-DYNA R16.1 Student 2026-10-28: rejected; 'Open include file: mat.k' then 'MAT 1 is not found': the main folder wins."
+
+[resolver]
+files = ["main.k", "mat.k"]

@@ -7,3 +7,7 @@ findings = [
   {rule = "unreferenced_entities", line = 20},
 ]
 note = "seeded_mistakes with CRLF line endings: line numbers must match the LF original."
+
+[resolver]
+files = ["main.k"]
+problems = [{kind = "missing", file = "main.k", line = 3, name = "missing_file.k"}]

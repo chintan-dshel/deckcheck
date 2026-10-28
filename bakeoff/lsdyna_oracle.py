@@ -16,8 +16,11 @@ def lsdyna_reads(case_dir: Path, timeout_s: float = 120) -> tuple[bool, str]:
         work = Path(tmp) / "case"
         shutil.copytree(case_dir, work)
         env = {**os.environ, "LSTC_LICENSE": "Ansys"}
-        proc = subprocess.run([str(LSDYNA_EXE), "i=main.k", "ncpu=1"], cwd=work, env=env,
-                              capture_output=True, text=True, encoding="latin-1", timeout=timeout_s)
+        try:
+            proc = subprocess.run([str(LSDYNA_EXE), "i=main.k", "ncpu=1"], cwd=work, env=env,
+                                  capture_output=True, text=True, encoding="latin-1", timeout=timeout_s)
+        except subprocess.TimeoutExpired:
+            return False, f"timeout after {timeout_s} s"
         messag = work / "messag"
         log = messag.read_text(encoding="latin-1") if messag.exists() else proc.stdout
         ok = bool(NORMAL.search(log)) or bool(NORMAL.search(proc.stdout))

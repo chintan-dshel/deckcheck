@@ -1,0 +1,7 @@
+lsdyna_valid = false
+findings = []
+note = "Q: what does LS-DYNA do with a.k -> b.k -> a.k? LS-DYNA R16.1 Student 2026-10-28: rejected; Error 10088 'in *INCLUDE file is already opened ... check nesting of files'."
+
+[resolver]
+files = ["main.k", "a.k", "b.k"]
+problems = [{kind = "cycle", file = "b.k", line = 3, name = "a.k"}]

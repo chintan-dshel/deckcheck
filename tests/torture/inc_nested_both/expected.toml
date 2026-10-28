@@ -1,0 +1,6 @@
+lsdyna_valid = false
+findings = []
+note = "Q: if both folders hold the file, which wins? LS-DYNA R16.1 Student 2026-10-28: rejected; 'Open include file: b.k', then 'MAT 1 is not found': the main folder's (bad) b.k was read."
+
+[resolver]
+files = ["main.k", "sub/a.k", "b.k"]
