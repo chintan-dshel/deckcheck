@@ -2,6 +2,7 @@
 import hashlib
 import shutil
 import tomllib
+import urllib.parse
 import urllib.request
 import zipfile
 from dataclasses import dataclass
@@ -26,6 +27,7 @@ class Entry:
     sha256: str
     root: str
     terms: str
+    in_place: bool = False  # a local file:// deck read where it is, so relative includes keep resolving
 
 
 def load_manifest(path: Path) -> list[Entry]:
@@ -41,6 +43,12 @@ def _root(entry: Entry, dest: Path) -> Path:
 
 
 def fetch(entry: Entry, cache: Path = CACHE) -> Path:
+    if entry.in_place:
+        path = Path(urllib.request.url2pathname(urllib.parse.urlparse(entry.url).path))
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        if digest != entry.sha256:
+            raise CorpusHashError(f"{entry.name}: expected {entry.sha256}, got {digest}")
+        return path
     dest = cache / entry.name
     if dest.exists():
         return _root(entry, dest)

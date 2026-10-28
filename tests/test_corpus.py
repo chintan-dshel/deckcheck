@@ -58,6 +58,24 @@ def test_ambiguous_root_raises(tmp_path):
         fetch(e, cache=tmp_path / "cache")
 
 
+def test_in_place_entry_returns_the_original_path(tmp_path):
+    # Local decks (e.g. the LS-DYNA install's examples) are read where they are, so relative includes keep working.
+    k = tmp_path / "examples" / "run.key"
+    k.parent.mkdir()
+    k.write_bytes(b"*KEYWORD\n*INCLUDE\n../shared/control.key\n*END\n")
+    e = Entry("local", 1, k.as_uri(), _sha(k), "run.key", "test", in_place=True)
+    assert fetch(e, cache=tmp_path / "cache") == k
+    assert not (tmp_path / "cache").exists()
+
+
+def test_in_place_entry_still_checks_the_hash(tmp_path):
+    k = tmp_path / "run.key"
+    k.write_bytes(b"*KEYWORD\n")
+    e = Entry("local", 1, k.as_uri(), "0" * 64, "run.key", "test", in_place=True)
+    with pytest.raises(CorpusHashError):
+        fetch(e, cache=tmp_path / "cache")
+
+
 def test_load_manifest(tmp_path):
     m = tmp_path / "manifest.toml"
     m.write_text('[[deck]]\nname = "x"\ntier = 1\nurl = "file:///x"\nsha256 = "ab"\nroot = "x.k"\nterms = "t"\n',
