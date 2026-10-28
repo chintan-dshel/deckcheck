@@ -119,6 +119,11 @@ pydyna; that is a spec change, decided with Chintan.
 M0 output: a written assessment (publishable on its own), the false-alarm count per rule, and the go/no-go
 recorded in this spec.
 
+**M0 result (2026-10-28): NO-GO for option A** — dynars' parser and edits pass (criteria 1, 4), its reference
+rules and include resolution fail (62 of 68 errors false; VIVA+ loads 2 of 18 files because `*INCLUDE_PATH` is
+ignored). Recommended route B1: dynars parser + deckcheck's own reference layer. See `docs/m0-assessment.md`.
+Route choice pending Chintan.
+
 ## 8. Test corpus
 
 | Tier | Decks | Stored |
