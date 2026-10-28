@@ -37,7 +37,11 @@ def _card(card, option: str | None) -> dict | list[dict]:
     if kind == "SeriesCard":
         return {"kind": "series", **base, "name": card._name, "element_width": card._element_width,
                 "per_card": card._fields_per_card, "type": getattr(card._type, "__name__", str(card._type))}
-    names = {"CardSet": "card_set", "TextCard": "text", "IncludeCard": "include"}
+    if kind == "CardSet":
+        # A repeating set of cards (SECTION_*, HOURGLASS, ...): its cards live in one instantiated item.
+        item = card._items[0] if card._items else card._set_type(parent=card, keyword=card._keyword)
+        return {"kind": "card_set", **base, "cards": [c for sub in item._cards for c in _flat(_card(sub, option))]}
+    names = {"TextCard": "text", "IncludeCard": "include"}
     return {"kind": names.get(kind, "unknown"), **base, "class": kind}
 
 
@@ -52,9 +56,13 @@ def _name(cls) -> str:
 
 def extract_class(cls) -> dict:
     inst = cls()
+    if any(type(c).__name__ == "CardSet" for c in inst._cards):
+        inst = cls(card_set_count=1)  # a CardSet only exposes its cards once it holds an item
+    specs = list(getattr(cls, "_option_spec_list", []))
+    specs += [o for c in inst._cards if type(c).__name__ == "CardSet" for o in c._option_specs]
     return {"class": cls.__name__,
             "options": [{"name": o.name, "position": str(o._position), "title_order": o._title_order}
-                        for o in getattr(cls, "_option_spec_list", [])],
+                        for o in specs],
             "links": {f: t.name for f, t in sorted(getattr(cls, "_link_fields", {}).items())},
             "cards": [c for card in inst._cards for c in _flat(_card(card, None))]}
 

@@ -1,6 +1,6 @@
 {
  "total": 6859,
- "unresolved": 223,
+ "unresolved": 158,
  "decks": {
   "base": {
    "keyword_lines": 9,
@@ -68,7 +68,7 @@
   },
   "lsdyna-doc-benchmarks-b02_implicit_stress-stress_run_linear": {
    "keyword_lines": 63,
-   "unresolved": 6
+   "unresolved": 5
   },
   "lsdyna-doc-benchmarks-b04_stamping-cross_member_op10": {
    "keyword_lines": 130,
@@ -84,7 +84,7 @@
   },
   "lsdyna-doc-examples-icfd_sloshing-fluid_main": {
    "keyword_lines": 28,
-   "unresolved": 5
+   "unresolved": 3
   },
   "lsdyna-doc-examples-implicit_cabin_test-cabload_run": {
    "keyword_lines": 68,
@@ -100,19 +100,19 @@
   },
   "lsdyna-doc-examples-implicit_stress_analysis-stress_run": {
    "keyword_lines": 65,
-   "unresolved": 6
+   "unresolved": 5
   },
   "lsdyna-doc-examples-implicit_stress_submodelling-mastermodel-beam_master": {
    "keyword_lines": 29,
-   "unresolved": 3
+   "unresolved": 2
   },
   "lsdyna-doc-examples-implicit_stress_submodelling-submodel-beam_sub": {
    "keyword_lines": 24,
-   "unresolved": 3
+   "unresolved": 2
   },
   "lsdyna-doc-examples-self_piercing_rivet-spr4": {
    "keyword_lines": 33,
-   "unresolved": 3
+   "unresolved": 2
   },
   "lsdyna-doc-examples-stamping-srail": {
    "keyword_lines": 69,
@@ -132,7 +132,7 @@
   },
   "lsdyna-doc-guidelines-explicit-ex04_post_buckling_strength-run": {
    "keyword_lines": 60,
-   "unresolved": 6
+   "unresolved": 5
   },
   "lsdyna-doc-guidelines-explicit-ex05_bolted_connection-run": {
    "keyword_lines": 91,
@@ -152,7 +152,7 @@
   },
   "lsdyna-doc-guidelines-explicit-ex09_vehicle_initialization_for_crash-run": {
    "keyword_lines": 114,
-   "unresolved": 9
+   "unresolved": 4
   },
   "lsdyna-doc-guidelines-implicit-examples-bolts001": {
    "keyword_lines": 37,
@@ -172,7 +172,7 @@
   },
   "lsdyna-doc-guidelines-implicit-restart-pretens001": {
    "keyword_lines": 99,
-   "unresolved": 12
+   "unresolved": 5
   },
   "lsdyna-doc-tutorial-2.tensile_test-tensile_test": {
    "keyword_lines": 4,
@@ -200,7 +200,7 @@
   },
   "lsdyna-doc-tutorial-9.icfd_with_fsi-main_fsi": {
    "keyword_lines": 85,
-   "unresolved": 11
+   "unresolved": 10
   },
   "vivaplus-50M-seated-v2.0.2": {
    "keyword_lines": 27,
@@ -208,7 +208,7 @@
   },
   "ccsa-yaris-detailed-v2j": {
    "keyword_lines": 4769,
-   "unresolved": 51
+   "unresolved": 7
   }
  },
  "unresolved_names": [
@@ -221,31 +221,7 @@
    51
   ],
   [
-   "*CONSTRAINED_JOINT_REVOLUTE_ID",
-   26
-  ],
-  [
-   "*CONSTRAINED_JOINT_SPHERICAL_ID",
-   17
-  ],
-  [
-   "*SECTION_SOLID_TITLE",
-   13
-  ],
-  [
-   "*CONSTRAINED_JOINT_TRANSLATIONAL_ID",
-   4
-  ],
-  [
-   "*ICFD_MAT_TITLE",
-   2
-  ],
-  [
    "*KEYWORD_ID",
-   1
-  ],
-  [
-   "*CONTACT_2D_AUTOMATIC_SINGLE_SURFACE_ID",
    1
   ],
   [
@@ -254,14 +230,6 @@
   ],
   [
    "*TERMINATION_NODE",
-   1
-  ],
-  [
-   "*LOAD_SEGMENT_SET_NONUNIFORM_ID",
-   1
-  ],
-  [
-   "*CONSTRAINED_JOINT_CYLINDRICAL_ID",
    1
   ]
  ]

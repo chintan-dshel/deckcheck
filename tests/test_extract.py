@@ -58,3 +58,16 @@ def test_conditional_cards_are_flagged(data):
 
 def test_extraction_is_deterministic():
     assert json.dumps(extract_all(), sort_keys=True) == json.dumps(extract_all(), sort_keys=True)
+
+
+def _all_fields(card):
+    return [f["name"] for f in card.get("fields", [])] + [n for c in card.get("cards", []) for n in _all_fields(c)]
+
+
+def test_card_set_keywords_have_their_cards_and_options(data):
+    # SECTION_*/HOURGLASS are pydyna CardSets: their cards live inside the set, not on the keyword.
+    section = data["keywords"]["SECTION_SOLID"]
+    assert "secid" in [n for c in section["cards"] for n in _all_fields(c)]
+    assert {"name": "TITLE", "position": "pre/1", "title_order": 1} in section["options"]
+    assert "hgid" in [n for c in data["keywords"]["HOURGLASS"]["cards"] for n in _all_fields(c)]
+    assert all(c.get("cards") for k in data["keywords"].values() for c in k["cards"] if c["kind"] == "card_set")

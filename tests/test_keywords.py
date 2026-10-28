@@ -51,16 +51,59 @@ def test_resolve_rejects_non_option_remainder():
 
 from deckcheck.keywords import load, overrides  # noqa: E402
 
-TARGETS = ("field", "card", "option")
+TARGETS = ("field", "fields", "card", "option")
 
 
 def test_every_override_targets_real_keywords_and_has_evidence():
     data = load()["keywords"]
     for o in overrides()["override"]:
-        assert ("keyword" in o) != ("keyword_prefix" in o), o
-        if "keyword" in o:
-            assert o["keyword"] in data, o
-        else:
-            assert any(k.startswith(o["keyword_prefix"]) for k in data), o
+        assert sum(k in o for k in ("keyword", "keywords", "keyword_prefix")) == 1, o
         assert sum(t in o for t in TARGETS) == 1, o
         assert o["evidence"] and o["reason"] and o["set"], o
+
+
+import re  # noqa: E402
+
+from deckcheck.keywords import override_targets  # noqa: E402
+
+
+def _names(card):
+    return [f["name"] for f in card.get("fields", [])] + [n for c in card.get("cards", []) for n in _names(c)]
+
+
+def _series(card):
+    return ([card["name"]] if card.get("kind") == "series" else []) + [n for c in card.get("cards", []) for n in _series(c)]
+
+
+def test_override_lint():
+    """Every override must be able to fire: its targets exist, and so do the fields, cards and type fields it names."""
+    data = load()["keywords"]
+    for o in overrides()["override"]:
+        targets = override_targets(o)
+        assert targets and all(t in data for t in targets), o
+        names = {t: [n for c in data[t]["cards"] for n in _names(c)] for t in targets}
+        if "field" in o:
+            having = [t for t in targets if o["field"] in names[t]]
+            assert having, o
+            if "keyword" in o or "keywords" in o:
+                assert having == targets, o
+            if "link_by" in o["set"]:
+                assert all(o["set"]["link_by"] in names[t] for t in having), (o, [t for t in having if o["set"]["link_by"] not in names[t]])
+        if "fields" in o:
+            assert all(f in names[t] for t in targets for f in o["fields"]), o
+        if "card" in o:
+            assert all(o["card"] in [n for c in data[t]["cards"] for n in _series(c)] for t in targets), o
+        if "option" in o:
+            assert re.fullmatch(r"(pre|post)/\d+", o["set"]["add_option"]["position"]), o
+
+
+def test_airbag_cn_override_matches_its_evidence_line():
+    hit = resolve("*AIRBAG_SIMPLE_PRESSURE_VOLUME_ID").name
+    assert any(hit in override_targets(o) for o in overrides()["override"] if o.get("field") == "cn")
+
+
+def test_resolve_honours_option_overrides():
+    assert resolve("*CONSTRAINED_JOINT_REVOLUTE_ID") == Resolved("CONSTRAINED_JOINT_REVOLUTE", ("ID",), "")
+    assert resolve("*ICFD_MAT_TITLE") == Resolved("ICFD_MAT", ("TITLE",), "")
+    assert resolve("*LOAD_SEGMENT_SET_NONUNIFORM_ID").options == ("ID",)
+    assert resolve("*CONSTRAINED_JOINT_STIFFNESS_GENERALIZED_ID") is None  # no evidence for this family

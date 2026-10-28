@@ -1,28 +1,50 @@
 # Corrections to the pydyna-extracted keyword data. Every entry cites deck text or an LS-DYNA run.
-# Schema: keyword (a data key) or keyword_prefix; exactly one target: field, card or option; set; evidence; reason.
-# Evidence tallies: bakeoff/results/type_field_evidence.json (ids that match exactly one entity kind).
+#
+# Schema, one [[override]] per correction:
+#   which keywords:  keyword = "X" | keywords = ["X", "Y"] | keyword_prefix = "X_" (+ optional exclude_prefix = [...])
+#   one target:      field = "f" | fields = ["f1", ...] | card = "<series card name>" | option = "NAME"
+#   set, evidence, reason
+# A type-dependent link (set.link_by) maps type values to kinds; unmapped values are left unchecked (no false alarm).
+# Note: pydyna models some _ID variants as separate classes (e.g. AIRBAG_*_ID), so an override for X does not
+# reach X_ID unless it lists both. Evidence tallies: bakeoff/results/type_field_evidence.json.
 
-# --- References whose kind depends on a type field. Unmapped type values are left unchecked (no false alarm).
+# --- References whose kind depends on a type field.
 
 [[override]]
 keyword_prefix = "CONTACT_"
+exclude_prefix = ["CONTACT_2D_"]
 field = "surfa"
 set = { link_by = "surfatyp", map = { "2" = "SET_PART", "3" = "PART", "4" = "SET_NODE" } }
-evidence = "type_field_evidence.json: surfatyp 2 -> SET_PART (3 unique), 3 -> PART (5), 4 -> SET_NODE (9); e.g. bolts001.key:291 ssid 6 sstyp 2 = *SET_PART_LIST_TITLE 6"
-reason = "pydyna has no link for surfa: its kind depends on surfatyp. Type 0 (segment set) left unmapped: 1 case, contradictory."
+evidence = "type_field_evidence.json: type 2 -> SET_PART (3 unique), 3 -> PART (5), 4 -> SET_NODE (9); e.g. bolts001.key:291 surfa 6, surfatyp 2 = *SET_PART_LIST_TITLE 6"
+reason = "pydyna has no link for surfa: its kind depends on surfatyp. Type 0 (segment set) left unmapped: 1 case, contradictory. CONTACT_2D_* excluded: different first-card layout, no surfatyp."
 
 [[override]]
 keyword_prefix = "CONTACT_"
+exclude_prefix = ["CONTACT_2D_"]
 field = "surfb"
 set = { link_by = "surfbtyp", map = { "2" = "SET_PART", "3" = "PART", "4" = "SET_NODE" } }
 evidence = "type_field_evidence.json: surfbtyp 2 -> SET_PART (1 unique), 3 -> PART (2); value 4 shares surfatyp's evidence"
 reason = "pydyna has no link for surfb: its kind depends on surfbtyp."
 
 [[override]]
+keyword = "CONTACT_AUTOMATIC_SINGLE_SURFACE"
+field = "ssid"
+set = { link_by = "sstyp", map = { "2" = "SET_PART", "3" = "PART", "4" = "SET_NODE" } }
+evidence = "Same tallies as surfa: the evidence scan reads the first card's columns 1-4 for every CONTACT_* block, which for this keyword are ssid/msid/sstyp/mstyp; e.g. torture part_inertia ssid 1, sstyp 2 = *SET_PART_LIST 1"
+reason = "pydyna names this keyword's fields ssid/sstyp instead of surfa/surfatyp. Not extended to CONTACT_ENTITY or CONTACT_GEBOD_*: their ssid has other meanings."
+
+[[override]]
+keyword = "CONTACT_AUTOMATIC_SINGLE_SURFACE"
+field = "msid"
+set = { link_by = "mstyp", map = { "2" = "SET_PART", "3" = "PART", "4" = "SET_NODE" } }
+evidence = "Same tallies as surfb (columns 2 and 4 of the first card)"
+reason = "pydyna names this keyword's fields msid/mstyp instead of surfb/surfbtyp."
+
+[[override]]
 keyword = "INITIAL_VELOCITY_GENERATION"
 field = "id"
 set = { link_by = "styp", map = { "1" = "SET_PART", "3" = "SET_NODE" } }
-evidence = "Yaris set-yaris-detailed-v2j.key:224-236: styp 1 ids 5000004-5000006 are *SET_PART_LIST_TITLE, styp 3 id 5000007 is *SET_NODE_LIST_TITLE; type_field_evidence.json 3 + 1 unique"
+evidence = "Yaris set-yaris-detailed-v2j.key:224-236: styp 1 ids 5000004-5000006 are *SET_PART_LIST_TITLE (:243, :363, :370), styp 3 id 5000007 is *SET_NODE_LIST_TITLE (:377); type_field_evidence.json 3 + 1 unique"
 reason = "pydyna has no link for id (nsid/pid): its kind depends on styp."
 
 # --- ICFD parts: their own id space, separate from structural *PART (no LinkType in pydyna).
@@ -31,28 +53,28 @@ reason = "pydyna has no link for id (nsid/pid): its kind depends on styp."
 keyword = "ICFD_PART"
 field = "pid"
 set = { defines = "ICFD_PART" }
-evidence = "tutorial 9 mesh_fluid.k:7-21 defines ICFD parts 1-5; LS-DYNA accepted main_fsi (tier1_lsdyna_input.jsonl)"
+evidence = "tutorial/9.ICFD_with_FSI/mesh_fluid.k:7-21 defines ICFD parts 1-5; LS-DYNA accepted main_fsi (tier1_lsdyna_input.jsonl)"
 reason = "ICFD part ids are a separate namespace referenced by ICFD keywords."
 
 [[override]]
 keyword = "ICFD_PART_VOL"
 field = "pid"
 set = { defines = "ICFD_PART" }
-evidence = "tutorial 9 fluid_main.k:86-88 (*ICFD_PART_VOL pid 1)"
+evidence = "tutorial/9.ICFD_with_FSI/fluid_main.k:86-88 (*ICFD_PART_VOL pid 1)"
 reason = "A volume part is an ICFD part too."
 
 [[override]]
 keyword = "ICFD_PART_VOL"
-card = "spid"
+fields = ["spid1", "spid2", "spid3", "spid4", "spid5", "spid6", "spid7", "spid8"]
 set = { link = "ICFD_PART" }
-evidence = "tutorial 9 fluid_main.k:86-90: spid1..8 list the surface parts of mesh_fluid.k:7-21"
+evidence = "tutorial/9.ICFD_with_FSI/fluid_main.k:86-90: spid1..8 list the surface parts of mesh_fluid.k:7-21"
 reason = "Surface part ids of an ICFD volume are ICFD parts, not structural parts."
 
 [[override]]
 keyword = "MESH_VOLUME"
 card = "elements"
 set = { link = "ICFD_PART" }
-evidence = "tutorial 9 fluid_main.k:99-103 (*MESH_VOLUME pid1..8 = ICFD parts of mesh_fluid.k)"
+evidence = "tutorial/9.ICFD_with_FSI/fluid_main.k:99-103 (*MESH_VOLUME pid1..8 = ICFD parts of mesh_fluid.k)"
 reason = "The series lists ICFD surface part ids."
 
 [[override]]
@@ -68,15 +90,15 @@ reason = "ICFD boundary conditions apply to ICFD parts."
 keyword = "DEFINE_TABLE"
 card = "points"
 set = { replace_with = [ { name = "value", type = "float", offset = 0, width = 20 }, { name = "lcid", type = "int", offset = 20, width = 10, link = "DEFINE_CURVE" } ] }
-evidence = "crashbox.k:153342-153344 (rows '0.0 421', '1.0 422'; curves 421, 422 follow as *DEFINE_CURVE)"
-reason = "Each table row is a value (20 wide) and a curve id (10 wide); pydyna models it as a 20-wide float series."
+evidence = "guidelines/explicit/EX02_CRASH_BOX/crashbox.k:153343-153344 (rows '0.0 421', '1.0 422'; curves 421, 422 follow as *DEFINE_CURVE)"
+reason = "Each table row is a value (20 wide) and a curve id (10 wide); pydyna models it as a 20-wide float series. Layout is deck evidence; that LS-DYNA reads the id column (not curve order) is to be settled by an M1c torture case."
 
 [[override]]
-keyword = "AIRBAG_SIMPLE_PRESSURE_VOLUME"
+keywords = ["AIRBAG_SIMPLE_PRESSURE_VOLUME", "AIRBAG_SIMPLE_PRESSURE_VOLUME_ID"]
 field = "cn"
 set = { link = "DEFINE_CURVE", when = "negative" }
-evidence = "BARRIER_DELAY_20MS.k:38197 cn = -1 with curve 1 defined; dynars reported curve 1 unused (bakeoff/triage.md)"
-reason = "A negative CN means |CN| is a load-curve id."
+evidence = "guidelines/explicit/EX09_VEHICLE_INITIALIZATION_FOR_CRASH/BARRIER_DELAY_20MS.k:38191-38197 (*AIRBAG_SIMPLE_PRESSURE_VOLUME_ID, cn = -1) with curve 1 at :38385-38388; dynars reported curve 1 unused (bakeoff/triage.md)"
+reason = "A negative CN means |CN| is a load-curve id. pydyna models the _ID variant as a separate class, so both keys are listed."
 
 [[override]]
 keyword = "BOUNDARY_PRESCRIBED_MOTION_RIGID"
@@ -85,39 +107,32 @@ set = { link = "PART" }
 evidence = "BARRIER_DELAY_20MS.k:38221 pid 19 = *PART at line 38600"
 reason = "pydyna links lrb but not pid, which is the rigid part being moved."
 
-# --- Options LS-DYNA accepts that pydyna's classes do not list. All place the option card first (pre/1).
+# --- Options LS-DYNA accepts that pydyna's classes do not list. Each places the option card first (pre/1).
 
 [[override]]
-keyword_prefix = "CONSTRAINED_JOINT_"
+keywords = ["CONSTRAINED_JOINT_REVOLUTE", "CONSTRAINED_JOINT_SPHERICAL", "CONSTRAINED_JOINT_TRANSLATIONAL", "CONSTRAINED_JOINT_CYLINDRICAL"]
 option = "ID"
 set = { add_option = { name = "ID", position = "pre/1", fields = [ { name = "jid", type = "int", offset = 0, width = 10 }, { name = "heading", type = "str", offset = 10, width = 70 } ] } }
-evidence = "BARRIER_DELAY_20MS.k:38331 *CONSTRAINED_JOINT_REVOLUTE_ID then '1' (jid) before n1..n6; 48 _ID joints in the corpus (keyword_coverage.json)"
-reason = "Joint _ID variants are used and accepted by LS-DYNA; pydyna lists no ID option."
-
-[[override]]
-keyword = "SECTION_SOLID"
-option = "TITLE"
-set = { add_option = { name = "TITLE", position = "pre/1", fields = [ { name = "title", type = "str", offset = 0, width = 80 } ] } }
-evidence = "mesh_solid_initial.key:337600 *SECTION_SOLID_TITLE then 'Amarok' then secid/elform; 13 in the corpus"
-reason = "Title line precedes the section card."
+evidence = "BARRIER_DELAY_20MS.k:38331-38334 *CONSTRAINED_JOINT_REVOLUTE_ID then jid 1 before n1..n6; corpus uses REVOLUTE_ID 26, SPHERICAL_ID 17, TRANSLATIONAL_ID 4, CYLINDRICAL_ID 1 (keyword_coverage.json)"
+reason = "Joint _ID variants are used and accepted by LS-DYNA; pydyna lists no ID option. Limited to the four joint types with corpus evidence."
 
 [[override]]
 keyword = "ICFD_MAT"
 option = "TITLE"
 set = { add_option = { name = "TITLE", position = "pre/1", fields = [ { name = "title", type = "str", offset = 0, width = 80 } ] } }
-evidence = "tutorial 9 fluid_main.k:112 *ICFD_MAT_TITLE then 'Kerosene' then mid/flg/ro"
+evidence = "examples/ICFD_Sloshing/fluid_main.k:112 *ICFD_MAT_TITLE then 'Kerosene' then mid/flg/ro"
 reason = "Title line precedes the material card."
 
 [[override]]
 keyword = "CONTACT_2D_AUTOMATIC_SINGLE_SURFACE"
 option = "ID"
 set = { add_option = { name = "ID", position = "pre/1", fields = [ { name = "cid", type = "int", offset = 0, width = 10 }, { name = "heading", type = "str", offset = 10, width = 70 } ] } }
-evidence = "spr4.k:50 *CONTACT_2D_AUTOMATIC_SINGLE_SURFACE_ID then '1Alla to all' before sids/sidm"
+evidence = "examples/Self_Piercing_Rivet/spr4.k:50 *CONTACT_2D_AUTOMATIC_SINGLE_SURFACE_ID then '1Alla to all' before sids/sidm"
 reason = "ID card precedes the contact card."
 
 [[override]]
 keyword = "LOAD_SEGMENT_SET_NONUNIFORM"
 option = "ID"
 set = { add_option = { name = "ID", position = "pre/1", fields = [ { name = "id", type = "int", offset = 0, width = 10 }, { name = "heading", type = "str", offset = 10, width = 70 } ] } }
-evidence = "static_buckling.k:385023 *LOAD_SEGMENT_SET_NONUNIFORM_ID then '1Pressure load' before ssid/lcid"
+evidence = "guidelines/explicit/EX04_POST_BUCKLING_STRENGTH/static_buckling.k:385023 *LOAD_SEGMENT_SET_NONUNIFORM_ID then '1Pressure load' before ssid/lcid"
 reason = "ID card precedes the load card."
