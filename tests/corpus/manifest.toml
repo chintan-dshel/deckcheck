@@ -1,0 +1,3 @@
+# External decks for M0 and the corpus job. Never commit the decks themselves.
+# Each [[deck]]: name, tier (1 breadth, 2 real-world), url, sha256 of the download, root (glob to the root deck),
+# terms (what the source's terms allow, and where that was read).
