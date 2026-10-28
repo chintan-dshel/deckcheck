@@ -119,11 +119,21 @@ pydyna; that is a spec change, decided with Chintan.
 M0 output: a written assessment (publishable on its own), the false-alarm count per rule, and the go/no-go
 recorded in this spec.
 
+**M0 result (2026-10-28): NO-GO for option A.**
+- dynars' parser and edits mostly pass (criteria 1 and 4), with two parser defects: a blank-title `*PART` is
+  dropped, and `*PART_INERTIA` is not indexed.
+- Its reference rules and include resolution fail: 62 of 68 errors are false, and VIVA+ loads 2 of 18 files
+  because `*INCLUDE_PATH` is ignored.
+- The Yaris (CCSA) ran with 0 errors, but it could not be refereed by LS-DYNA Student (too large).
+- Recommended route B1: dynars parser plus deckcheck's own reference and position layer.
+
+See `docs/m0-assessment.md`. Route choice pending Chintan.
+
 ## 8. Test corpus
 
 | Tier | Decks | Stored |
 |---|---|---|
-| 1. Breadth | ~20–30 official LS-DYNA example decks (dynaexamples.com) across keyword families | Downloaded at test time; terms to check in M0 |
+| 1. Breadth | ~20–30 official LS-DYNA example decks across keyword families. As run in M0: 35 decks from the LS-DYNA Student install's `documentation/` folder (dynaexamples.com returned 503), read in place | Local only; never committed (see `docs/corpus-terms.md`) |
 | 2. Real-world | VIVA+ human body model (LGPL v3), plus one CCSA/NCAC vehicle model | Downloaded at test time; CCSA terms to check in M0 |
 | 3. Torture | ~10 tiny decks, one quirk each: long format, free format, `*PARAMETER`, `*INCLUDE_PATH`, odd comments, tabs | Ours, committed |
 

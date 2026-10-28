@@ -1,0 +1,335 @@
+# External decks for M0 and the corpus job. Never commit the decks themselves.
+# Each [[deck]]: name, tier (1 breadth, 2 real-world), url, sha256 of the download, root (glob to the root deck),
+# terms (what the source's terms allow, and where that was read).
+
+[[deck]]
+name = "lsdyna-doc-benchmarks-b01_crash-bumper_100k"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/benchmarks/B01_crash/bumper_100k.k"
+sha256 = "91b09bea4a2eaf59bed302809e34dc26c316dd9053210442f9d539d937550c83"
+root = "bumper_100k.k"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-benchmarks-b02_implicit_stress-stress_run_linear"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/benchmarks/B02_implicit_stress/stress_run_linear.key"
+sha256 = "cee22e374c6d9b4822d4efc9319d564eb6b8d49fe054b8870559bc88b8cf2d92"
+root = "stress_run_linear.key"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-benchmarks-b04_stamping-cross_member_op10"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/benchmarks/B04_stamping/cross_member_op10.dyn"
+sha256 = "eeb4be264b2fd02e4f78a3625ad096e12bdfc39db16663eb51a0bc7419892090"
+root = "cross_member_op10.dyn"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-examples-bumper_impact_test-bumper"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/examples/Bumper_impact_test/bumper.k"
+sha256 = "979c36b036e5dff0205366f1078ff7a2cb6c3ad5fa493bb15d2cc7f3e07e397d"
+root = "bumper.k"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-examples-icfd_pipe_junction-main_pipe"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/examples/ICFD_Pipe_Junction/main_pipe.k"
+sha256 = "f74a6acb12869eae76e84e3b1262f1d6e79e4b5a582989c31ae9aab06241cb09"
+root = "main_pipe.k"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-examples-icfd_sloshing-fluid_main"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/examples/ICFD_Sloshing/fluid_main.k"
+sha256 = "f9c24b460d5aed686816aa4a8cdc0617c3a4fdbda1d58e9abeed8fb8602ebbdb"
+root = "fluid_main.k"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-examples-implicit_cabin_test-cabload_run"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/examples/Implicit_cabin_test/cabload_run.key"
+sha256 = "ad870c0d86ad93e581074eea8f159e80dc1b386677c824ed8bef4fe4af2e1cfe"
+root = "cabload_run.key"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-examples-implicit_postbuckling-step_1_linear_buckl-b3_frame_linear_buckl"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/examples/Implicit_postbuckling/STEP_1_LINEAR_BUCKL/B3_Frame_linear_buckl.key"
+sha256 = "7ee750af84c0366840484f469e81d085690e219a85ef8f1dede836f0f3725923"
+root = "B3_Frame_linear_buckl.key"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-examples-implicit_postbuckling-step_2_postbuckl-b4_postbuckling_frame"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/examples/Implicit_postbuckling/STEP_2_POSTBUCKL/B4_Postbuckling_Frame.key"
+sha256 = "f4892e21529a4098dccade9ac53bf23312b71cbb603654dcfc681ae1f0eaecca"
+root = "B4_Postbuckling_Frame.key"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-examples-implicit_stress_analysis-stress_run"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/examples/Implicit_stress_analysis/stress_run.key"
+sha256 = "6103c5bf77a4c53d728745ebcdf26481b66b450e6050468ef3923262137bb648"
+root = "stress_run.key"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-examples-implicit_stress_submodelling-mastermodel-beam_master"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/examples/Implicit_stress_submodelling/MASTERMODEL/beam_master.key"
+sha256 = "12d58148736c9c0dd4abc9cdef9cfba6f3b411675dd3fd8e176e709ceb7bdcac"
+root = "beam_master.key"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-examples-implicit_stress_submodelling-submodel-beam_sub"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/examples/Implicit_stress_submodelling/SUBMODEL/beam_sub.key"
+sha256 = "3c80c8ce0484a8c4505bb19f4506fef0d3b0701621361dbbc70ccac531c16da0"
+root = "beam_sub.key"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-examples-self_piercing_rivet-spr4"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/examples/Self_Piercing_Rivet/spr4.k"
+sha256 = "0458acdc1364911e9e8333ce601f07b69e61de1a286efdcab46b4ec7635fa229"
+root = "spr4.k"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-examples-stamping-srail"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/examples/Stamping/srail.dyn"
+sha256 = "b6ca04ca8e2125673d8304a4af7bd6e9346262638dbbcc6481f494bc322c1384"
+root = "srail.dyn"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-guidelines-explicit-ex01_droptest-run"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/guidelines/explicit/EX01_DROPTEST/run.key"
+sha256 = "e57818bf92956526dc922f5e2a26e3e87139d1af90e5b7cbdc30f751675dcb6b"
+root = "run.key"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-guidelines-explicit-ex02_crash_box-run"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/guidelines/explicit/EX02_CRASH_BOX/run.key"
+sha256 = "013e7b5ceb5c90a4e5b7bdfac91b674c7ed11d1c96c85dafb2b272fbc5abe896"
+root = "run.key"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-guidelines-explicit-ex03_deep_drawing-forming-run"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/guidelines/explicit/EX03_DEEP_DRAWING/FORMING/run.key"
+sha256 = "19533bd9bab1de7a541d44bd60b60007b648b736d5ea1f13f0e618e85b3f87ee"
+root = "run.key"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-guidelines-explicit-ex04_post_buckling_strength-run"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/guidelines/explicit/EX04_POST_BUCKLING_STRENGTH/run.key"
+sha256 = "e506dffcdbaafdfdf698b847f32786146baa28bbcd9cd71f14f23cf085fd525c"
+root = "run.key"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-guidelines-explicit-ex05_bolted_connection-run"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/guidelines/explicit/EX05_BOLTED_CONNECTION/run.key"
+sha256 = "47dc1a7a028dd1b194b073b525acf4bc77e77f0717d2c3f6924dfb45904091ca"
+root = "run.key"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-guidelines-explicit-ex06_interference_fit-run"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/guidelines/explicit/EX06_INTERFERENCE_FIT/run.key"
+sha256 = "63174f6f313a629ec7243184067d15c14cc34f53b0722a34148c0a94833ea061"
+root = "run.key"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-guidelines-explicit-ex07_fillet_weld-run"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/guidelines/explicit/EX07_FILLET_WELD/run.key"
+sha256 = "da61a9930bd47bf7c12ec3eb79ed32ec261040b13c8321db0606e50eafe5c670"
+root = "run.key"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-guidelines-explicit-ex08_rubber_seal-run"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/guidelines/explicit/EX08_RUBBER_SEAL/run.key"
+sha256 = "ed7a1fc8967ba6a64b50864c2c4a7b7ec28aa20bf33c2eb7209da741d93d3fa7"
+root = "run.key"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-guidelines-explicit-ex09_vehicle_initialization_for_crash-run"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/guidelines/explicit/EX09_VEHICLE_INITIALIZATION_FOR_CRASH/run.key"
+sha256 = "9929faa20623353e7b2d4e7e3c699b69eeda7da8371adba6568cbbeaf5fbd869"
+root = "run.key"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-guidelines-implicit-examples-bolts001"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/guidelines/implicit/EXAMPLES/bolts001.key"
+sha256 = "c579b7cf76ff26e3895622cff0911a43b8599c37838a52d7e48bf059931da01a"
+root = "bolts001.key"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-guidelines-implicit-examples-eigen001"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/guidelines/implicit/EXAMPLES/eigen001.key"
+sha256 = "9397b1dddd627ee732323f2976a75cdff0f8a0e7c2c41601f4bbf56fcee99829"
+root = "eigen001.key"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-guidelines-implicit-examples-doorstiff001"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/guidelines/implicit/EXAMPLES/doorstiff001.key"
+sha256 = "16205e6d41e41bff09cb7e9117973e6d634729341e254278cc0566854544124f"
+root = "doorstiff001.key"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-guidelines-implicit-frequency_domain-psd_fatigue_example-set_4"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/guidelines/implicit/Frequency_domain/PSD_FATIGUE_EXAMPLE/set_4.key"
+sha256 = "5fecc3d6fc12c279337008365e493f27ea67dae4496236b89a9e5c4b87b3d99e"
+root = "set_4.key"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-guidelines-implicit-restart-pretens001"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/guidelines/implicit/RESTART/pretens001.key"
+sha256 = "6c56efaa9a595d0113491f2201684c052d36208355df262d35503ef9a61584a6"
+root = "pretens001.key"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-tutorial-2.tensile_test-tensile_test"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/tutorial/2.Tensile_test/tensile_test.k"
+sha256 = "fef1396ce4a46cd6bed38931c33bb0b7656dc31816ab66981c4742fecf35f325"
+root = "tensile_test.k"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-tutorial-3.crashbox-crashbox_results"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/tutorial/3.Crashbox/crashbox_results.k"
+sha256 = "4b5bab6f9288fc49daf4d01ce3054e9bb4dab18b8b2e12091cf08581f22b4aec"
+root = "crashbox_results.k"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-tutorial-4.eigenvalue-tire"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/tutorial/4.Eigenvalue/tire.k"
+sha256 = "e3fcce14660dfd24b28a44f17bcb8687179ef0f75acc9c43a82cb9498df75a0f"
+root = "tire.k"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-tutorial-5.hardening_and_failure-hardening"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/tutorial/5.Hardening_and_failure/hardening.k"
+sha256 = "04fd131e11358277284b7b3be28a5cc6751fee3402bd120e4b2c0cb5fe6b91ca"
+root = "hardening.k"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-tutorial-6.prestress-prestress_geometry"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/tutorial/6.Prestress/prestress_geometry.k"
+sha256 = "25f8ae816f2e46e6c60be6c731b2634849062474f233a87b974f2d328f16df25"
+root = "prestress_geometry.k"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-tutorial-8.icfd_2d_flow_cylinder-2dcylinder_main"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/tutorial/8.ICFD_2D_Flow_Cylinder/2Dcylinder_main.k"
+sha256 = "7fba32800e0d34140d2626a321f5624c7207f609ca3b8e9139b4c394ccf657a0"
+root = "2Dcylinder_main.k"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "lsdyna-doc-tutorial-9.icfd_with_fsi-main_fsi"
+tier = 1
+url = "file:///C:/Program%20Files/LS-DYNA%20Suite%20R16.1%20Student/documentation/tutorial/9.ICFD_with_FSI/main_fsi.k"
+sha256 = "5e7d7aeec616736dad5ea7dae0647eac6f17c0157f87955e267ee24e01052f29"
+root = "main_fsi.k"
+terms = "Ships with LS-DYNA Suite R16.1 Student (Ansys clickwrap accepted by Chintan). Local use only: read in place, never committed or redistributed."
+in_place = true
+
+[[deck]]
+name = "vivaplus-50M-seated-v2.0.2"
+tier = 2
+url = "https://openvt.eu/api/v4/projects/171/repository/archive.zip?sha=v2.0.2"
+sha256 = "f3eba854e4d5a901b1c32e5d910dc5519eb8bdc1061e72b40e38f66ee0ba7a69"
+root = "*/model/50M-seated/vivaplus-50M.key"
+terms = "LGPL v3 (LICENSE.md and model/LICENSE/lgpl-3.0.txt in the archive, read 2026-10-28). Downloaded at test time; never committed. Archive hash checked stable across two downloads."
+
+[[deck]]
+name = "ccsa-yaris-detailed-v2j"
+tier = 2
+url = "file:///D:/AI_Projects/deckcheck/.corpus/local/ccsa-yaris/2010-toyota-yaris-detailed-v2j/combine.key"
+sha256 = "c18833c640379efdd9e92cb608a700a5517440d026874ad6c31da4e782a6cb45"
+root = "combine.key"
+terms = "CCSA/GMU 2010 Toyota Yaris detailed v2j, downloaded by Chintan 2026-10-28 (zip sha256 1e02171f2d211082786fb15ec13f285712e973a7589d4bd6ba48cb5cc102f0e9). README: acknowledge CCSA and FHWA in publications; no license or redistribution terms. Local only, never committed."
+in_place = true

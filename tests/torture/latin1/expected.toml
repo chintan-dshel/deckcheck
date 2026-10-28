@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "Part title contains a Latin-1 byte (0xFC)."

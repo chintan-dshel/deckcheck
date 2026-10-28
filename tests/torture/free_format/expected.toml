@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "Comma-separated free format on every card."
