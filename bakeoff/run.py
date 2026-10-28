@@ -60,10 +60,10 @@ def run_one(deck: Path, cap_mb: int = 4096, timeout_s: float = 1800) -> dict:
         return result
 
 
-def _decks(torture: bool, corpus: bool) -> list[Path]:
-    decks = sorted(TORTURE.glob("*/main.k")) if torture else []
+def _decks(torture: bool, corpus: bool, tier: int | None) -> list[tuple[str, Path]]:
+    decks = [(p.parent.name, p) for p in sorted(TORTURE.glob("*/main.k"))] if torture else []
     if corpus:
-        decks += [fetch(e) for e in load_manifest(MANIFEST)]
+        decks += [(e.name, fetch(e)) for e in load_manifest(MANIFEST) if tier is None or e.tier == tier]
     return decks
 
 
@@ -71,15 +71,17 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--torture", action="store_true")
     ap.add_argument("--corpus", action="store_true")
+    ap.add_argument("--tier", type=int, help="only corpus entries of this tier")
+    ap.add_argument("--cap-mb", type=int, default=4096)
     ap.add_argument("--out", type=Path, required=True)
     args = ap.parse_args()
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as f:
-        for deck in _decks(args.torture, args.corpus):
-            row = run_one(deck)
+        for name, deck in _decks(args.torture, args.corpus, args.tier):
+            row = {"name": name, **run_one(deck, cap_mb=args.cap_mb)}
             f.write(json.dumps(row) + "\n")
             f.flush()
-            print(deck, "error" if "error" in row else f"{len(row['findings'])} findings", row.get("peak_mb"))
+            print(name, "error" if "error" in row else f"{len(row['findings'])} findings", row.get("peak_mb"))
 
 
 if __name__ == "__main__":

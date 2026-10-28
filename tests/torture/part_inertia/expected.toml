@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "Part 1 defined by *PART_INERTIA (rigid, prescribed inertia; common in vehicle and barrier models) and used by a part set that a contact uses; part 2 is an ordinary *PART. dynars 1.1.0 skips part checks when no ordinary *PART exists, so part 2 is needed to expose the defect."

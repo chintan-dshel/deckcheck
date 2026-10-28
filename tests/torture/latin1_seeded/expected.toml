@@ -1,0 +1,9 @@
+lsdyna_valid = false
+findings = [
+  {rule = "include_missing", line = 2},
+  {rule = "references_resolve", line = 4},
+  {rule = "duplicate_ids", line = 4},
+  {rule = "duplicate_ids", line = 9},
+  {rule = "unreferenced_entities", line = 20},
+]
+note = "seeded_mistakes with a Latin-1 byte (0xFC) in the first part title: line numbers must match the LF original."

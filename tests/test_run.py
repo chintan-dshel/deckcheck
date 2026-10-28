@@ -1,8 +1,25 @@
 from pathlib import Path
 
-from bakeoff.run import run_one
+import json
+
+from bakeoff.run import _decks, main, run_one
 
 TORTURE = Path(__file__).parent / "torture"
+
+
+def test_decks_are_named():
+    named = dict(_decks(torture=True, corpus=False, tier=None))
+    assert "seeded_mistakes" in named and named["seeded_mistakes"].name == "main.k"
+
+
+def test_main_writes_the_name_on_every_row(tmp_path, monkeypatch):
+    # The triage scripts key on row["name"]; the runner itself must write it.
+    out = tmp_path / "torture.jsonl"
+    monkeypatch.setattr("sys.argv", ["run", "--torture", "--out", str(out)])
+    main()
+    rows = [json.loads(line) for line in out.read_text(encoding="utf-8").splitlines()]
+    assert rows and all(r["name"] for r in rows)
+    assert {r["name"] for r in rows} >= {"base", "seeded_mistakes"}
 
 
 def test_run_one_returns_probe_result_with_peak():

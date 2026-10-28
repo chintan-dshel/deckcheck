@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "base with the *PART title card left blank (an empty line), as pre-processors often export it."

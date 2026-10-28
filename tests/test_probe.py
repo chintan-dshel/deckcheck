@@ -42,6 +42,28 @@ def test_edit_changes_exactly_one_line():
     assert r["edit"] == {"tried": True, "status": "in_place", "changed_lines": 1}
 
 
+@pytest.mark.parametrize("case", ["crlf_seeded", "latin1_seeded"])
+def test_line_numbers_do_not_depend_on_encoding(case):
+    # Same deck as seeded_mistakes in CRLF / Latin-1: every finding must report the same line as the LF original.
+    lf = sorted((f["rule"], f["line"]) for f in measure(str(TORTURE / "seeded_mistakes" / "main.k"))["findings"])
+    other = sorted((f["rule"], f["line"]) for f in measure(str(TORTURE / case / "main.k"))["findings"])
+    assert other == lf
+
+
+@pytest.mark.xfail(strict=True, reason="dynars 1.1.0 drops a *PART whose title card is blank (M0 defect 6)")
+def test_part_with_blank_title_is_kept():
+    r = measure(str(TORTURE / "blank_title" / "main.k"))
+    assert r["edit"] == {"tried": True, "status": "in_place", "changed_lines": 1}
+    assert r["findings"] == []
+
+
+@pytest.mark.xfail(strict=True, reason="dynars 1.1.0 does not index *PART_INERTIA as a part (M0 defect 7)")
+def test_part_inertia_defines_a_part():
+    # Part 1 is a *PART_INERTIA used by a part set that a contact uses; a correct checker reports nothing.
+    r = measure(str(TORTURE / "part_inertia" / "main.k"))
+    assert r["findings"] == []
+
+
 def test_unparseable_path_reports_error():
     r = measure(str(TORTURE / "does_not_exist.k"))
     assert "error" in r
