@@ -17,6 +17,9 @@ dev = ["pytest>=8"]
 [tool.hatch.build.targets.wheel]
 packages = ["src/deckcheck"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"NOTICE" = "deckcheck/NOTICE"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
