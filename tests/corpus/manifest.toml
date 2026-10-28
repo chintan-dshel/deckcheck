@@ -324,3 +324,12 @@ url = "https://openvt.eu/api/v4/projects/171/repository/archive.zip?sha=v2.0.2"
 sha256 = "f3eba854e4d5a901b1c32e5d910dc5519eb8bdc1061e72b40e38f66ee0ba7a69"
 root = "*/model/50M-seated/vivaplus-50M.key"
 terms = "LGPL v3 (LICENSE.md and model/LICENSE/lgpl-3.0.txt in the archive, read 2026-10-28). Downloaded at test time; never committed. Archive hash checked stable across two downloads."
+
+[[deck]]
+name = "ccsa-yaris-detailed-v2j"
+tier = 2
+url = "file:///D:/AI_Projects/deckcheck/.corpus/local/ccsa-yaris/2010-toyota-yaris-detailed-v2j/combine.key"
+sha256 = "c18833c640379efdd9e92cb608a700a5517440d026874ad6c31da4e782a6cb45"
+root = "combine.key"
+terms = "CCSA/GMU 2010 Toyota Yaris detailed v2j, downloaded by Chintan 2026-10-28 (zip sha256 1e02171f2d211082786fb15ec13f285712e973a7589d4bd6ba48cb5cc102f0e9). README: acknowledge CCSA and FHWA in publications; no license or redistribution terms. Local only, never committed."
+in_place = true

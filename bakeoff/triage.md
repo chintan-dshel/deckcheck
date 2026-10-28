@@ -66,4 +66,25 @@ case `include_path`, where LS-DYNA reads the include), so it parsed **2 files** 
 reported the body as missing. No other rule could see the model's parts, materials or contacts. Parse 0.45 s, peak
 152.5 MB; round-trip 2/2; edit not tried (no `*PART` in the two files it loaded).
 
-Not run: the CCSA vehicle (pending Chintan's download).
+# Tier 2 — CCSA 2010 Toyota Yaris detailed v2j, 2026-10-28
+
+Evidence: `results/corpus_tier2_yaris.jsonl`. Root `combine.key`, 4 files (169 MB main deck, 1,519,587 elements).
+No LS-DYNA referee: the model exceeds the Student version's size limit. Triage by reading the deck. Run with a 2 GB cap
+(not 4 GB) per the laptop's bounded-resource rule.
+
+Parse and checks: 4/4 files loaded (`*INCLUDE` and `*INCLUDE_TRANSFORM` resolved); rules 0.22 s; peak 953 MB.
+Round-trip 4/4 identical; one-field edit `in_place`, 1 line changed.
+
+| Rule | Findings | Real | False | Unclassified |
+|---|---|---|---|---|
+| references_resolve, include_missing, duplicate_ids | 0 | — | — | — |
+| unreferenced_entities (Warning) | 13 | 0 | 9 | 4 |
+
+False, each verified at the field:
+- Transform 1000001: used as `tranid` of `*INCLUDE_TRANSFORM` (combine.key 101); it positions `wall.key`.
+- NodeSets 1000011–1000014: used as `nsid` of `*RIGIDWALL_PLANAR` (combine.key 238 and the same pattern after).
+- Sets 5000004–5000007: used as `nsid/pid` of `*INITIAL_VELOCITY_GENERATION` (set-yaris 224–236; wheel spin and
+  vehicle velocity).
+
+Unclassified: PartSets 2000003–2000006. Their ids coincide with part ids used on thousands of lines, so a text search
+cannot decide them.
