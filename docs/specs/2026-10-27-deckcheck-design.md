@@ -16,6 +16,16 @@ number of checks.
 
 - Open parsers already exist (pydyna, dynars, dynakw, lsdyna-mesh-reader, lsdyna-parser). deckcheck builds on
   one of them and never writes a new full parser.
+- **Decision 2026-10-28 (option A): build on dynars.** Reconnaissance found dynars (MIT, v1.1.0) already ships
+  validation rules with `file:line` findings — `references_resolve`, `duplicate_ids`, `include_missing`,
+  `unreferenced_entities` — plus byte-preserving `set_field` and a keyword library generated from pydyna's field
+  database. A smoke test caught all four seeded mistakes. deckcheck is therefore the front doors for LS-DYNA deck
+  checking, plus the checks and position accuracy dynars lacks — not a second rules engine.
+- dynars risks: single maintainer, 2 stars, created July 2026, last commit 15 Aug 2026. Mitigation: the adapter
+  boundary isolates it; MIT allows a fork; pydyna is the fallback parser.
+- Smoke-test defects deckcheck must correct: `include_missing` reports line 0; `references_resolve` reported a
+  comment line rather than the `*PART` line; paths carry a Windows `\\?\` prefix; `deck.parts()` collapses
+  duplicate ids.
 - No editor tooling, language server or agent interface for LS-DYNA decks exists. That is the gap.
 - Non-goals for version 1: physics checks (units, timestep, hourglass, contact defaults), editing decks, running
   the solver, any GUI beyond the editor.
@@ -42,15 +52,23 @@ deck files ─► parse adapter ─► Deck ─► index ─► rules ─► dia
 
 | Unit | Does | Depends on |
 |---|---|---|
-| Parse adapter | Wraps the parser chosen in M0. Produces a `Deck`: cards with keyword, fields, file, line and column span, and the include tree. The only module that imports the third-party parser. | M0 winner |
-| Keyword schema | Data files (YAML, one per keyword family): field names, column positions, and which entity each field references (e.g. `*PART.mid → MAT`). Written by us. | nothing |
-| Index | For each entity kind (part, section, material, hourglass, EOS, part set, contact): where each ID is defined and where it is referenced, across all included files. | Deck, schema |
-| Rules | One function per check: takes the index (and Deck), returns a list of diagnostics. | Index, schema |
+| Adapter (`engine/`) | The only module that imports dynars. Runs dynars' parse and built-in rules and maps each `Finding` to a deckcheck diagnostic: stable code, normalized path, corrected line. | dynars |
+| Position layer | Our own light card-splitter: for each keyword block, the line of each data card and the column span of each field (comments and `$#` rulers skipped). Corrects dynars' line numbers and gives field-level spans for squiggles. Not a parser: it never interprets values. | file text |
+| Own rules | Checks dynars lacks: DC003 column/format, DC004's circular-include half. Same diagnostic output. | position layer, dynars deck |
+| Keyword data | dynars' built-in library (generated from pydyna's MIT field database). Our own YAML schema only for keywords it lacks, registered through `register_schema`. | dynars |
 | Diagnostics | Record: file, line, column span, severity, code, message, related locations. | nothing |
 | Front doors | Format diagnostics. Contain no checking logic. | Diagnostics |
 
-The index is the central piece. All five version-1 checks, Ctrl+click, the MCP find-references tool and the M5
-diff are queries on it.
+dynars' deck plays the role of the index: references, definitions and `set_field` all come from it. The diagram
+above is the logical flow; in code, "parse adapter + index + most rules" is the adapter over dynars.
+
+| Code | Source |
+|---|---|
+| DC001 | dynars `references_resolve` |
+| DC002 | dynars `duplicate_ids` |
+| DC003 | deckcheck (position layer) |
+| DC004 | dynars `include_missing` (missing file) + deckcheck (circular include) |
+| DC005 | dynars `unreferenced_entities` |
 
 Error handling:
 - A card that won't parse produces one diagnostic, and the run continues.
@@ -84,20 +102,22 @@ M2 and M3 designs are detailed in their own specs when reached. This spec binds 
 
 ## 7. M0 parser bake-off
 
-Candidates: pydyna (`ansys-dyna-core`) and dynars. Others are excluded unless both fail.
+After the option A decision, M0's question is no longer "which parser" but **"can deckcheck stand on dynars?"**
+pydyna is measured only as the fallback.
 
-Winning criteria, in priority order:
-1. Keeps file, line and column positions for every card
-2. Survives every corpus deck without crashing; unknown keywords are kept, not dropped
-3. Round-trip: read then write gives an identical file
-4. Handles long format, free (comma) format and `*PARAMETER`
-5. Parses the vehicle model within a capped memory budget (dev laptop: 7.7 GB RAM; cap set in the plan)
-6. License compatible with Apache-2.0, and actively maintained
+dynars passes M0 when, on the full corpus:
+1. It parses every deck without crashing, within the memory cap.
+2. Its four rules produce zero unexplained findings (each finding is either a real defect in that deck,
+   recorded, or a dynars false alarm, counted).
+3. Every finding's line, after our correction, points at the right keyword block.
+4. `set_field` round-trip: parse, write without edits → byte-identical; one edit → only that field's bytes differ.
+5. It handles long format, free (comma) format and `*PARAMETER` in the torture decks.
 
-Fallback if neither keeps positions: a thin card-splitter of our own supplies positions, and the parser supplies
-field meanings.
+If dynars fails 1 or 2 on decks that matter (VIVA+ or the vehicle model), stop and return to option B with
+pydyna; that is a spec change, decided with Chintan.
 
-M0 output: a written comparison (publishable on its own) and the chosen parser recorded in this spec.
+M0 output: a written assessment (publishable on its own), the false-alarm count per rule, and the go/no-go
+recorded in this spec.
 
 ## 8. Test corpus
 
@@ -122,8 +142,8 @@ Tests:
 - License: Apache-2.0 (explicit patent grant helps corporate adoption).
 - Python core. Packaging via `pyproject.toml`; `pip install deckcheck` gives the core and CLI, with extras
   `deckcheck[lsp]` (M2) and `deckcheck[mcp]` (M3).
-- Layout: `src/deckcheck/{parse/, schema/, index.py, rules/, diagnostics.py, cli.py}`, `tests/{rules/, torture/,
-  corpus/manifest.toml}`, `editors/vscode/` (M2), `docs/`.
+- Layout: `src/deckcheck/{engine.py, positions.py, rules/, diagnostics.py, cli.py}`, `tests/{rules/, torture/,
+  corpus/manifest.toml}`, `bakeoff/` (M0 measurement scripts and results), `editors/vscode/` (M2), `docs/`.
 - CI (GitHub Actions): a fast job on every push (rule and torture tests); a corpus job nightly or on demand
   (download, hash check, zero-false-alarm gate). Run locally with a memory cap.
 - CONTRIBUTING.md centres on "add a keyword = add rows to a schema file".
@@ -144,8 +164,8 @@ Tests:
 
 ## 11. Completion criteria
 
-- **M0 done:** both candidates run on all three tiers; the comparison against the six criteria is written up;
-  the parser choice is recorded here; the terms for the example decks and CCSA are checked and recorded.
+- **M0 done:** dynars runs on all three tiers; each of the five pass criteria in section 7 is measured and
+  written up; the go/no-go is recorded here; the terms for the example decks and CCSA are checked and recorded.
 - **M1 done:**
   - DC001–DC005 each catch their seeded mistake.
   - Zero unexplained diagnostics on the full corpus.
@@ -156,5 +176,6 @@ Tests:
 ## 12. Open questions
 
 - Terms for the LS-DYNA example decks and CCSA models (resolved in M0).
-- License of pydyna's keyword data, if reused for the schema (resolved in M0).
+- License of pydyna's keyword data: resolved, MIT (pydyna is MIT; dynars' library is generated from it).
+- M1 estimate drops from ~2 weeks to ~1 week if dynars passes M0 (revisit in the M1 plan).
 - Memory cap value for the corpus run (set in the plan).
