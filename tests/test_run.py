@@ -46,3 +46,8 @@ def test_run_one_large_output(tmp_path):
     deck.write_text("\n".join(lines + ["*END", ""]), encoding="ascii")
     r = run_one(deck, timeout_s=300)
     assert "error" not in r and len(r["findings"]) == 3000
+
+
+def test_run_one_runs_the_named_module():
+    row = run_one(Path("tests/torture/include_path/main.k"), cap_mb=2048, module="bakeoff.read_tree")
+    assert row["files"] == ["main.k", "sub/mat.k"] and row["problems"] == [] and row["peak_mb"] > 0
