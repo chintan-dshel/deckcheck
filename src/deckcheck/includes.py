@@ -72,6 +72,8 @@ def _filenames(cards: list[Card]) -> list[tuple[Card, str, int]]:
         parts.append(text.strip())
         out.append((first, "".join(parts), i + 1))
         parts, first = [], None
+    if parts:  # a ' +' with no card after it: still a name, so a missing file is reported, not dropped
+        out.append((first, "".join(parts), len(cards)))
     return out
 
 
@@ -93,15 +95,18 @@ def _locate(name: str, including_dir: Path, main_dir: Path, paths: list[Path]) -
 
 def _offsets(tree: Tree, node: FileNode, block: Block, start: int) -> dict[str, int]:
     layout = load()["keywords"]["INCLUDE_TRANSFORM"]["cards"][1:3]  # the idnoff... and idroff cards
-    out: dict[str, int] = {}
-    for spec, card in zip(layout, block.cards[start:start + 2] + [Card(0, "")] * 2):
-        fields = [f for f in spec["fields"] if f["name"].startswith("id") and f["name"].endswith("off")]
+    cards = [[f for f in spec["fields"] if f["name"].startswith("id") and f["name"].endswith("off")] for spec in layout]
+    out = {f["name"]: 0 for fields in cards for f in fields}
+    if block.resolved and block.resolved.format == "+":
+        # long format widths are M1c's: the offsets are unknown, so say so rather than return zeros silently
+        tree.problems.append(Problem("unread", node.path, block.line, (1, 1 + len(block.name)), block.name))
+        return out
+    for fields, card in zip(cards, block.cards[start:start + 2]):
         for name, value in card_values(card, fields).items():
             try:
-                out[name] = int(value) if value else 0
+                out[name] = int(value.text) if value.text else 0
             except ValueError:
-                tree.problems.append(Problem("unread", node.path, card.line, _span(card.text), value))
-                out[name] = 0
+                tree.problems.append(Problem("unread", node.path, card.line, (value.start, value.end), value.text))
     return out
 
 

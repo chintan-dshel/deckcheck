@@ -1,4 +1,16 @@
 == inc_nested_sibling: rejected
+ *** Error 10087 (KEY+87)
+     File b.k does not exist
+ Open include file: sub\a.k
+ *** Error 10087 (KEY+87)
+     File b.k does not exist
+ *** Error 10157 (KEY+157)
+     MAT 1 is not found
+ *** Error 10304 (KEY+304)
+     MATERIAL ID 1 does not exist.
+ *** Error 10133 (KEY+133)
+ *** Error 10304 (KEY+304)
+     CHECKING MATERIAL INPUT Part ID= 1
      PART ID 1 with
      SECTION ID 1 and
      MATERIAL ID 1 does not exist.
@@ -7,7 +19,7 @@
  *** Error 10133 (KEY+133)
      keyword input phase failed with: 6 errors
 
- E r r o r   t e r m i n a t i o n                             10/28/26 19:35:16
+ E r r o r   t e r m i n a t i o n                             10/28/26 20:01:05
 
  S t o r a g e   a l l o c a t i o n   
 
@@ -18,12 +30,10 @@
  T i m i n g   i n f o r m a t i o n
                         CPU(seconds)   %CPU  Clock(seconds) %Clock
   ----------------------------------------------------------------
-  Keyword Processing ... 0.0000E+00    0.00     8.4000E-02    3.10
-    KW Reading ......... 0.0000E+00    0.00     2.5000E-02    0.92
-    KW Writing ......... 0.0000E+00    0.00     1.8000E-02    0.66
-  Initialization ....... 2.0000E+00  100.00     2.6250E+00   96.90
+  Keyword Processing ... 0.0000E+00    0.00     1.4000E-02    0.56
+  Initialization ....... 2.0000E+00  100.00     2.4830E+00   99.44
   ----------------------------------------------------------------
-  T o t a l s            2.0000E+00  100.00     2.7090E+00  100.00
+  T o t a l s            2.0000E+00  100.00     2.4970E+00  100.00
 
  Problem time       =    0.0000E+00
  Problem cycle      =         0
@@ -33,14 +43,21 @@
 
  Number of CPU's    1
  NLQ used/max     192/  192
- Start time   10/28/2026 19:35:16  
- End time     10/28/2026 19:35:16  
+ Start time   10/28/2026 20:01:05  
+ End time     10/28/2026 20:01:05  
  Elapsed time       0 second  for       0 cycles using  1 SMP thread 
              (      0 hour   0 minute   0 second )
 
- E r r o r   t e r m i n a t i o n                             10/28/26 19:35:16
+ E r r o r   t e r m i n a t i o n                             10/28/26 20:01:05
 == inc_nested_main: accepted
 == inc_nested_both: rejected
+ Open include file: sub\a.k
+ Open include file: b.k
+ *** Error 10157 (KEY+157)
+     MAT 1 is not found
+ *** Error 10304 (KEY+304)
+     MATERIAL ID 1 does not exist.
+ *** Error 10133 (KEY+133)
      CHECKING MATERIAL INPUT Part ID= 1
      PART ID 1 with
      SECTION ID 1 and
@@ -50,7 +67,7 @@
  *** Error 10133 (KEY+133)
      keyword input phase failed with: 4 errors
 
- E r r o r   t e r m i n a t i o n                             10/28/26 19:35:21
+ E r r o r   t e r m i n a t i o n                             10/28/26 20:01:10
 
  S t o r a g e   a l l o c a t i o n   
 
@@ -61,52 +78,11 @@
  T i m i n g   i n f o r m a t i o n
                         CPU(seconds)   %CPU  Clock(seconds) %Clock
   ----------------------------------------------------------------
-  Keyword Processing ... 0.0000E+00    0.00     2.0000E-02    0.80
-    KW Writing ......... 0.0000E+00    0.00     1.0000E-02    0.40
-  Initialization ....... 2.0000E+00  100.00     2.4810E+00   99.20
-  ----------------------------------------------------------------
-  T o t a l s            2.0000E+00  100.00     2.5010E+00  100.00
-
- Problem time       =    0.0000E+00
- Problem cycle      =         0
- Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
- CPU time per zone cycle  =          0.000 picoseconds
- Clock time per zone cycle=          0.000 picoseconds
-
- Number of CPU's    1
- NLQ used/max     192/  192
- Start time   10/28/2026 19:35:21  
- End time     10/28/2026 19:35:21  
- Elapsed time       0 second  for       0 cycles using  1 SMP thread 
-             (      0 hour   0 minute   0 second )
-
- E r r o r   t e r m i n a t i o n                             10/28/26 19:35:21
-== inc_path_precedence: rejected
-     CHECKING MATERIAL INPUT Part ID= 1
-     PART ID 1 with
-     SECTION ID 1 and
-     MATERIAL ID 1 does not exist.
-     This is PART 1 in the order of input.
- 
- *** Error 10133 (KEY+133)
-     keyword input phase failed with: 4 errors
-
- E r r o r   t e r m i n a t i o n                             10/28/26 19:35:24
-
- S t o r a g e   a l l o c a t i o n   
-
- Memory required to complete solution   :     165K
- Additional dynamically allocated memory:    2123K
-                                   Total:    2287K
-
- T i m i n g   i n f o r m a t i o n
-                        CPU(seconds)   %CPU  Clock(seconds) %Clock
-  ----------------------------------------------------------------
-  Keyword Processing ... 0.0000E+00    0.00     1.8000E-02    0.72
+  Keyword Processing ... 0.0000E+00    0.00     2.5000E-02    0.99
     KW Writing ......... 0.0000E+00    0.00     9.0000E-03    0.36
-  Initialization ....... 2.0000E+00  100.00     2.4860E+00   99.28
+  Initialization ....... 2.0000E+00  100.00     2.5010E+00   99.01
   ----------------------------------------------------------------
-  T o t a l s            2.0000E+00  100.00     2.5040E+00  100.00
+  T o t a l s            2.0000E+00  100.00     2.5260E+00  100.00
 
  Problem time       =    0.0000E+00
  Problem cycle      =         0
@@ -116,13 +92,22 @@
 
  Number of CPU's    1
  NLQ used/max     192/  192
- Start time   10/28/2026 19:35:24  
- End time     10/28/2026 19:35:24  
+ Start time   10/28/2026 20:01:10  
+ End time     10/28/2026 20:01:10  
  Elapsed time       0 second  for       0 cycles using  1 SMP thread 
              (      0 hour   0 minute   0 second )
 
- E r r o r   t e r m i n a t i o n                             10/28/26 19:35:24
-== inc_path_relative: rejected
+ E r r o r   t e r m i n a t i o n                             10/28/26 20:01:10
+== inc_path_precedence: rejected
+ Open include file: mat.k
+ *** Error 10157 (KEY+157)
+     MAT 1 is not found
+ *** Error 10304 (KEY+304)
+     MATERIAL ID 1 does not exist.
+ *** Error 10133 (KEY+133)
+ 
+ *** Error 10304 (KEY+304)
+     CHECKING MATERIAL INPUT Part ID= 1
      PART ID 1 with
      SECTION ID 1 and
      MATERIAL ID 1 does not exist.
@@ -131,7 +116,7 @@
  *** Error 10133 (KEY+133)
      keyword input phase failed with: 4 errors
 
- E r r o r   t e r m i n a t i o n                             10/28/26 19:35:27
+ E r r o r   t e r m i n a t i o n                             10/28/26 20:01:13
 
  S t o r a g e   a l l o c a t i o n   
 
@@ -142,12 +127,9 @@
  T i m i n g   i n f o r m a t i o n
                         CPU(seconds)   %CPU  Clock(seconds) %Clock
   ----------------------------------------------------------------
-  Keyword Processing ... 0.0000E+00    0.00     1.9000E-02    0.75
-    KW Reading ......... 0.0000E+00    0.00     4.0000E-03    0.16
-    KW Writing ......... 0.0000E+00    0.00     3.0000E-03    0.12
-  Initialization ....... 2.0000E+00  100.00     2.5100E+00   99.25
+  Initialization ....... 2.0000E+00  100.00     2.4890E+00  100.00
   ----------------------------------------------------------------
-  T o t a l s            2.0000E+00  100.00     2.5290E+00  100.00
+  T o t a l s            2.0000E+00  100.00     2.4890E+00  100.00
 
  Problem time       =    0.0000E+00
  Problem cycle      =         0
@@ -157,24 +139,75 @@
 
  Number of CPU's    1
  NLQ used/max     192/  192
- Start time   10/28/2026 19:35:27  
- End time     10/28/2026 19:35:27  
+ Start time   10/28/2026 20:01:13  
+ End time     10/28/2026 20:01:13  
  Elapsed time       0 second  for       0 cycles using  1 SMP thread 
              (      0 hour   0 minute   0 second )
 
- E r r o r   t e r m i n a t i o n                             10/28/26 19:35:27
+ E r r o r   t e r m i n a t i o n                             10/28/26 20:01:13
+== inc_path_relative: rejected
+ Open include file: sub\a.k
+ Open include file: .\lib\mat.k
+ *** Error 10157 (KEY+157)
+     MAT 1 is not found
+ *** Error 10304 (KEY+304)
+     MATERIAL ID 1 does not exist.
+ *** Error 10133 (KEY+133)
+     PART ID 1 with
+     SECTION ID 1 and
+     MATERIAL ID 1 does not exist.
+     This is PART 1 in the order of input.
+ 
+ *** Error 10133 (KEY+133)
+     keyword input phase failed with: 4 errors
+
+ E r r o r   t e r m i n a t i o n                             10/28/26 20:01:15
+
+ S t o r a g e   a l l o c a t i o n   
+
+ Memory required to complete solution   :     165K
+ Additional dynamically allocated memory:    2123K
+                                   Total:    2287K
+
+ T i m i n g   i n f o r m a t i o n
+                        CPU(seconds)   %CPU  Clock(seconds) %Clock
+  ----------------------------------------------------------------
+  Keyword Processing ... 0.0000E+00    0.00     2.5000E-02    1.01
+    KW Reading ......... 0.0000E+00    0.00     5.0000E-03    0.20
+    KW Writing ......... 0.0000E+00    0.00     3.0000E-03    0.12
+  Initialization ....... 2.0000E+00  100.00     2.4520E+00   98.99
+  ----------------------------------------------------------------
+  T o t a l s            2.0000E+00  100.00     2.4770E+00  100.00
+
+ Problem time       =    0.0000E+00
+ Problem cycle      =         0
+ Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
+ CPU time per zone cycle  =          0.000 picoseconds
+ Clock time per zone cycle=          0.000 picoseconds
+
+ Number of CPU's    1
+ NLQ used/max     192/  192
+ Start time   10/28/2026 20:01:15  
+ End time     10/28/2026 20:01:15  
+ Elapsed time       0 second  for       0 cycles using  1 SMP thread 
+             (      0 hour   0 minute   0 second )
+
+ E r r o r   t e r m i n a t i o n                             10/28/26 20:01:15
 == inc_path_backslash: accepted
 == inc_path_late: rejected
- expanding   memory to      102202 d     2104344  
+ *** Error 10087 (KEY+87)
+     File mat.k does not exist
+ Open include file: lib\mat.k
+ *** Error 10133 (KEY+133)
  expanding   memory to      164202 d     2119344  
 
-                                                               10/28/26 19:35:32
+                                                               10/28/26 20:01:21
  Open include file: lib\mat.k
  
  *** Error 10133 (KEY+133)
      keyword input phase failed with: 1 errors
 
- E r r o r   t e r m i n a t i o n                             10/28/26 19:35:32
+ E r r o r   t e r m i n a t i o n                             10/28/26 20:01:21
 
  S t o r a g e   a l l o c a t i o n   
 
@@ -185,11 +218,12 @@
  T i m i n g   i n f o r m a t i o n
                         CPU(seconds)   %CPU  Clock(seconds) %Clock
   ----------------------------------------------------------------
-  Keyword Processing ... 0.0000E+00    0.00     1.6000E-02    0.64
-    KW Writing ......... 0.0000E+00    0.00     1.4000E-02    0.56
-  Initialization ....... 2.0000E+00  100.00     2.4720E+00   99.36
+  Keyword Processing ... 0.0000E+00    0.00     1.2000E-02    0.48
+    KW Reading ......... 0.0000E+00    0.00     4.0000E-03    0.16
+    KW Writing ......... 0.0000E+00    0.00     2.0000E-03    0.08
+  Initialization ....... 2.0000E+00  100.00     2.4790E+00   99.52
   ----------------------------------------------------------------
-  T o t a l s            2.0000E+00  100.00     2.4880E+00  100.00
+  T o t a l s            2.0000E+00  100.00     2.4910E+00  100.00
 
  Problem time       =    0.0000E+00
  Problem cycle      =         0
@@ -199,17 +233,19 @@
 
  Number of CPU's    1
  NLQ used/max     192/  192
- Start time   10/28/2026 19:35:32  
- End time     10/28/2026 19:35:32  
+ Start time   10/28/2026 20:01:21  
+ End time     10/28/2026 20:01:21  
  Elapsed time       0 second  for       0 cycles using  1 SMP thread 
              (      0 hour   0 minute   0 second )
 
- E r r o r   t e r m i n a t i o n                             10/28/26 19:35:32
+ E r r o r   t e r m i n a t i o n                             10/28/26 20:01:21
 == inc_multi: accepted
 == inc_continuation: accepted
 == inc_cycle: rejected
+ Open include file: a.k
  Open include file: b.k
- 
+ *** Error 10088 (KEY+88)
+ *** Error 10133 (KEY+133)
  *** Error 10088 (KEY+88)
      in *INCLUDE file is already opened
      a.k
@@ -218,7 +254,7 @@
  *** Error 10133 (KEY+133)
      keyword input phase failed with: 1 errors
 
- E r r o r   t e r m i n a t i o n                             10/28/26 19:35:40
+ E r r o r   t e r m i n a t i o n                             10/28/26 20:01:29
 
  S t o r a g e   a l l o c a t i o n   
 
@@ -229,10 +265,12 @@
  T i m i n g   i n f o r m a t i o n
                         CPU(seconds)   %CPU  Clock(seconds) %Clock
   ----------------------------------------------------------------
-  Keyword Processing ... 0.0000E+00    0.00     2.0000E-03    0.08
-  Initialization ....... 2.0000E+00  100.00     2.5100E+00   99.92
+  Keyword Processing ... 0.0000E+00    0.00     1.7000E-02    0.67
+    KW Reading ......... 0.0000E+00    0.00     4.0000E-03    0.16
+    KW Writing ......... 0.0000E+00    0.00     5.0000E-03    0.20
+  Initialization ....... 2.0000E+00  100.00     2.5040E+00   99.33
   ----------------------------------------------------------------
-  T o t a l s            2.0000E+00  100.00     2.5120E+00  100.00
+  T o t a l s            2.0000E+00  100.00     2.5210E+00  100.00
 
  Problem time       =    0.0000E+00
  Problem cycle      =         0
@@ -242,12 +280,12 @@
 
  Number of CPU's    1
  NLQ used/max     192/  192
- Start time   10/28/2026 19:35:40  
- End time     10/28/2026 19:35:40  
+ Start time   10/28/2026 20:01:29  
+ End time     10/28/2026 20:01:29  
  Elapsed time       0 second  for       0 cycles using  1 SMP thread 
              (      0 hour   0 minute   0 second )
 
- E r r o r   t e r m i n a t i o n                             10/28/26 19:35:40
+ E r r o r   t e r m i n a t i o n                             10/28/26 20:01:29
 == inc_transform: accepted
 == end_main: accepted
 == end_include: accepted

@@ -32,3 +32,16 @@ def test_timeout_is_a_rejection(monkeypatch, tmp_path):
     monkeypatch.setattr(oracle.subprocess, "run", hang)
     ok, log = oracle.lsdyna_reads(tmp_path, timeout_s=1)
     assert ok is False and "timeout" in log
+
+
+def test_deciding_lines_survive_a_long_log(monkeypatch, tmp_path):
+    (tmp_path / "main.k").write_text("*KEYWORD\n*END\n")
+
+    def run(*args, **kwargs):
+        lines = [" *** Error 10087 (KEY+87)", "     File b.k does not exist"] + [f" filler {i}" for i in range(100)]
+        (Path(kwargs["cwd"]) / "messag").write_text("\n".join(lines))
+        return subprocess.CompletedProcess(args[0], 1, stdout="")
+
+    monkeypatch.setattr(oracle.subprocess, "run", run)
+    ok, log = oracle.lsdyna_reads(tmp_path)
+    assert ok is False and "File b.k does not exist" in log and "Error 10087" in log

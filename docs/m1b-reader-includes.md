@@ -79,15 +79,22 @@ The seven M0 defects:
 1. **`*PARAMETER` substitution moved to the field reader**, because it needs field positions. The reader keeps
    `*PARAMETER` blocks as ordinary blocks.
 2. **Long format beyond the `+` suffix** (`*KEYWORD LONG=`) is not handled and appears nowhere in the corpus. The
-   reader keeps the `*KEYWORD` line as a block, so its cards are available.
+   reader keeps the `*KEYWORD` line as a block, so its cards are available. A long-format `*INCLUDE_TRANSFORM +`
+   gets an `unread` problem and zero offsets, never silently misread offsets.
 3. **Nested transforms are not composed.** Each `FileNode` holds its own offsets. Composing them along `parent` needs
    an LS-DYNA case first.
 4. **Which offset applies to which kind** (`idnoff` → nodes, `idpoff` → parts, …) still needs evidence before the
    index uses it.
 5. **`unfollowed` includes** (binary, auto-offset, …) hide ids. DC001 must treat target kinds as not fully covered
-   when any appear. None appear in the corpus.
+   when any appear. `*INCLUDE_AUTO_OFFSET` is wider still: it changes how every *later* include offsets its ids, so
+   all ids after it are unreliable, not just one file's. None appear in the corpus.
 6. **Working directory.** LS-DYNA resolves relative names against its working directory. deckcheck assumes that is
    the main deck's folder, which is what a user normally does and what the three tier-1 rejections confirm. A CLI
    option for a different run folder can come later if users ask.
 7. **Memory.** Cards are one `NamedTuple` per line: the Yaris needs 683 MB for 3 million cards. M1c's index adds to
    this, so the cap stays a gate on the corpus run.
+8. **Not yet refereed, so the resolver's behaviour there is a guess to confirm before M1c relies on it:** an
+   `*INCLUDE_PATH` inside an included file (applied globally to later includes, relative to the main deck); a blank
+   card inside a ` +` continuation (ends the name); trailing text after a filename (part of the name); absolute
+   include names; an `*INCLUDE` with no filename card (silently nothing). Proposed cases: `inc_path_in_include`,
+   `inc_blank_in_continuation`, `inc_absolute`, `inc_empty`.
