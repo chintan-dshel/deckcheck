@@ -89,9 +89,9 @@ reason = "ICFD boundary conditions apply to ICFD parts."
 [[override]]
 keyword = "DEFINE_TABLE"
 card = "points"
-set = { replace_with = [ { name = "value", type = "float", offset = 0, width = 20 }, { name = "lcid", type = "int", offset = 20, width = 10, link = "DEFINE_CURVE" } ] }
-evidence = "guidelines/explicit/EX02_CRASH_BOX/crashbox.k:153343-153344 (rows '0.0 421', '1.0 422'; curves 421, 422 follow as *DEFINE_CURVE)"
-reason = "Each table row is a value (20 wide) and a curve id (10 wide); pydyna models it as a 20-wide float series. Layout is deck evidence; that LS-DYNA reads the id column (not curve order) is to be settled by an M1c torture case."
+set = { replace_with = [ { name = "value", type = "float", offset = 0, width = 20 }, { name = "lcid", type = "int", offset = 20, width = 10 } ] }
+evidence = "guidelines/explicit/EX02_CRASH_BOX/crashbox.k:153343-153344 (rows '0.0 421', '1.0 422'; curves 421, 422 follow as *DEFINE_CURVE); tests/torture/table_dangling (row names missing curve 99: accepted) and table_before (ids match but curves precede the table: rejected)"
+reason = "Each table row is a value (20 wide) and a curve id (10 wide); pydyna models it as a 20-wide float series. LS-DYNA takes the curves that follow the table by position and does not read the id column as a reference, so lcid carries no link."
 
 [[override]]
 keywords = ["AIRBAG_SIMPLE_PRESSURE_VOLUME", "AIRBAG_SIMPLE_PRESSURE_VOLUME_ID"]
