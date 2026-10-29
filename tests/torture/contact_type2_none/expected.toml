@@ -1,0 +1,6 @@
+lsdyna_valid = false
+findings = []
+note = "Q: sstyp 2 with neither part set 99 nor part 99. LS-DYNA R16.1 Student 2026-10-29: rejected, 'Error 10144 part set for contact interface # 99 is not found.'"
+
+[index]
+dangling = [{kind = "SET_PART", id = 99, file = "main.k", line = 22, columns = [8, 10]}]

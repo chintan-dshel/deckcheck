@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "Q: does *KEYWORD LONG=Y make every card 20 wide? (LONG=S is the standard format: the first probe used it and was rejected, Error 10246, on a 20-wide card.) LS-DYNA R16.1 Student 2026-10-29: accepted."

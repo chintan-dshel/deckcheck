@@ -1,0 +1,69 @@
+{
+ "offsets": {
+  "MAT": {
+   "control": true,
+   "negative": false,
+   "accepted": [
+    "idmoff"
+   ],
+   "decided": "idmoff"
+  },
+  "SECTION": {
+   "control": true,
+   "negative": false,
+   "accepted": [
+    "idroff"
+   ],
+   "decided": "idroff"
+  },
+  "HOURGLASS": {
+   "control": true,
+   "negative": false,
+   "accepted": [
+    "idroff"
+   ],
+   "decided": "idroff"
+  },
+  "NODE": {
+   "control": true,
+   "negative": false,
+   "accepted": [
+    "idnoff"
+   ],
+   "decided": "idnoff"
+  },
+  "DEFINE_CURVE": {
+   "control": true,
+   "negative": false,
+   "accepted": [
+    "idfoff"
+   ],
+   "decided": "idfoff"
+  },
+  "PART": {
+   "control": true,
+   "negative": false,
+   "accepted": [
+    "idpoff"
+   ],
+   "decided": "idpoff"
+  },
+  "SET_PART": {
+   "control": true,
+   "negative": false,
+   "accepted": [
+    "idsoff"
+   ],
+   "decided": "idsoff"
+  },
+  "SET_NODE": {
+   "control": true,
+   "negative": false,
+   "accepted": [
+    "idsoff"
+   ],
+   "decided": "idsoff"
+  }
+ },
+ "inc_absolute": true
+}

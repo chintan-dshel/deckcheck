@@ -1,0 +1,6 @@
+lsdyna_valid = false
+findings = []
+note = "Q: with sstyp 3, is ssid a part? Part set 99 exists, part 99 does not. LS-DYNA R16.1 Student 2026-10-29: rejected, 'Error 20216 part # 99 is out-of-range'."
+
+[index]
+dangling = [{kind = "PART", id = 99, file = "main.k", line = 25, columns = [8, 10]}]

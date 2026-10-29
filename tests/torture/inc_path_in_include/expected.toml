@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "Q: does an *INCLUDE_PATH inside an included file apply to includes after it in the including file? LS-DYNA R16.1 Student 2026-10-29: accepted (mat.k found in lib/)."

@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "Q: does *BOUNDARY_SPC_SET reject a missing node set? Node set 99 does not exist. LS-DYNA R16.1 Student 2026-10-29: accepted, no warning. LS-DYNA does not check this reference."

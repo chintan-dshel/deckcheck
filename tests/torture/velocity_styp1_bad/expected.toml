@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "Q: with styp 1, is id a part set? Part set 1 does not exist, part 1 does. LS-DYNA R16.1 Student 2026-10-29: accepted, no warning. With velocity_styp1_none: a missing part set id falls back to the part with that id."

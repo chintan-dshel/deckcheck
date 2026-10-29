@@ -7,7 +7,11 @@ CASES = ["base", "free_format", "long_format", "parameter", "include_path", "com
          "crlf_seeded", "latin1_seeded",
          "inc_nested_sibling", "inc_nested_main", "inc_nested_both", "inc_path_precedence", "inc_path_relative",
          "inc_path_backslash", "inc_path_late", "inc_multi", "inc_continuation", "inc_cycle", "inc_transform",
-         "end_main", "end_include"]
+         "end_main", "end_include",
+         "table_dangling", "table_before", "table_ids", "contact_type2_bad", "contact_type2_none",
+         "contact_type3_bad", "contact_type4_bad", "velocity_styp1_bad", "velocity_styp1_none", "velocity_styp3_bad",
+         "inc_path_in_include", "inc_blank_in_continuation", "inc_empty", "long_keyword", "long_section",
+         "parameter_ref", "spc_set_id", "spc_set_none", "zero_ref"]
 
 
 def test_every_case_has_main_and_expected():

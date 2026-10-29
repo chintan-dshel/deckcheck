@@ -1,0 +1,4 @@
+*KEYWORD
+*INCLUDE_PATH
+lib
+*END

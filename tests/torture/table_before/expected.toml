@@ -1,0 +1,7 @@
+lsdyna_valid = false
+findings = []
+note = "Q: are DEFINE_TABLE's row ids honoured when the named curves come before the table? LS-DYNA R16.1 Student 2026-10-29: rejected, 'Error 20308 Table ID= 10 has an invalid load curve ID specified' for both rows. With table_dangling: the table takes the curves that follow it, by position, not by the id column."
+
+[index]
+dangling = []
+note_index = "a placement rule, not a dangling id; no index finding"

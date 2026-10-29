@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "Q: does the _ID card come before the main card (M0 defect)? LS-DYNA R16.1 Student 2026-10-29: accepted."

@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "Q: is 0 in a reference field no reference (M0 defect: eosid, hgid, tmid all 0)? LS-DYNA R16.1 Student 2026-10-29: accepted."

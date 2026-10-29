@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "Q: in '+' format, does an 8-field card stay on one 160-column line? LS-DYNA R16.1 Student 2026-10-29: accepted."

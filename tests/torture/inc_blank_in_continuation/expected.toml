@@ -1,0 +1,6 @@
+lsdyna_valid = false
+findings = []
+note = "Q: does a blank card end a ' +' continued include name, or is it skipped? LS-DYNA R16.1 Student 2026-10-29: rejected, 'Error 10087 File sub\\ does not exist', then 'MAT 1 is not found'. A blank card ends the name."
+
+[index]
+dangling = [{kind = "MAT", id = 1, file = "main.k", line = 12, columns = [29, 30]}]

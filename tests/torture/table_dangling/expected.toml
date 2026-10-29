@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "Q: is DEFINE_TABLE's curve-id column read as an id? The row names curve 99, which does not exist; curves 5 and 6 follow the table. LS-DYNA R16.1 Student 2026-10-29: accepted, no warning. The column is not checked: see table_before."

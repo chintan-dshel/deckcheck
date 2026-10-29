@@ -1,0 +1,330 @@
+== table_dangling: accepted
+== table_before: rejected
+ *** Error 20308 (STR+308)
+ *** Error 20308 (STR+308)
+ *** Error 20460 (STR+460)
+ *** Error 20460 (STR+460)
+ *** Error 20018 (STR+18)
+ expanding   memory to        2124 d     2039153 contact friction
+ expanding   memory to        2224 d     2039768 rigid bodies for disp. termination
+ expanding   memory to        2347 d     1605163 save d3plot control data
+ 
+ *** Error 20018 (STR+18)
+     structured input phase failed with 4 fatal errors
+     please check messag file
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 08:04:31
+
+ S t o r a g e   a l l o c a t i o n   
+
+ Memory required to complete solution   :     165K
+ Additional dynamically allocated memory:    2174K
+                                   Total:    2339K
+
+ T i m i n g   i n f o r m a t i o n
+                        CPU(seconds)   %CPU  Clock(seconds) %Clock
+  ----------------------------------------------------------------
+  Keyword Processing ... 0.0000E+00    0.00     1.7000E-02    0.68
+    KW Reading ......... 0.0000E+00    0.00     1.0000E-03    0.04
+  Initialization ....... 2.0000E+00  100.00     2.4740E+00   99.32
+    Init Proc Phase 1 .. 0.0000E+00    0.00     8.0000E-03    0.32
+  ----------------------------------------------------------------
+  T o t a l s            2.0000E+00  100.00     2.4910E+00  100.00
+
+ Problem time       =    0.0000E+00
+ Problem cycle      =         0
+ Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
+ CPU time per zone cycle  =          0.000 picoseconds
+ Clock time per zone cycle=          0.000 picoseconds
+
+ Number of CPU's    1
+ NLQ used/max     192/  192
+ Start time   10/29/2026 08:04:31  
+ End time     10/29/2026 08:04:31  
+ Elapsed time       0 second  for       0 cycles using  1 SMP thread 
+             (      0 hour   0 minute   0 second )
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 08:04:31
+== table_ids: accepted
+== contact_type2_bad: accepted
+== contact_type2_none: rejected
+ *** Error 10144 (KEY+144)
+     part set for contact interface # 99 is not found.
+ *** Error 10133 (KEY+133)
+ 
+ *** Error 10144 (KEY+144)
+     CHECKING CONTACT INPUT DATA [*CONTACT]Control-intf. # 1
+     part set for contact interface # 99 is not found.
+     (This is #1 in the input order)
+ 
+ *** Error 10133 (KEY+133)
+     keyword input phase failed with: 2 errors
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 08:04:39
+
+ S t o r a g e   a l l o c a t i o n   
+
+ Memory required to complete solution   :     213K
+ Additional dynamically allocated memory:    2123K
+                                   Total:    2336K
+
+ T i m i n g   i n f o r m a t i o n
+                        CPU(seconds)   %CPU  Clock(seconds) %Clock
+  ----------------------------------------------------------------
+  Keyword Processing ... 0.0000E+00    0.00     1.3000E-02    0.52
+    KW Writing ......... 0.0000E+00    0.00     4.0000E-03    0.16
+  Initialization ....... 2.0000E+00  100.00     2.4710E+00   99.48
+  ----------------------------------------------------------------
+  T o t a l s            2.0000E+00  100.00     2.4840E+00  100.00
+
+ Problem time       =    0.0000E+00
+ Problem cycle      =         0
+ Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
+ CPU time per zone cycle  =          0.000 picoseconds
+ Clock time per zone cycle=          0.000 picoseconds
+
+ Number of CPU's    1
+ NLQ used/max     192/  192
+ Start time   10/29/2026 08:04:39  
+ End time     10/29/2026 08:04:39  
+ Elapsed time       0 second  for       0 cycles using  1 SMP thread 
+             (      0 hour   0 minute   0 second )
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 08:04:39
+== contact_type3_bad: rejected
+ *** Error 20216 (STR+216)
+ *** Error 20018 (STR+18)
+ expanding   memory to        2230 d     2041794 rigid bodies for disp. termination
+ expanding   memory to        2353 d     1607189 save d3plot control data
+ 
+ *** Error 20018 (STR+18)
+     structured input phase failed with 1 fatal errors
+     please check messag file
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 08:04:42
+
+ S t o r a g e   a l l o c a t i o n   
+
+ Memory required to complete solution   :     208K
+ Additional dynamically allocated memory:    2174K
+                                   Total:    2382K
+
+ T i m i n g   i n f o r m a t i o n
+                        CPU(seconds)   %CPU  Clock(seconds) %Clock
+  ----------------------------------------------------------------
+  Keyword Processing ... 0.0000E+00    0.00     1.6000E-02    0.64
+    KW Reading ......... 0.0000E+00    0.00     1.0000E-03    0.04
+    KW Writing ......... 0.0000E+00    0.00     4.0000E-03    0.16
+  Initialization ....... 2.0000E+00  100.00     2.4820E+00   99.36
+    Init Proc Phase 1 .. 0.0000E+00    0.00     1.0000E-02    0.40
+  ----------------------------------------------------------------
+  T o t a l s            2.0000E+00  100.00     2.4980E+00  100.00
+
+ Problem time       =    0.0000E+00
+ Problem cycle      =         0
+ Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
+ CPU time per zone cycle  =          0.000 picoseconds
+ Clock time per zone cycle=          0.000 picoseconds
+
+ Number of CPU's    1
+ NLQ used/max     192/  192
+ Start time   10/29/2026 08:04:41  
+ End time     10/29/2026 08:04:42  
+ Elapsed time       1 second  for       0 cycles using  1 SMP thread 
+             (      0 hour   0 minute   1 second )
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 08:04:42
+== contact_type4_bad: rejected
+ *** Error 10144 (KEY+144)
+     node set for contact interface # 1 is not found.
+ *** Error 10144 (KEY+144)
+     slave node set for contact interface # 1 is not found.
+ *** Error 10133 (KEY+133)
+     (This is #1 in the input order)
+ 
+ *** Error 10144 (KEY+144)
+     CHECKING CONTACT INPUT DATA [*CONTACT]Surface-intf. # 1
+     slave node set for contact interface # 1 is not found.
+     (This is #1 in the input order)
+ 
+ *** Error 10133 (KEY+133)
+     keyword input phase failed with: 4 errors
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 08:04:44
+
+ S t o r a g e   a l l o c a t i o n   
+
+ Memory required to complete solution   :     208K
+ Additional dynamically allocated memory:    2123K
+                                   Total:    2330K
+
+ T i m i n g   i n f o r m a t i o n
+                        CPU(seconds)   %CPU  Clock(seconds) %Clock
+  ----------------------------------------------------------------
+  Keyword Processing ... 0.0000E+00    0.00     1.6000E-02    0.64
+  Initialization ....... 2.0000E+00  100.00     2.4820E+00   99.36
+  ----------------------------------------------------------------
+  T o t a l s            2.0000E+00  100.00     2.4980E+00  100.00
+
+ Problem time       =    0.0000E+00
+ Problem cycle      =         0
+ Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
+ CPU time per zone cycle  =          0.000 picoseconds
+ Clock time per zone cycle=          0.000 picoseconds
+
+ Number of CPU's    1
+ NLQ used/max     192/  192
+ Start time   10/29/2026 08:04:44  
+ End time     10/29/2026 08:04:44  
+ Elapsed time       0 second  for       0 cycles using  1 SMP thread 
+             (      0 hour   0 minute   0 second )
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 08:04:44
+== velocity_styp1_bad: accepted
+== velocity_styp1_none: rejected
+ *** Error 10144 (KEY+144)
+     part set for initial velocity # 99 is not found.
+ *** Error 10133 (KEY+133)
+ 
+ *** Error 10144 (KEY+144)
+     CHECKING GENERATED VELOCITY DATA GENERATION set 1
+     part set for initial velocity # 99 is not found.
+     (This is #1 in the input order)
+ 
+ *** Error 10133 (KEY+133)
+     keyword input phase failed with: 2 errors
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 08:04:50
+
+ S t o r a g e   a l l o c a t i o n   
+
+ Memory required to complete solution   :     165K
+ Additional dynamically allocated memory:    2123K
+                                   Total:    2287K
+
+ T i m i n g   i n f o r m a t i o n
+                        CPU(seconds)   %CPU  Clock(seconds) %Clock
+  ----------------------------------------------------------------
+  Keyword Processing ... 0.0000E+00    0.00     8.0000E-03    0.32
+    KW Writing ......... 0.0000E+00    0.00     8.0000E-03    0.32
+  Initialization ....... 2.0000E+00  100.00     2.5020E+00   99.68
+  ----------------------------------------------------------------
+  T o t a l s            2.0000E+00  100.00     2.5100E+00  100.00
+
+ Problem time       =    0.0000E+00
+ Problem cycle      =         0
+ Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
+ CPU time per zone cycle  =          0.000 picoseconds
+ Clock time per zone cycle=          0.000 picoseconds
+
+ Number of CPU's    1
+ NLQ used/max     192/  192
+ Start time   10/29/2026 08:04:50  
+ End time     10/29/2026 08:04:50  
+ Elapsed time       0 second  for       0 cycles using  1 SMP thread 
+             (      0 hour   0 minute   0 second )
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 08:04:50
+== velocity_styp3_bad: rejected
+ *** Error 10144 (KEY+144)
+     node set for initial velocity generation # 1 is not found.
+ *** Error 10133 (KEY+133)
+ expanding   memory to      102273 d     2104344  
+ expanding   memory to      164273 d     2119344  
+ 
+ *** Error 10144 (KEY+144)
+     CHECKING GENERATED VELOCITY DATA GENERATION set 1
+     node set for initial velocity generation # 1 is not found.
+     (This is #1 in the input order)
+ 
+ *** Error 10133 (KEY+133)
+     keyword input phase failed with: 2 errors
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 08:04:52
+
+ S t o r a g e   a l l o c a t i o n   
+
+ Memory required to complete solution   :     165K
+ Additional dynamically allocated memory:    2123K
+                                   Total:    2287K
+
+ T i m i n g   i n f o r m a t i o n
+                        CPU(seconds)   %CPU  Clock(seconds) %Clock
+  ----------------------------------------------------------------
+  Initialization ....... 2.0000E+00  100.00     2.4810E+00  100.00
+  ----------------------------------------------------------------
+  T o t a l s            2.0000E+00  100.00     2.4810E+00  100.00
+
+ Problem time       =    0.0000E+00
+ Problem cycle      =         0
+ Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
+ CPU time per zone cycle  =          0.000 picoseconds
+ Clock time per zone cycle=          0.000 picoseconds
+
+ Number of CPU's    1
+ NLQ used/max     192/  192
+ Start time   10/29/2026 08:04:52  
+ End time     10/29/2026 08:04:52  
+ Elapsed time       0 second  for       0 cycles using  1 SMP thread 
+             (      0 hour   0 minute   0 second )
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 08:04:52
+== inc_path_in_include: accepted
+== inc_blank_in_continuation: rejected
+ *** Error 10087 (KEY+87)
+     File sub\ does not exist
+ *** Error 10087 (KEY+87)
+     File sub\ does not exist
+ *** Error 10450 (KEY+450)
+ *** Error 10157 (KEY+157)
+     MAT 1 is not found
+ *** Error 10304 (KEY+304)
+     MATERIAL ID 1 does not exist.
+ *** Error 10133 (KEY+133)
+     PART ID 1 with
+     SECTION ID 1 and
+     MATERIAL ID 1 does not exist.
+     This is PART 1 in the order of input.
+ 
+ *** Error 10133 (KEY+133)
+     keyword input phase failed with: 7 errors
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 08:04:58
+
+ S t o r a g e   a l l o c a t i o n   
+
+ Memory required to complete solution   :     165K
+ Additional dynamically allocated memory:    2123K
+                                   Total:    2287K
+
+ T i m i n g   i n f o r m a t i o n
+                        CPU(seconds)   %CPU  Clock(seconds) %Clock
+  ----------------------------------------------------------------
+  Keyword Processing ... 0.0000E+00    0.00     1.1000E-02    0.44
+    KW Reading ......... 0.0000E+00    0.00     1.0000E-03    0.04
+    KW Writing ......... 0.0000E+00    0.00     3.0000E-03    0.12
+  Initialization ....... 2.0000E+00  100.00     2.4760E+00   99.56
+  ----------------------------------------------------------------
+  T o t a l s            2.0000E+00  100.00     2.4870E+00  100.00
+
+ Problem time       =    0.0000E+00
+ Problem cycle      =         0
+ Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
+ CPU time per zone cycle  =          0.000 picoseconds
+ Clock time per zone cycle=          0.000 picoseconds
+
+ Number of CPU's    1
+ NLQ used/max     192/  192
+ Start time   10/29/2026 08:04:58  
+ End time     10/29/2026 08:04:58  
+ Elapsed time       0 second  for       0 cycles using  1 SMP thread 
+             (      0 hour   0 minute   0 second )
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 08:04:58
+== inc_empty: accepted
+== long_keyword: accepted
+== long_section: accepted
+== parameter_ref: accepted
+== spc_set_id: accepted
+== spc_set_none: accepted
+== zero_ref: accepted

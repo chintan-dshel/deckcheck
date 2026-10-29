@@ -1,0 +1,6 @@
+lsdyna_valid = false
+findings = []
+note = "Q: with sstyp 4, is ssid a node set? Part set 1 exists, node set 1 does not (nodes-to-surface contact: a single-surface contact can't take a node set, Error 11089). LS-DYNA R16.1 Student 2026-10-29: rejected, 'Error 10144 node set for contact interface # 1 is not found.'"
+
+[index]
+dangling = [{kind = "SET_NODE", id = 1, file = "main.k", line = 25, columns = [9, 10]}]

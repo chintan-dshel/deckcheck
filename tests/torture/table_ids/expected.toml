@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "Q: control for table_dangling, rows name curves 5 and 6, which follow the table. LS-DYNA R16.1 Student 2026-10-29: accepted."

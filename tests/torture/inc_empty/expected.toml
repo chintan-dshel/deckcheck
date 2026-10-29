@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "Q: is an *INCLUDE with no filename card accepted? LS-DYNA R16.1 Student 2026-10-29: accepted."

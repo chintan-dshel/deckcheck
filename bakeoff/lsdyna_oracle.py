@@ -8,7 +8,7 @@ from pathlib import Path
 
 LSDYNA_EXE = Path(r"C:\Program Files\LS-DYNA Suite R16.1 Student\lsdyna"
                   r"\ls-dyna_smp_d_R16.1_180-gd50332dbe5_winx64_ifort190_sse2_studentversion.exe")
-DECIDING = re.compile(r"Error 1\d{4}|Open include file|does not exist|not found")
+DECIDING = re.compile(r"Error [12]\d{4}|Open include file|does not exist|not found")
 NORMAL = re.compile(r"N\s*o\s*r\s*m\s*a\s*l\s+t\s*e\s*r\s*m\s*i\s*n\s*a\s*t\s*i\s*o\s*n")
 
 
