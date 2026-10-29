@@ -169,7 +169,7 @@ One reviewer question went to LS-DYNA: is a `*DEFINE_FUNCTION` id accepted where
     uncertain;
   - long-format series stop;
   - kinds not probed for offsets are uncertain under a transform.
-- **A question for Chintan.** LS-DYNA leaves some references unchecked (`*BOUNDARY_SPC_SET` node set). deckcheck
-  treats them as uses, so it never reports them. Should M1d add a separate warning for them: "LS-DYNA accepts this,
-  but the boundary condition does nothing"? It would be a real value-add, but a different promise than "zero false
-  alarms".
+- **Decided (Chintan, 2026-10-29): M1d warns on references LS-DYNA accepts but ignores.** LS-DYNA leaves some
+  references unchecked (`*BOUNDARY_SPC_SET` node set). The index keeps treating them as uses, so they never appear as
+  dangling. M1d adds a separate warning for them: "LS-DYNA accepts this, but the boundary condition does nothing".
+  The principle is to give the engineer every fact and let them decide what to do with it.
