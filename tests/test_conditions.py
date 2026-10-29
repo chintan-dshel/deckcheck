@@ -62,3 +62,7 @@ def test_column_any_reads_the_current_row():
     assert run("self.elements['n5'].any()", n5=None) is False
     assert run("self.elements['n5'].any()", n5=0) is False
     assert names_in("self.elements['n5'].any()") == {"n5"}
+
+
+def test_arithmetic_is_numbers_only():
+    assert run("self.nr * self.ns", nr="a", ns=10**9) is UNKNOWN

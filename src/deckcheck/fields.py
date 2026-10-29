@@ -3,6 +3,7 @@ placement, tables, series and card sets, conditional cards (deckcheck.conditions
 *PARAMETER substitution (spec §4, field reader row). Where it can't decide, it stops and says so (`unread`)."""
 import functools
 import itertools
+import math
 import re
 from typing import Iterator, NamedTuple
 
@@ -73,20 +74,42 @@ def _parse(text: str, ftype: str, params: dict) -> object:
         value = params.get(text.lstrip("-&").strip().upper(), UNKNOWN)
         if text.startswith("-"):
             value = -value if isinstance(value, (int, float)) else UNKNOWN
-        if ftype == "int" and isinstance(value, float) and value.is_integer():
-            value = int(value)
-        return value
+        return _typed(value, ftype)
+    if "_" in text:
+        raise ValueError(text)  # Python reads 1_0 as 10; LS-DYNA does not
     if ftype == "int":
         try:
             return int(text)
         except ValueError:
-            number = float(text)
+            number = _finite(text)
             if number.is_integer():
                 return int(number)
             raise
     if ftype == "float":
-        return float(text)
+        return _finite(text)
     return text
+
+
+def _finite(text: str) -> float:
+    number = float(text)
+    if not math.isfinite(number):
+        raise ValueError(text)  # nan, inf, 1e400
+    return number
+
+
+def _typed(value: object, ftype: str) -> object:
+    """A *PARAMETER value in a field of type `ftype`; UNKNOWN when it is not of that type."""
+    if value is UNKNOWN or ftype == "str":
+        return value
+    if isinstance(value, float) and not math.isfinite(value):
+        return UNKNOWN
+    if ftype == "int":
+        if isinstance(value, float) and value.is_integer():
+            return int(value)
+        return value if isinstance(value, int) else UNKNOWN
+    if ftype == "float":
+        return float(value) if isinstance(value, (int, float)) else UNKNOWN
+    return value
 
 
 def _free_parts(text: str) -> list[tuple[str, int]]:
@@ -137,6 +160,7 @@ class _Reader:
         self.params, self.long, self.wanted, self.problems = params, long, wanted, problems
         self.needed = _needed(self.key)
         self.stopped = False
+        self.partial = False  # this instance ran out of cards before an unconditional card
 
     def left(self) -> bool:
         return not self.stopped and self.i < len(self.cards)
@@ -165,7 +189,11 @@ class _Reader:
         if v is UNKNOWN or not isinstance(v, (int, float)):
             self.stop(f"length {spec['length']!r} undecided")
             return 0
-        return max(int(v), 0)
+        try:
+            return max(int(v), 0)
+        except (OverflowError, ValueError):  # inf, nan
+            self.stop(f"length {spec['length']!r} not a count")
+            return 0
 
     def decided_after(self, spec: dict) -> bool:
         """A conditional card: pydyna reads it, then decides with its own and earlier fields (lib/cards.py
@@ -201,6 +229,8 @@ class _Reader:
                 if self.stopped:
                     return
                 continue
+            if not self.left() and not self.stopped and top and spec["kind"] == "card"                     and spec.get("when") is None and spec["option"] not in OPTIONAL_TRAILING:
+                self.partial = True
             if not self.left() or not self.active(spec, scope):
                 if self.stopped:
                     return
@@ -311,12 +341,19 @@ def read_fields(block: Block, params: dict | None = None, long_deck: bool = Fals
     entry = layout(block.resolved.name)
     cards, legacy = entry["cards"], entry.get("legacy")
     first = next((c for c in block.cards if c.text.strip()), None)
-    if legacy and first is not None and len(first.text.strip()) > legacy["first_card_longer_than"]:
-        cards = legacy["cards"]  # pydyna before_read: the one-line legacy format
+    if legacy and first is not None:
+        if first.free or reader.long:  # pydyna's test counts characters of 8-wide fixed fields only
+            reader.stop("legacy or two-card element format undecided in free or long format")
+        elif len(first.text.strip()) > legacy["first_card_longer_than"]:
+            cards = legacy["cards"]  # pydyna before_read: the one-line legacy format
     yield from reader.container(cards, Scope(), True)
     while REPEAT_INSTANCES and not reader.stopped and any(c.text.strip() for c in block.cards[reader.i:]):
-        before = reader.i
+        before, reader.partial = reader.i, False
         yield from reader.container(cards, Scope(), True)
+        if reader.partial and not reader.stopped:  # a too-short pydyna layout looks like this: say so
+            problems.append(FieldProblem("unread", block.cards[before].line, 0, 0,
+                                         "a repeated instance ends early: the layout may not match the deck"))
+            reader.stopped = True
         if reader.i == before:
             break
     if not reader.stopped:

@@ -16,7 +16,7 @@ Date: 2026-10-29 · referee LS-DYNA R16.1 Student · evidence in `bakeoff/result
   - 632 dangling `PART 1` references in `tutorial/2.Tensile_test/tensile_test.k`. That file is a mesh with no
     `*PART`, and LS-DYNA rejects it for that reason, so the findings are real.
   - One `unread` stop on a keyword whose pydyna layout is from another version. The stop is deliberate.
-- **Memory.** Yaris peak 1,155 MB under the 2,048 MB cap, in 55 s. M1b's reader alone took 683 MB.
+- **Memory.** Yaris peak about 1,150 MB under the 2,048 MB cap, in about 60 s. M1b's reader alone took 683 MB.
 - **LS-DYNA settled 27 new torture cases and 10 offset probes.** Taking the M1b cases with them, every rule the reader applies
   traces to an LS-DYNA verdict or to pydyna's own reader code.
 
@@ -85,9 +85,9 @@ The negative control now catches the first kind of break.
 
 | Deck set | Files | Definitions | References | Dangling (real) | Duplicates | Problems | Uncertain kinds | Peak MB | Slowest |
 |---|---|---|---|---|---|---|---|---|---|
-| Tier 1 (35 decks) | 1–4 each | 2,245,114 | 3,559,910 | 632, one deck (tensile_test) | 0 | 1 `unread` (PSD fatigue) | 2 uses, PSD deck | 194 | 8.7 s (EX04) |
-| VIVA+ | 18 | 1,350,217 | 1,271,764 | 0 | 0 | 0 | `SET_SOLID` uses (`&Solid_e_o` is a `*PARAMETER_EXPRESSION`) | 548 | 17 s |
-| Yaris | 4 | 3,012,957 | 6,314,548 | 0 | 0 | 0 | none | 1,155 | 55 s |
+| Tier 1 (35 decks) | 1–4 each | 2,245,114 | 3,559,910 | 632, one deck (tensile_test) | 0 | 1 `unread` (PSD fatigue) | uses only, on 4 decks (unmapped contact types, unread PSD card); no definitions | 194 | 8.7 s (EX04) |
+| VIVA+ | 18 | 1,350,217 | 1,271,764 | 0 | 0 | 0 | uses only: `SET_SOLID` (`&Solid_e_o` is a `*PARAMETER_EXPRESSION`), `DEFINE_CURVE` (a table), `PART`, `SET_PART`, `SET_NODE` (unmapped contact types) | 548 | 20 s |
+| Yaris | 4 | 3,012,957 | 6,314,548 | 0 | 0 | 0 | uses only: `DEFINE_TRANSFORMATION` (`tranid` not read), `PART` (unmapped contact types); no definitions | 1,150 | 58–64 s |
 
 Judged-real findings are pinned in `tests/corpus/expected_index.toml` and tested by `tests/test_index_corpus.py`
 (tier 1).
@@ -124,16 +124,46 @@ cites its evidence:
 Exact line and span: every rejected torture case carries an `[index]` table written by hand from LS-DYNA's words,
 and `test_torture_index` compares the index against it on all 55 cases.
 
-## 5. What this means for M1d
+## 5. Final review fixes
+
+A fresh reviewer found false alarms and crashes that the corpus didn't trigger. Each is fixed, with a test that failed first:
+- **Legacy solids in long and free format** (false duplicates). pydyna's 16-character test only holds for fixed 8-wide
+  cards, so the block now stops as `unread`.
+- **`LONG=Y` with `*INCLUDE_TRANSFORM`** (offsets read 10 wide). The index is blind there.
+- **A `*PARAMETER` of the wrong type in an id field**, or a non-integer id. These are now `UNKNOWN` and uncertain,
+  where before the definition was dropped.
+- **Crashes on huge or non-finite values** (`1e400`, `nan`, a 20-digit id):
+  - such values are `bad`, or uncertain when out of range;
+  - lengths that aren't counts stop the block;
+  - arithmetic in conditions is numbers only.
+- **Python-lenient numbers** (`1_0`) are now `bad`.
+- **A repeated instance that runs out of cards early** is reported (`unread`), the signal of a too-short layout. It
+  never fires on the corpus.
+- **The part-set fallback when part and set offsets differ** is a use, never checked, because it isn't refereed.
+- **Columns past 65535** are reported at 65535.
+
+One reviewer question went to LS-DYNA: is a `*DEFINE_FUNCTION` id accepted where a curve is linked
+(`*LOAD_BODY_Z`)? No: Error 10141 `Load curve id 5 is undefined`. So deckcheck's dangling finding there is right.
+
+## 6. What this means for M1d
 
 - **DC001** reports `Index.dangling()`. It is already silent on uncertain kinds and blind trees. When the tree has
   missing includes (`Tree.problems`), it should say the target may live in the missing file.
 - **DC002** reports `Index.duplicates()`.
 - **DC003's inputs** are `bad` problems (a value not of its field's type, tabs), `extra` (now rare: only when an
   instance reads no cards) and `unread` (an info line, not a warning).
-- **DC005** can report kinds whose uses are certain on a deck. On the corpus that is every kind on the Yaris and
-  every kind except `SET_SOLID` on VIVA+. `Index.used(kind)` includes possible uses (negative ids, unchecked
-  references).
+- **DC005 can't take `uncertain_uses` as the whole story** (final review, I1). `uncertain_uses` marks the uses
+  deckcheck knows it can't place:
+  - unread blocks and unknown values;
+  - type values the data doesn't map;
+  - curves taken by a `*DEFINE_TABLE`;
+  - `*INCLUDE_TRANSFORM` `tranid`.
+
+  A field pydyna's data doesn't mark as a reference at all (for example `*BOUNDARY_PRESCRIBED_MOTION_NODE` `lcid`)
+  is invisible, so `Index.used(kind)` is a lower bound. M1d needs a per-kind basis before DC005 reports a kind, such
+  as an audit that every field referring to it is linked. MAT, SECTION and HOURGLASS, referred to almost only from
+  `*PART`, are the likely first candidates. `used()` includes possible uses (negative ids, unchecked references,
+  fallbacks under differing offsets).
 - **Open reading rules:**
   - nested transforms (an ancestor's offsets as well as the file's own) are not refereed, so they make kinds
     uncertain;

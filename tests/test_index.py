@@ -153,3 +153,88 @@ def test_missing_include_does_not_blind(tmp_path):
 def test_pack_roundtrip():
     for loc in [(0, 1, 0, 0), (3, 2**20 + 5, 1500, 1600), (65535, 2**31 - 1, 65535, 65535)]:
         assert unpack(pack(*loc)) == loc
+
+
+# --- Final review findings (M1c): each reproduces the reviewer's deck
+
+
+def i20(*vals):
+    return "".join(f"{v:>20}" for v in vals)
+
+
+def raw(tmp_path, text, files=None):
+    (tmp_path / "main.k").write_bytes(text.encode("latin-1"))
+    for rel, body in (files or {}).items():
+        (tmp_path / rel).write_bytes(body.encode("latin-1"))
+    return build(resolve_tree(tmp_path / "main.k"))
+
+
+def test_long_deck_two_card_solid_is_not_read_as_legacy(tmp_path):
+    rows = "".join(i20(e, 1) + "\n" + i20(*range(1, 9)) + "\n" for e in (1, 2))
+    ix = raw(tmp_path, "*KEYWORD LONG=Y\n*ELEMENT_SOLID\n" + rows + "*END\n")
+    assert ix.duplicates() == []
+
+
+def test_free_two_card_solid_is_not_read_as_legacy(tmp_path):
+    rows = "10000001,12345678\n1,2,3,4,5,6,7,8\n10000002,12345678\n1,2,3,4,5,6,7,8\n"
+    ix = raw(tmp_path, "*KEYWORD\n*ELEMENT_SOLID\n" + rows + "*END\n")
+    assert ix.duplicates() == []
+
+
+def test_long_deck_transform_offsets_are_not_read_10_wide(tmp_path):
+    sub = "*KEYWORD\n*MAT_ELASTIC\n" + i20(1, "7.85E-9", "210000.0", 0.3) + "\n*END\n"
+    main = ("*KEYWORD LONG=Y\n*INCLUDE_TRANSFORM\nsub.k\n" + i20(0, 0, 0, 100, 0, 0, 0) + "\n" + i20(0) + "\n\n\n"
+            + "*PART\nplate\n" + i20(1, 1, 101) + "\n*SECTION_SHELL\n" + i20(1, 2) + "\n" + i20(1.0, 1.0, 1.0, 1.0)
+            + "\n*END\n")
+    ix = raw(tmp_path, main, {"sub.k": sub})
+    assert ix.dangling() == []
+
+
+def test_parameter_of_another_type_is_unknown_not_dropped(tmp_path):
+    mat = i10(1, "7.85E-9", "210000.0", 0.3)
+    for param in (f"{'C mid':<10}{'1':>10}", f"{'R mid':<10}{'1.5':>10}"):
+        ix = index(tmp_path, "*PARAMETER\n" + param + "\n" + BASE.replace(mat, i10("&mid", "7.85E-9", "210000.0", 0.3)))
+        assert ix.dangling() == [] and "MAT" in ix.uncertain_defs, param
+
+
+def test_huge_values_do_not_crash(tmp_path):
+    index(tmp_path, BASE + "*LOAD_NODE_POINT\n99999999999999999999,1,0,1.0\n")
+    index(tmp_path, "*AIRBAG_SIMPLE_PRESSURE_VOLUME\n" + card_text("AIRBAG_SIMPLE_PRESSURE_VOLUME", sid=1) + "\n"
+          + card_text("AIRBAG_SIMPLE_PRESSURE_VOLUME", cn="-1.0e30") + "\n")
+    shell = "*SECTION_SHELL\n" + i10(1, 2, 1.0, "&nip", 0.0, 0, 1) + "\n" + i10(1.0, 1.0, 1.0, 1.0) + "\n" + i10(0.0) + "\n"
+    for value in ("1e400", "nan"):
+        index(tmp_path, f"*PARAMETER\n{'R nip':<10}{value:>10}\n" + shell)
+
+
+def test_lenient_python_numbers_are_bad_values(tmp_path):
+    ix = index(tmp_path, BASE.replace(i10(1, 1, 1), i10(1, 1, "1_0")))
+    assert ix.dangling() == [] and any(p.kind == "bad" for _, p in ix.problems)
+
+
+def test_unmapped_type_value_makes_its_kinds_uses_uncertain(tmp_path):
+    contact = "*CONTACT_AUTOMATIC_SINGLE_SURFACE\n" + i10(5, 0, 0, 0) + "\n" + i10(0.0) + "\n" + i10(1.0) + "\n"
+    ix = index(tmp_path, BASE + contact)
+    assert "SET_PART" in ix.uncertain_uses and "PART" in ix.uncertain_uses
+
+
+def test_curves_after_a_table_make_curve_uses_uncertain(tmp_path):
+    table = "*DEFINE_TABLE\n" + i10(10) + "\n" + f"{0.0:>20}{5:>10}\n"
+    curve = "*DEFINE_CURVE\n" + i10(5) + "\n" + f"{0.0:>20}{1.0:>20}\n"
+    ix = index(tmp_path, BASE + table + curve)
+    assert "DEFINE_CURVE" in ix.uncertain_uses
+
+
+def test_include_transform_makes_transformation_uses_uncertain(tmp_path):
+    ix = index(tmp_path, transform({}) + BASE, {"sub.k": "*KEYWORD\n*END\n"})
+    assert "DEFINE_TRANSFORMATION" in ix.uncertain_uses
+
+
+def test_part_set_fallback_under_different_offsets_is_not_checked(tmp_path):
+    sub = ("*KEYWORD\n*PART\nplate\n" + i10(1, 1, 1) + "\n*CONTACT_AUTOMATIC_SINGLE_SURFACE\n" + i10(1, 0, 2, 0) + "\n"
+           + i10(0.0) + "\n" + i10(1.0) + "\n*END\n")
+    ix = index(tmp_path, transform({"idpoff": 100, "idsoff": 200}) + BASE, {"sub.k": sub})
+    assert ix.dangling() == []
+
+
+def test_pack_clamps_columns_past_16_bits():
+    assert unpack(pack(0, 1, 70004, 70010)) == (0, 1, 65535, 65535)

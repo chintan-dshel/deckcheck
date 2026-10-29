@@ -33,10 +33,12 @@ OFFSET_FIELD: dict[str, str] = {
 # missing part set id falls back to the part with that id (torture contact_type2_bad/_none, velocity_styp1_bad/_none)
 LOOKUP = {"DEFINE_CURVE": ("DEFINE_CURVE", "DEFINE_TABLE"), "DEFINE_CURVE_OR_TABLE": ("DEFINE_CURVE", "DEFINE_TABLE"),
           "SET_PART": ("SET_PART", "PART"), "ICFD_PART": ("ICFD_PART", "ICFD_PART_VOL")}
+ID_MAX = 2**63 - 1  # array('q')
 STRUCTURAL = frozenset({"KEYWORD", "TITLE", "END"})
 
 
 def pack(file: int, line: int, start: int, end: int) -> int:
+    start, end = min(start, 0xFFFF), min(end, 0xFFFF)  # a column past 65535 is reported at 65535
     return (((file << 32 | line) << 16 | start) << 16) | end
 
 
@@ -171,13 +173,21 @@ class Index:
         if f.value is UNKNOWN:
             self._uncertain(self.uncertain_defs, kind, f"{f.line}: id not known")
             return
-        if not isinstance(f.value, int) or f.value <= 0:
+        if f.value is None or f.value == 0:
+            return
+        if not isinstance(f.value, int):  # a str or non-integral float: not an id deckcheck can match
+            self._uncertain(self.uncertain_defs, kind, f"{f.line}: id not an integer")
+            return
+        if f.value < 0:
             return
         shift = _shift(kind, offs)
         if shift is None:
             self._uncertain(self.uncertain_defs, kind, "transform offset not refereed")
             return
         id_, loc = f.value + shift, pack(fi, f.line, f.start, f.end)
+        if id_ > ID_MAX:
+            self._uncertain(self.uncertain_defs, kind, f"{f.line}: id out of range")
+            return
         seen = self.defs.setdefault(kind, {})
         if id_ in seen:
             self.dups.append((kind, id_, loc, seen[id_]))
@@ -190,6 +200,10 @@ class Index:
             t = row.get(spec["link_by"])
             ok = t is not None and isinstance(t.value, (int, str))  # a type number, or a row name (SET_*_GENERAL)
             kind = spec["link_map"].get(str(t.value).strip().upper()) if ok else None
+            if kind is None and v is not None and v != 0:  # a type deckcheck doesn't map: a use it can't place
+                for k in set(spec["link_map"].values()):
+                    self._uncertain(self.uncertain_uses, k, f"{f.line}: {spec['link_by']} not mapped")
+                return
         else:
             kind = spec.get("link")
         if kind is None or v is None or v == 0:
@@ -199,11 +213,16 @@ class Index:
             return
         if isinstance(v, float) and v.is_integer():  # an id in a float field (airbag cn)
             v = int(v)
-        if not isinstance(v, int):
+        if not isinstance(v, int) or abs(v) > ID_MAX:
+            self._uncertain(self.uncertain_uses, kind, f"{f.line}: reference not an id")
             return
         shift = _shift(kind, offs)
         if shift is None:
             self._uncertain(self.uncertain_uses, kind, "transform offset not refereed")
+            return
+        if any(_shift(k, offs) != shift for k in LOOKUP.get(kind, (kind,))):
+            # a fallback kind shifted by another offset (SET_PART -> PART): not refereed, so a use, never checked
+            self.possible.setdefault(kind, set()).add(abs(v) + shift)
             return
         if spec.get("link_when") == "unchecked":  # LS-DYNA accepts a missing target here: a use, never checked
             self.possible.setdefault(kind, set()).add(abs(v) + shift)
@@ -238,9 +257,15 @@ def build(tree: Tree) -> Index:
         offs = _file_offsets(tree, fi)
         for block in node.source.blocks:
             name = block.name
+            if name.startswith("INCLUDE_TRANSFORM"):  # its tranid is a use deckcheck doesn't record
+                ix._uncertain(ix.uncertain_uses, "DEFINE_TRANSFORMATION", f"*{name} tranid not read")
+                if long_deck:  # includes._offsets reads 10-wide fields
+                    ix.blind.add(f"{node.path.name}:{block.line} *{name} offsets in a LONG=Y deck not read")
             if name in STRUCTURAL or name.startswith(("INCLUDE", "PARAMETER")):
                 continue
             key = block.resolved.name if block.resolved else None
+            if key and key.startswith("DEFINE_TABLE"):  # its curves follow it by position (torture table_before)
+                ix._uncertain(ix.uncertain_uses, "DEFINE_CURVE", f"*{name}: curves taken by position")
             kinds = definers().get(key, ()) if key else ()
             fam = family_kind(key or name)
             if fam and not any(k == fam for k, _ in kinds) and not not_definer(key or name):

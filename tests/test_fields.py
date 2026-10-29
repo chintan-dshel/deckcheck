@@ -206,3 +206,9 @@ def test_blank_field_span_is_empty_at_its_column(tmp_path):
     out, _ = fields(tmp_path, "*MAT_ELASTIC\n         1   7.85E-9    \n")
     e = [f for f in out if f.name == "e"][0]
     assert (e.value, e.start, e.end) == (None, 20, 20)
+
+
+def test_partial_repeated_instance_is_reported(tmp_path):
+    # final review I4: a repeated instance that runs out of cards may mean a layout that is too short
+    _, problems = fields(tmp_path, "*BOUNDARY_SPC_SET_ID\n         1first\n         3\n         2second\n")
+    assert [(p.kind, p.line) for p in problems] == [("unread", 4)]

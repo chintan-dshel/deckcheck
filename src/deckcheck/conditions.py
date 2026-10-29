@@ -134,7 +134,9 @@ def _eval(n, s: Scope) -> object:
         return not v if isinstance(n.op, ast.Not) else -v if isinstance(n.op, ast.USub) else +v
     if isinstance(n, ast.BinOp):
         a, b = _eval(n.left, s), _eval(n.right, s)
-        return UNKNOWN if a is UNKNOWN or b is UNKNOWN else _BIN[type(n.op)](a, b)
+        if not (isinstance(a, (int, float)) and isinstance(b, (int, float))):
+            return UNKNOWN  # numbers only: a str field times a count would build a huge string
+        return _BIN[type(n.op)](a, b)
     if isinstance(n, ast.Compare):
         left = _eval(n.left, s)
         for op, comp in zip(n.ops, n.comparators):
