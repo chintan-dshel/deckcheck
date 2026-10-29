@@ -1,3 +1,6 @@
 lsdyna_valid = true
 findings = []
 note = "Include resolved through *INCLUDE_PATH, not relative to main.k."
+
+[resolver]
+files = ["main.k", "sub/mat.k"]

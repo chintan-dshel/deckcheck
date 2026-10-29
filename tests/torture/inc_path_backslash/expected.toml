@@ -1,0 +1,6 @@
+lsdyna_valid = true
+findings = []
+note = "Q: is VIVA+'s form, a Windows path with a trailing backslash, accepted? LS-DYNA R16.1 Student 2026-10-28: accepted."
+
+[resolver]
+files = ["main.k", "lib/mat.k"]

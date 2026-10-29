@@ -35,10 +35,10 @@ def _kill_tree(proc: psutil.Process) -> None:
     proc.kill()
 
 
-def run_one(deck: Path, cap_mb: int = 4096, timeout_s: float = 1800) -> dict:
+def run_one(deck: Path, cap_mb: int = 4096, timeout_s: float = 1800, module: str = "bakeoff.probe") -> dict:
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp) / "result.json"
-        proc = subprocess.Popen([sys.executable, "-m", "bakeoff.probe", str(deck), str(out)],
+        proc = subprocess.Popen([sys.executable, "-m", module, str(deck), str(out)],
                                 stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
         watched, peak, start = psutil.Process(proc.pid), 0, time.monotonic()
         while proc.poll() is None:

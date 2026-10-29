@@ -1,0 +1,6 @@
+lsdyna_valid = false
+findings = []
+note = "Q: is *INCLUDE_PATH_RELATIVE relative to the file holding it, or to the main deck? LS-DYNA R16.1 Student 2026-10-28: rejected; 'Open include file: .\\lib\\mat.k' then 'MAT 1 is not found': relative to the main deck."
+
+[resolver]
+files = ["main.k", "sub/a.k", "lib/mat.k"]

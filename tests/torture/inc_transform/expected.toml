@@ -1,0 +1,6 @@
+lsdyna_valid = true
+findings = []
+note = "Q: is *INCLUDE_TRANSFORM with node and element offsets, laid out like the Yaris (blank cards kept), accepted? LS-DYNA R16.1 Student 2026-10-28: accepted."
+
+[resolver]
+files = ["main.k", "mesh.k"]

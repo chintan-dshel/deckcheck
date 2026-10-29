@@ -1,0 +1,4 @@
+*KEYWORD
+*INCLUDE
+a.k
+*END

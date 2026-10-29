@@ -1,0 +1,7 @@
+lsdyna_valid = false
+findings = []
+note = "Q: does an *INCLUDE_PATH apply to an *INCLUDE before it? LS-DYNA R16.1 Student 2026-10-28: rejected; Error 10087 'File mat.k does not exist' (LS-DYNA later opens lib\\mat.k in a second pass, but the error stands)."
+
+[resolver]
+files = ["main.k"]
+problems = [{kind = "missing", file = "main.k", line = 7, name = "mat.k"}]

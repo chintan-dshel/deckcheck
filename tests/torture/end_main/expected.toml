@@ -1,0 +1,6 @@
+lsdyna_valid = true
+findings = []
+note = "Q: is text after *END in the main deck ignored? LS-DYNA R16.1 Student 2026-10-28: accepted (*NOT_A_KEYWORD after *END not read)."
+
+[resolver]
+files = ["main.k"]
