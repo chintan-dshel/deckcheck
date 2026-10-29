@@ -1,0 +1,8 @@
+# Index findings on corpus decks judged real (M1c Task 7). Each cites its evidence. A deck not listed has none.
+# `dangling` lists findings one by one; `dangling_counts` counts many identical ones: {kind, id, file, count}.
+
+[[deck]]
+name = "lsdyna-doc-tutorial-2.tensile_test-tensile_test"
+dangling_counts = [{kind = "PART", id = 1, file = "tensile_test.k", count = 632}]
+duplicates = []
+evidence = "tensile_test.k is the tutorial's mesh: *ELEMENT_SHELL and *NODE only, every shell names part 1, no *PART. LS-DYNA R16.1 Student 2026-10-29 on the file alone: rejected, 'Error 20388 thin shell element 1 has an invalid material 1 that exceeds the number of materials defined, 0'."

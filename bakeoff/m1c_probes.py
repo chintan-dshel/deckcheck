@@ -6,6 +6,7 @@ references the entity as 1 + one candidate field's offset. A control run (all of
 first, and a negative control (reference 1 + NO_FIELD) must fail. Kinds whose probe needs another kind's offset run
 after it."""
 import json
+import sys
 import tempfile
 from pathlib import Path
 
@@ -71,6 +72,11 @@ def probe(kind: str, ref: int, known: dict[str, int]) -> tuple[str, str]:
         n0 = known["NODE"]  # contact checks its node set (contact_type4_bad); *BOUNDARY_SPC_SET does not (spc_set_none)
         return (model(n0=n0) + "*CONTACT_NODES_TO_SURFACE\n" + i10(ref, 1, 4, 3) + "\n"
                 + i10(0.0, 0.0) + "\n" + i10(1.0, 1.0) + "\n", "*SET_NODE_LIST\n" + i10(1) + "\n" + i10(1, 2) + "\n")
+    if kind == "ELEMENT_SHELL":  # the whole model sits in sub.k, so its ids shift together (M1c Task 7, Yaris wall)
+        return "*DATABASE_HISTORY_SHELL\n" + i10(ref) + "\n", model()
+    if kind == "SET_SEGMENT":  # a segment set over the model's shell, all in sub.k; a contact in main.k names it
+        return ("*CONTACT_AUTOMATIC_SINGLE_SURFACE\n" + i10(ref, 0, 0, 0) + "\n" + i10(0.0, 0.0) + "\n"
+                + i10(1.0, 1.0) + "\n", model() + "*SET_SEGMENT\n" + i10(1) + "\n" + i10(1, 2, 3, 4) + "\n")
     raise ValueError(kind)
 
 
@@ -87,9 +93,9 @@ def run(main_body: str, sub: str, off: dict[str, int]) -> bool:
         return lsdyna_reads(case)[0]
 
 
-def offsets() -> dict:
+def offsets(kinds=ORDER) -> dict:
     out, known = {}, {}
-    for kind in ORDER:
+    for kind in kinds:
         if any(k not in known for k in NEEDS.get(kind, ())):
             out[kind] = {"control": None, "accepted": [], "decided": None, "skipped": "a needed kind is undecided"}
             continue
@@ -118,4 +124,9 @@ def absolute_include() -> bool:
 
 
 if __name__ == "__main__":
-    OUT.write_text(json.dumps({"offsets": offsets(), "inc_absolute": absolute_include()}, indent=1), encoding="utf-8")
+    if len(sys.argv) > 1:  # probe the named self-contained kinds only and add them to the results file
+        results = json.loads(OUT.read_text(encoding="utf-8"))
+        results["offsets"].update(offsets(sys.argv[1:]))
+    else:
+        results = {"offsets": offsets(), "inc_absolute": absolute_include()}
+    OUT.write_text(json.dumps(results, indent=1), encoding="utf-8")

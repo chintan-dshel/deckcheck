@@ -63,6 +63,22 @@
     "idsoff"
    ],
    "decided": "idsoff"
+  },
+  "ELEMENT_SHELL": {
+   "control": true,
+   "negative": false,
+   "accepted": [
+    "ideoff"
+   ],
+   "decided": "ideoff"
+  },
+  "SET_SEGMENT": {
+   "control": true,
+   "negative": false,
+   "accepted": [
+    "idsoff"
+   ],
+   "decided": "idsoff"
   }
  },
  "inc_absolute": true

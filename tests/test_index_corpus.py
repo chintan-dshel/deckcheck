@@ -1,4 +1,5 @@
 import tomllib
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -18,8 +19,12 @@ SMALL = [e for e in load_manifest(MANIFEST) if e.tier == 1]
 def test_tier1_index_matches_judged_findings(entry):
     ix = build(resolve_tree(fetch(entry)))
     want = EXPECTED.get(entry.name, {"dangling": [], "duplicates": []})
-    assert [(r.kind, r.id, r.path.name, r.line) for r in ix.dangling()] == [
-        (d["kind"], d["id"], d["file"], d["line"]) for d in want["dangling"]]
+    if "dangling_counts" in want:  # many identical findings: compare counts per (kind, id, file)
+        assert Counter((r.kind, r.id, r.path.name) for r in ix.dangling()) == {
+            (d["kind"], d["id"], d["file"]): d["count"] for d in want["dangling_counts"]}
+    else:
+        assert [(r.kind, r.id, r.path.name, r.line) for r in ix.dangling()] == [
+            (d["kind"], d["id"], d["file"], d["line"]) for d in want["dangling"]]
     assert [(d.kind, d.id, d.path.name, d.line) for d in ix.duplicates()] == [
         (d["kind"], d["id"], d["file"], d["line"]) for d in want["duplicates"]]
 

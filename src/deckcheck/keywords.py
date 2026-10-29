@@ -47,16 +47,23 @@ def resolve(line: str) -> Resolved | None:
     data = load()["keywords"]
     for cut in range(len(name), 0, -1):
         key = name[:cut]
-        if key in data and (cut == len(name) or name[cut] == "_"):
-            opts = _split_options(name[cut:], options_of(key))
+        target = key if key in data else _aliases().get(key)
+        if target and (cut == len(name) or name[cut] == "_"):
+            opts = _split_options(name[cut:], options_of(target))
             if opts is not None:
-                return Resolved(key, opts, fmt)
+                return Resolved(target, opts, fmt)
     return None
 
 
 @functools.cache
 def overrides() -> dict:
     return tomllib.loads(resources.files("deckcheck.data").joinpath("overrides.toml").read_text(encoding="utf-8"))
+
+
+@functools.cache
+def _aliases() -> dict[str, str]:
+    """Keyword names LS-DYNA reads as another keyword pydyna has (overrides.toml [[alias]])."""
+    return {a["name"]: a["key"] for a in overrides().get("alias", [])}
 
 
 def override_targets(o: dict) -> list[str]:
@@ -142,6 +149,8 @@ def layout(key: str) -> dict:
                     card.update(kind="table", length=None)
                 if "stop" in s:
                     card["stop"] = s["stop"]
+                if "active" in s:
+                    card.update(when=s["active"], conditional=True)
             if card["kind"] == "series" and card.get("name") == o.get("card"):
                 card.update(_link_facts(s))
             for f in card.get("fields", []):

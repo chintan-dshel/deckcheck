@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "Q: is *SET_PART (no _LIST) read as a part list? The contact names part set 7, no part 7 exists. LS-DYNA R16.1 Student 2026-10-29: accepted. *SET_PART is *SET_PART_LIST (pydyna has no SET_PART class)."

@@ -19,9 +19,9 @@ evidence = "torture base; M0 tier-1 runs (every element node defined by *NODE)"
 
 [[definer]]
 kind = "PART"
-keywords = ["PART", "PART_INERTIA", "PART_CONTACT", "PART_COMPOSITE"]
+keywords = ["PART", "PART_INERTIA", "PART_CONTACT", "PART_COMPOSITE", "PART_AVERAGED"]
 field = "pid"
-evidence = "torture base, part_inertia (LS-DYNA accepted part 1 defined only by *PART_INERTIA)"
+evidence = "torture base, part_inertia (LS-DYNA accepted part 1 defined only by *PART_INERTIA); PART_AVERAGED: VIVA+ vivaplus-22-Neck-Muscles.k:26 (PART layout: title, pid secid mid), in a load LS-DYNA accepted"
 
 [[definer]]
 kind = "PART"

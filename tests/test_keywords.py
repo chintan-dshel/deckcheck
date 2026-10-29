@@ -107,3 +107,10 @@ def test_resolve_honours_option_overrides():
     assert resolve("*ICFD_MAT_TITLE") == Resolved("ICFD_MAT", ("TITLE",), "")
     assert resolve("*LOAD_SEGMENT_SET_NONUNIFORM_ID").options == ("ID",)
     assert resolve("*CONSTRAINED_JOINT_STIFFNESS_GENERALIZED_ID") is None  # no evidence for this family
+
+
+def test_alias_resolves_to_its_data_key():
+    from deckcheck.keywords import Resolved, resolve
+    assert resolve("*SET_PART_TITLE") == Resolved("SET_PART_LIST", ("TITLE",), "")
+    assert resolve("*SET_PART") == Resolved("SET_PART_LIST", (), "")
+    assert resolve("*SET_PART_ADD").name == "SET_PART_ADD"

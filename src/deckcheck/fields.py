@@ -29,6 +29,8 @@ class Value(NamedTuple):
 
 
 def _value(raw: str, at: int) -> Value:
+    if not raw.strip():
+        return Value("", at, at)  # a blank field: an empty span at its own column
     lead = len(raw) - len(raw.lstrip())
     return Value(raw.strip(), at + lead, at + len(raw.rstrip()))
 
@@ -166,13 +168,9 @@ class _Reader:
         return max(int(v), 0)
 
     def decided_after(self, spec: dict) -> bool:
-        """A card whose condition reads only its own fields, or pydyna's has-values chain: pydyna reads the card,
-        then decides (lib/cards.py _read_card), so deckcheck does too."""
-        when = spec.get("when")
-        if spec["kind"] != "card" or when is None:
-            return False
-        names = names_in(when)
-        return bool(HAS_VALUES.fullmatch(when)) or bool(names) and names <= {f["name"] for f in spec["fields"]}
+        """A conditional card: pydyna reads it, then decides with its own and earlier fields (lib/cards.py
+        _read_card), so deckcheck does too."""
+        return spec["kind"] == "card" and spec.get("when") is not None
 
     def tentative(self, spec: dict, scope: Scope) -> Iterator[Field]:
         when = spec["when"]

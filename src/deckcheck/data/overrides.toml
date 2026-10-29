@@ -191,3 +191,20 @@ field = "load_i"
 set = { stop = "pydyna's cross-PSD card does not match this deck's layout" }
 evidence = "guidelines/implicit/Frequency_domain/PSD_FATIGUE_EXAMPLE/set_4.key:109339-109351 (six cards, comment 'vaflag method unit umlt vapsd varms npsd nftg'; pydyna has nine, 'napsd ncpsd', and reads the pid card as the cross-PSD card)"
 reason = "The deck follows another version of the keyword; reading on would misplace every later field."
+
+# --- Conditions pydyna gives a keyword but not its siblings.
+
+[[override]]
+keywords = ["ELEMENT_SHELL_BETA_OFFSET", "ELEMENT_SHELL_MCID_OFFSET", "ELEMENT_SHELL_THICKNESS_BETA", "ELEMENT_SHELL_THICKNESS_BETA_OFFSET", "ELEMENT_SHELL_THICKNESS_MCID", "ELEMENT_SHELL_THICKNESS_MCID_OFFSET", "ELEMENT_SHELL_THICKNESS_OFFSET"]
+field = "thic5"
+set = { active = "self.elements['n5'].any()" }
+evidence = "pydyna's ELEMENT_SHELL_THICKNESS, _BETA and _MCID give the thic5-8 card this condition; VIVA+ common/vivaplus-elements.k:292994-293000 (*ELEMENT_SHELL_THICKNESS_BETA, 4-node shells, two cards per element)"
+reason = "The thic5-8 card exists only for 8-node shells; without the condition it swallows the next element's first card."
+
+# --- Aliases: a keyword name LS-DYNA reads as another keyword that pydyna has.
+
+[[alias]]
+name = "SET_PART"
+key = "SET_PART_LIST"
+evidence = "tests/torture/set_part_alias (*SET_PART 7, contact names part set 7, no part 7: LS-DYNA accepted); VIVA+ vivaplus-materials.k:12035 *SET_PART_TITLE in list layout"
+reason = "pydyna has no SET_PART class; the card layout is SET_PART_LIST's."

@@ -90,7 +90,7 @@ def test_link_by_type_value(tmp_path):
 
 def test_unresolved_family_member_makes_kind_uncertain(tmp_path):
     contact = "*CONTACT_AUTOMATIC_SINGLE_SURFACE\n" + i10(5, 0, 2, 0) + "\n" + i10(0.0) + "\n" + i10(1.0) + "\n"
-    ix = index(tmp_path, BASE + contact + "*SET_PART_TITLE\nnamed set\n" + i10(5) + "\n" + i10(1) + "\n")
+    ix = index(tmp_path, BASE + contact + "*SET_PART_SPECIAL\nnamed set\n" + i10(5) + "\n" + i10(1) + "\n")
     assert ix.dangling() == [] and "SET_PART" in ix.uncertain_defs and not ix.checked("SET_PART")
 
 

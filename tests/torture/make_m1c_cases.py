@@ -143,6 +143,8 @@ CASES = {
         "main.k": deck("motion on a missing part", BASE + "*SET_NODE_LIST\n" + i10(1) + "\n" + i10(1, 2) + "\n"
                        + "*CONSTRAINED_NODAL_RIGID_BODY\n" + i10(5, 0, 1) + "\n"
                        + "*BOUNDARY_PRESCRIBED_MOTION_RIGID\n" + i10(6, 1, 2, 1) + "\n" + curve(1))},
+    "set_part_alias": {  # Is *SET_PART (no _LIST) read as a part list? Contact names part set 7; no part 7 exists
+        "main.k": deck("set part without list", BASE + "*SET_PART\n" + i10(7) + "\n" + i10(1) + "\n" + contact(7, 2))},
     "set_general_rows": {  # Is a second option row of *SET_NODE_GENERAL read? (part 99 missing)
         "main.k": deck("general set rows", BASE + "*SET_NODE_GENERAL\n" + i10(1) + "\n" + "PART      " + i10(1) + "\n"
                        + "PART      " + i10(99) + "\n" + nodes_to_surface(1))},

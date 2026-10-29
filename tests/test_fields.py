@@ -187,3 +187,22 @@ def test_layout_applies_overrides():
     assert surfa["link_by"] == "surfatyp" and surfa["link_map"]["2"] == "SET_PART"
     assert layout("PART")["cards"][0]["cards"][1]["fields"][2]["link"] == "MAT"
     assert "ID" in {o["name"] for o in layout("CONSTRAINED_JOINT_REVOLUTE")["options"]}
+
+
+def test_thickness_beta_card_5_to_8_only_for_8_node_shells(tmp_path):
+    thick = f"{0.7:>16}{0.7:>16}{0.7:>16}{0.7:>16}{30.0:>16}\n"
+    out, problems = fields(tmp_path, "*ELEMENT_SHELL_THICKNESS_BETA\n       1       1       1       2       3       4\n"
+                           + thick + "       2       1       2       5       6       3\n" + thick)
+    assert values(out, "eid") == [1, 2] and values(out, "n1") == [1, 2] and problems == []
+
+
+def test_condition_on_own_and_earlier_fields(tmp_path):
+    # CONTROL_IMPLICIT_EIGENVALUE card 2: 'self.eigmth in [...] or (self.isolid != 0 or ...)', isolid on that card
+    out, problems = fields(tmp_path, "*CONTROL_IMPLICIT_EIGENVALUE\n        10\n         1\n")
+    assert problems == [] and values(out, "neig") == [10] and values(out, "isolid") == [1]
+
+
+def test_blank_field_span_is_empty_at_its_column(tmp_path):
+    out, _ = fields(tmp_path, "*MAT_ELASTIC\n         1   7.85E-9    \n")
+    e = [f for f in out if f.name == "e"][0]
+    assert (e.value, e.start, e.end) == (None, 20, 20)

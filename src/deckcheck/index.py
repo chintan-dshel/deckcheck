@@ -26,6 +26,8 @@ OFFSET_FIELD: dict[str, str] = {
     "PART": "idpoff",
     "SET_PART": "idsoff",
     "SET_NODE": "idsoff",
+    "ELEMENT_SHELL": "ideoff",
+    "SET_SEGMENT": "idsoff",
 }
 # a reference of the key kind resolves against definitions of any listed kind: curves and tables share ids; a
 # missing part set id falls back to the part with that id (torture contact_type2_bad/_none, velocity_styp1_bad/_none)
