@@ -34,7 +34,8 @@ def test_spc_set_id_option_and_links(data):
     opt = [c for c in k["cards"] if c["option"] == "ID"][0]
     assert [(f["name"], f["offset"], f["width"]) for f in opt["fields"]] == [("id", 0, 10), ("heading", 10, 70)]
     main = [c for c in k["cards"] if c["option"] is None][0]
-    assert main["fields"][0] == {"name": "nsid", "type": "int", "offset": 0, "width": 10}
+    assert {k: v for k, v in main["fields"][0].items() if k != "default"} == {
+        "name": "nsid", "type": "int", "offset": 0, "width": 10}
 
 
 def test_part_is_a_table_group_heading_then_ids(data):
@@ -71,3 +72,40 @@ def test_card_set_keywords_have_their_cards_and_options(data):
     assert {"name": "TITLE", "position": "pre/1", "title_order": 1} in section["options"]
     assert "hgid" in [n for c in data["keywords"]["HOURGLASS"]["cards"] for n in _all_fields(c)]
     assert all(c.get("cards") for k in data["keywords"].values() for c in k["cards"] if c["kind"] == "card_set")
+
+
+def _walk(cards):
+    for c in cards:
+        yield c
+        yield from _walk(c.get("cards", []))
+
+
+def test_section_shell_conditions_and_lengths(data):
+    item = data["keywords"]["SECTION_SHELL"]["cards"][0]
+    assert item["kind"] == "card_set" and item["length"] is None
+    angle = [c for c in item["cards"] if c.get("name") == "angle"][0]
+    assert angle["when"] == "self.icomp == 1"
+    assert angle["length"] == "2 if self.nip == 0 else self.nip"
+    xi = [c for c in item["cards"] if c["kind"] == "table"][0]
+    assert xi["length"] == "self.nipp"
+    assert xi["when"] == "self.elform in [101, 102, 103, 104, 105]"
+
+
+def test_unbounded_tables_have_no_length(data):
+    curve = [c for c in data["keywords"]["DEFINE_CURVE"]["cards"] if c["kind"] == "table"][0]
+    assert curve["length"] is None and curve["when"] is None
+
+
+def test_field_defaults(data):
+    first = data["keywords"]["SECTION_SHELL"]["cards"][0]["cards"][0]["fields"]
+    assert {f["name"]: f["default"] for f in first}["nip"] == 2
+    assert {f["name"]: f["default"] for f in first}["icomp"] == 0
+    assert {f["name"]: f["default"] for f in first}["secid"] is None
+
+
+def test_every_card_has_when_and_counts_have_length(data):
+    for k in data["keywords"].values():
+        for c in _walk(k["cards"]):
+            assert "when" in c and c["conditional"] == (c["when"] is not None)
+            if c["kind"] in ("table", "series", "card_set", "table_group"):
+                assert "length" in c

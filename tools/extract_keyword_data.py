@@ -2,6 +2,8 @@
 
 Build-time only: run in .venv-extract. deckcheck never imports pydyna at runtime.
 """
+import ast
+import functools
 import importlib.metadata
 import json
 import sys
@@ -10,13 +12,40 @@ from pathlib import Path
 from ansys.dyna.core import keywords as kw
 from ansys.dyna.core.lib.keyword_base import KeywordBase
 
+LIB = Path(sys.modules[KeywordBase.__module__].__file__).parent  # ansys/dyna/core/lib
+
+
+@functools.cache
+def _lambdas(path: str) -> dict[int, list[ast.Lambda]]:
+    out: dict[int, list[ast.Lambda]] = {}
+    for node in ast.walk(ast.parse(Path(path).read_text(encoding="utf-8"))):
+        if isinstance(node, ast.Lambda):
+            out.setdefault(node.lineno, []).append(node)
+    return out
+
+
+def _source(fn) -> str | None:
+    """A card's condition or length lambda as Python source. None: no function, or pydyna's library default
+    (a table or series read to the end of the block). "?": the lambda could not be pinned to one expression."""
+    if fn is None:
+        return None
+    path = Path(fn.__code__.co_filename)
+    if path.is_relative_to(LIB):
+        return None
+    texts = {ast.unparse(n.body) for n in _lambdas(str(path)).get(fn.__code__.co_firstlineno, [])}
+    return texts.pop() if len(texts) == 1 else "?"
+
+
+def _default(value):
+    return value if type(value) in (int, float, str) else None
+
 
 def _fields(schema) -> list[dict]:
     out = []
     for item in schema:
         if hasattr(item, "offset") and hasattr(item, "width"):
             out.append({"name": item.name, "type": getattr(item.type, "__name__", str(item.type)),
-                        "offset": item.offset, "width": item.width})
+                        "offset": item.offset, "width": item.width, "default": _default(item.default)})
         elif isinstance(item, tuple):
             out.extend(_fields(item))
     return out
@@ -24,23 +53,28 @@ def _fields(schema) -> list[dict]:
 
 def _card(card, option: str | None) -> dict | list[dict]:
     kind = type(card).__name__
-    base = {"option": option, "conditional": getattr(card, "_active_func", None) is not None}
+    when = _source(getattr(card, "_active_func", None))
+    base = {"option": option, "conditional": when is not None, "when": when}
+    length = {"length": _source(getattr(card, "_length_func", None))}
     if kind == "OptionCardSet":
         name = card._option_spec.name
         return [c for sub in card._cards for c in _flat(_card(sub, name))]
     if kind == "Card":
         return {"kind": "card", **base, "fields": _fields(card._schema)}
     if kind == "TableCard":
-        return {"kind": "table", **base, "fields": _fields(card._schema)}
+        return {"kind": "table", **base, **length, "fields": _fields(card._schema)}
     if kind == "TableCardGroup":
-        return {"kind": "table_group", **base, "cards": [c for sub in card._cards for c in _flat(_card(sub, option))]}
+        rows = {"length": _source(getattr(card._cards[0], "_length_func", None))}
+        return {"kind": "table_group", **base, **rows,
+                "cards": [c for sub in card._cards for c in _flat(_card(sub, option))]}
     if kind == "SeriesCard":
-        return {"kind": "series", **base, "name": card._name, "element_width": card._element_width,
+        return {"kind": "series", **base, **length, "name": card._name, "element_width": card._element_width,
                 "per_card": card._fields_per_card, "type": getattr(card._type, "__name__", str(card._type))}
     if kind == "CardSet":
         # A repeating set of cards (SECTION_*, HOURGLASS, ...): its cards live in one instantiated item.
         item = card._items[0] if card._items else card._set_type(parent=card, keyword=card._keyword)
-        return {"kind": "card_set", **base, "cards": [c for sub in item._cards for c in _flat(_card(sub, option))]}
+        return {"kind": "card_set", **base, **length,
+                "cards": [c for sub in item._cards for c in _flat(_card(sub, option))]}
     names = {"TextCard": "text", "IncludeCard": "include"}
     return {"kind": names.get(kind, "unknown"), **base, "class": kind}
 
