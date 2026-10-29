@@ -3,6 +3,7 @@ placement, tables, series and card sets, conditional cards (deckcheck.conditions
 *PARAMETER substitution (spec §4, field reader row). Where it can't decide, it stops and says so (`unread`)."""
 import functools
 import itertools
+import re
 from typing import Iterator, NamedTuple
 
 from deckcheck.conditions import UNKNOWN, Scope, compile_expr, evaluate, names_in
@@ -13,6 +14,12 @@ from deckcheck.reader import Block, Card
 LONG_KEYWORD = True  # long_keyword: *KEYWORD LONG=Y makes every card long (LONG=S is the standard format)
 LONG_WIDTH = 20      # pydyna's to_long: each field max(width, 20), one line per card (long_section)
 OPTIONAL_TRAILING = frozenset("ABCDEFG")  # contact optional cards A-G: read when present (pydyna: post options)
+REPEAT_INSTANCES = True  # repeat_velocity, repeat_history_id, repeat_load_node_set, repeat_mat: cards left after the
+                         # layout start another instance
+FLAG_TRUE = "&"  # pydyna Flag(True, "&", ""): the only bool field, mpp2, marks the MPP card 2 that follows
+# pydyna writes these optional cards only when set; its reader reads the card, then keeps it if set (lib/cards.py
+# _read_card). LS-DYNA reads them by position, so deckcheck reads one whenever a card remains.
+HAS_VALUES = re.compile(r"self\._cards\[\d+\]\.has_nondefault_values\(\)( or self\._cards\[\d+\]\.active)?")
 
 
 class Value(NamedTuple):
@@ -58,6 +65,8 @@ def _parse(text: str, ftype: str, params: dict) -> object:
     """A field's value; raises ValueError when the text is not of the field's type."""
     if not text:
         return None
+    if ftype == "bool":
+        return text == FLAG_TRUE
     if text.startswith(("&", "-&")):
         value = params.get(text.lstrip("-&").strip().upper(), UNKNOWN)
         if text.startswith("-"):
@@ -156,8 +165,44 @@ class _Reader:
             return 0
         return max(int(v), 0)
 
+    def decided_after(self, spec: dict) -> bool:
+        """A card whose condition reads only its own fields, or pydyna's has-values chain: pydyna reads the card,
+        then decides (lib/cards.py _read_card), so deckcheck does too."""
+        when = spec.get("when")
+        if spec["kind"] != "card" or when is None:
+            return False
+        names = names_in(when)
+        return bool(HAS_VALUES.fullmatch(when)) or bool(names) and names <= {f["name"] for f in spec["fields"]}
+
+    def tentative(self, spec: dict, scope: Scope) -> Iterator[Field]:
+        when = spec["when"]
+        if HAS_VALUES.fullmatch(when):
+            yield from self.card(spec["fields"], scope)
+            return
+        i, group, n_problems, values = self.i, self.group, len(self.problems), dict(scope.values)
+        out = list(self.card(spec["fields"], scope))
+        tree = compile_expr(when)
+        v = evaluate(tree, scope) if tree else UNKNOWN
+        if v is not UNKNOWN and v:
+            yield from out
+            return
+        self.i, self.group = i, group  # not this card: put it back
+        del self.problems[n_problems:]
+        scope.values.clear()
+        scope.values.update(values)
+        if v is UNKNOWN:
+            self.stop(f"condition {when!r} undecided")
+
     def container(self, cards: list[dict], scope: Scope, top: bool) -> Iterator[Field]:
         for spec in _ordered(cards, self.key, self.options, top):
+            if self.left() and "stop" in spec:
+                self.stop(spec["stop"])
+                return
+            if self.left() and self.decided_after(spec):
+                yield from self.tentative(spec, scope)
+                if self.stopped:
+                    return
+                continue
             if not self.left() or not self.active(spec, scope):
                 if self.stopped:
                     return
@@ -265,7 +310,17 @@ def read_fields(block: Block, params: dict | None = None, long_deck: bool = Fals
         return
     problems = [] if problems is None else problems
     reader = _Reader(block, params or {}, is_long(block, long_deck), wanted, problems)
-    yield from reader.container(layout(block.resolved.name)["cards"], Scope(), True)
+    entry = layout(block.resolved.name)
+    cards, legacy = entry["cards"], entry.get("legacy")
+    first = next((c for c in block.cards if c.text.strip()), None)
+    if legacy and first is not None and len(first.text.strip()) > legacy["first_card_longer_than"]:
+        cards = legacy["cards"]  # pydyna before_read: the one-line legacy format
+    yield from reader.container(cards, Scope(), True)
+    while REPEAT_INSTANCES and not reader.stopped and any(c.text.strip() for c in block.cards[reader.i:]):
+        before = reader.i
+        yield from reader.container(cards, Scope(), True)
+        if reader.i == before:
+            break
     if not reader.stopped:
         rest = [c for c in block.cards[reader.i:] if c.text.strip()]
         if rest:

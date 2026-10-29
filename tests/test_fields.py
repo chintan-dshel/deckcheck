@@ -99,9 +99,61 @@ def test_undecided_condition_stops_the_block(tmp_path):
     assert [(p.kind, p.line) for p in problems] == [("unread", 4)]
 
 
-def test_extra_cards_are_reported(tmp_path):
-    _, problems = fields(tmp_path, "*MAT_ELASTIC\n         1   7.85E-9  210000.0       0.3\n       9.9\n")
-    assert [(p.kind, p.line) for p in problems] == [("extra", 3)]
+def test_cards_after_the_layout_start_another_instance(tmp_path):
+    out, problems = fields(tmp_path, "*MAT_ELASTIC\n         1   7.85E-9  210000.0       0.3\n"
+                                     "         2   7.85E-9  210000.0       0.3\n")
+    assert [(f.value, f.line) for f in out if f.name == "mid"] == [(1, 2), (2, 3)] and problems == []
+
+
+def test_repeated_instance_includes_its_option_card(tmp_path):
+    out, _ = fields(tmp_path, "*BOUNDARY_SPC_SET_ID\n         1first\n         3\n         2second\n         4\n")
+    assert values(out, "id") == [1, 2] and values(out, "nsid") == [3, 4]
+
+
+def test_optional_cards_are_read_when_present(tmp_path):
+    # pydyna: 'self._cards[1].has_nondefault_values() or ...' (lib/cards.py reads, then keeps a non-default card)
+    out, problems = fields(tmp_path, "*CONTROL_SHELL\n      20.0\n       1.0         1\n")
+    assert values(out, "intgrd") == [1] and problems == []
+
+
+def test_flag_card_decided_after_reading_it(tmp_path):
+    mpp = "*CONTACT_AUTOMATIC_SINGLE_SURFACE_MPP\n         0\n"
+    main = "         5         0         2\n       0.0\n       1.0\n"
+    out, problems = fields(tmp_path, mpp + "&                  1\n" + main)
+    assert values(out, "ssid") == [5] and values(out, "chksegs") == [1] and problems == []
+    out, problems = fields(tmp_path, mpp + main)
+    assert values(out, "ssid") == [5] and values(out, "chksegs") == [] and problems == []
+
+
+def test_legacy_element_solid(tmp_path):
+    out, problems = fields(tmp_path, "*ELEMENT_SOLID\n       1       1       1       2       3       4       5       6"
+                                     "       7       8\n       2       1       9      10      11      12      13      14"
+                                     "      15      16\n")
+    assert values(out, "eid") == [1, 2] and values(out, "n8") == [8, 16] and problems == []
+
+
+def test_two_card_element_solid(tmp_path):
+    out, _ = fields(tmp_path, "*ELEMENT_SOLID\n       1       1\n       1       2       3       4       5       6"
+                              "       7       8\n")
+    assert values(out, "eid") == [1] and values(out, "n1") == [1]
+
+
+def test_column_condition_per_row(tmp_path):
+    thick = f"{2.0:>16}{2.0:>16}{2.0:>16}{2.0:>16}\n"
+    out, problems = fields(tmp_path, "*ELEMENT_SHELL_THICKNESS\n       1       1       1       2       3       4\n"
+                           + thick + "       2       1       2       5       6       3\n" + thick)
+    assert values(out, "eid") == [1, 2] and problems == []
+
+
+def test_rows_override(tmp_path):
+    out, problems = fields(tmp_path, "*SET_SOLID\n         1\n         1         2\n         3\n")
+    assert values(out, "sid") == [1] and values(out, "k1") == [1, 3] and problems == []
+
+
+def test_stop_override(tmp_path):
+    out, problems = fields(tmp_path, "*FREQUENCY_DOMAIN_RANDOM_VIBRATION_FATIGUE\n         1\n      0.03\n         1\n"
+                                     "\n                   3      2001\n         1        -1\n")
+    assert values(out, "pid") == [] and [(p.kind, p.line) for p in problems] == [("unread", 7)]
 
 
 def test_bad_value(tmp_path):

@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "Q: does *CONSTRAINED_NODAL_RIGID_BODY's pid define a part that *BOUNDARY_PRESCRIBED_MOTION_RIGID can name (part 5, no *PART 5)? LS-DYNA R16.1 Student 2026-10-29: accepted."

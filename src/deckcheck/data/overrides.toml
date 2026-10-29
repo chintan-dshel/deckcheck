@@ -59,9 +59,9 @@ reason = "ICFD part ids are a separate namespace referenced by ICFD keywords."
 [[override]]
 keyword = "ICFD_PART_VOL"
 field = "pid"
-set = { defines = "ICFD_PART" }
-evidence = "tutorial/9.ICFD_with_FSI/fluid_main.k:86-88 (*ICFD_PART_VOL pid 1)"
-reason = "A volume part is an ICFD part too."
+set = { defines = "ICFD_PART_VOL" }
+evidence = "tutorial/9.ICFD_with_FSI/fluid_main.k:86-88 (*ICFD_PART_VOL pid 1) and mesh_fluid.k:7-9 (*ICFD_PART pid 1) in one deck LS-DYNA accepted (tier1_lsdyna_input.jsonl)"
+reason = "Volume part ids are their own namespace: the same id as a surface ICFD part is not a duplicate. An ICFD_PART reference resolves against both (index.LOOKUP)."
 
 [[override]]
 keyword = "ICFD_PART_VOL"
@@ -145,3 +145,49 @@ field = "nsid"
 set = { when = "unchecked" }
 evidence = "tests/torture/spc_set_none (*BOUNDARY_SPC_SET names node set 99, none defined: LS-DYNA R16.1 Student accepted, no warning)"
 reason = "LS-DYNA accepts a missing node set here, so a dangling nsid is not a deckcheck error; the id still counts as a use."
+
+# --- Cards LS-DYNA reads as rows, where pydyna models one card (M1c Task 7 corpus).
+
+[[override]]
+keywords = ["SET_BEAM_GENERAL", "SET_BEAM_GENERAL_COLLECT", "SET_DISCRETE_GENERAL", "SET_DISCRETE_GENERAL_COLLECT", "SET_NODE_GENERAL", "SET_NODE_GENERAL_COLLECT", "SET_SEGMENT_GENERAL", "SET_SEGMENT_GENERAL_COLLECT", "SET_SHELL_GENERAL", "SET_SHELL_GENERAL_COLLECT", "SET_SOLID_GENERAL", "SET_SOLID_GENERAL_COLLECT"]
+field = "option"
+set = { rows = true }
+evidence = "tests/torture/set_general_rows (second row 'PART 99' rejected: 'part 99 to be added to node set is not defined'); guidelines/explicit/EX09_VEHICLE_INITIALIZATION_FOR_CRASH/BARRIER_DELAY_20MS.k:38617-38618"
+reason = "Each option row of a *SET_*_GENERAL adds members; there can be any number of them."
+
+[[override]]
+keywords = ["SET_BEAM_GENERAL", "SET_BEAM_GENERAL_COLLECT", "SET_DISCRETE_GENERAL", "SET_DISCRETE_GENERAL_COLLECT", "SET_NODE_GENERAL", "SET_NODE_GENERAL_COLLECT", "SET_SEGMENT_GENERAL", "SET_SEGMENT_GENERAL_COLLECT", "SET_SHELL_GENERAL", "SET_SHELL_GENERAL_COLLECT", "SET_SOLID_GENERAL", "SET_SOLID_GENERAL_COLLECT"]
+fields = ["e1", "e2", "e3", "e4", "e5", "e6", "e7"]
+set = { link_by = "option", map = { "PART" = "PART" } }
+evidence = "tests/torture/set_general_rows ('PART 99' rejected as a missing part)"
+reason = "A PART row lists part ids; other row types are left unchecked."
+
+[[override]]
+keywords = ["SET_BEAM_COLLECT", "SET_DISCRETE", "SET_DISCRETE_COLLECT", "SET_SOLID", "SET_SOLID_COLLECT"]
+field = "k1"
+set = { rows = true }
+evidence = "guidelines/explicit/EX01_DROPTEST/droptest.k:352844-352850 (*SET_SOLID: sid card, then 49 rows of eight element ids)"
+reason = "The member card repeats; the sid card does not."
+
+[[override]]
+keyword = "CONSTRAINED_INTERPOLATION"
+field = "inid"
+set = { rows = true }
+evidence = "guidelines/explicit/EX04_POST_BUCKLING_STRENGTH/static_buckling.k:384772-384779 (one icid card, then a row per independent node)"
+reason = "One row per independent node."
+
+[[override]]
+keyword = "DEFINE_FRICTION"
+field = "pid_i"
+set = { rows = true }
+evidence = "guidelines/explicit/EX08_RUBBER_SEAL/rubber_seal.k:54606-54610 (one id card, then a row per part pair)"
+reason = "One row per part pair."
+
+# --- Layouts that do not match the decks LS-DYNA reads: deckcheck stops there (unread), it does not guess.
+
+[[override]]
+keyword = "FREQUENCY_DOMAIN_RANDOM_VIBRATION_FATIGUE"
+field = "load_i"
+set = { stop = "pydyna's cross-PSD card does not match this deck's layout" }
+evidence = "guidelines/implicit/Frequency_domain/PSD_FATIGUE_EXAMPLE/set_4.key:109339-109351 (six cards, comment 'vaflag method unit umlt vapsd varms npsd nftg'; pydyna has nine, 'napsd ncpsd', and reads the pid card as the cross-PSD card)"
+reason = "The deck follows another version of the keyword; reading on would misplace every later field."

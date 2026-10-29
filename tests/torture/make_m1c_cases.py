@@ -123,6 +123,29 @@ CASES = {
                        BASE + "*BOUNDARY_SPC_SET\n" + i10(99, 0, 1, 1, 1, 1, 1, 1) + "\n")},
     "zero_ref": {  # M0 defect: 0 in a reference field is no reference (eosid, hgid, tmid all 0)
         "main.k": deck("zero references", BASE.replace(PART, "*PART\nplate\n" + i10(1, 1, 1, 0, 0, 0, 0, 0) + "\n"))},
+    # Task 7 (corpus): cards left after the layout, and definers the corpus found
+    "repeat_velocity": {  # Is a second two-card instance under one *INITIAL_VELOCITY_GENERATION read? (99: no node set)
+        "main.k": deck("velocity generation repeated", BASE + velocity(1, 2) + velocity(99, 3).split("\n", 1)[1])},
+    "repeat_mat": {  # Is a second *MAT_ELASTIC line another material? The part uses material 2, defined only there
+        "main.k": deck("material repeated", BASE.replace(MAT, MAT + i10(2, "7.85E-9", "210000.0", 0.3) + "\n")
+                       .replace(PART, "*PART\nplate\n" + i10(1, 1, 2) + "\n"))},
+    "repeat_history_id": {  # Is a second *DATABASE_HISTORY_NODE_ID line read as another instance? (node 99 missing)
+        "main.k": deck("history node repeated", BASE + "*DATABASE_HISTORY_NODE_ID\n" + i10(1) + "first\n"
+                       + i10(99) + "second\n")},
+    "repeat_load_node_set": {  # Is a second *LOAD_NODE_SET line read as another instance? (node set 99 missing)
+        "main.k": deck("load node set repeated", BASE + "*SET_NODE_LIST\n" + i10(1) + "\n" + i10(1, 2) + "\n"
+                       + "*LOAD_NODE_SET\n" + i10(1, 3, 1, 1.0) + "\n" + i10(99, 3, 1, 1.0) + "\n" + curve(1))},
+    "nodal_rigid_part": {  # Does *CONSTRAINED_NODAL_RIGID_BODY's pid define a part a rigid motion can name?
+        "main.k": deck("motion on a nodal rigid body", BASE + "*SET_NODE_LIST\n" + i10(1) + "\n" + i10(1, 2) + "\n"
+                       + "*CONSTRAINED_NODAL_RIGID_BODY\n" + i10(5, 0, 1) + "\n"
+                       + "*BOUNDARY_PRESCRIBED_MOTION_RIGID\n" + i10(5, 1, 2, 1) + "\n" + curve(1))},
+    "nodal_rigid_none": {  # control: the motion names part 6, which nothing defines
+        "main.k": deck("motion on a missing part", BASE + "*SET_NODE_LIST\n" + i10(1) + "\n" + i10(1, 2) + "\n"
+                       + "*CONSTRAINED_NODAL_RIGID_BODY\n" + i10(5, 0, 1) + "\n"
+                       + "*BOUNDARY_PRESCRIBED_MOTION_RIGID\n" + i10(6, 1, 2, 1) + "\n" + curve(1))},
+    "set_general_rows": {  # Is a second option row of *SET_NODE_GENERAL read? (part 99 missing)
+        "main.k": deck("general set rows", BASE + "*SET_NODE_GENERAL\n" + i10(1) + "\n" + "PART      " + i10(1) + "\n"
+                       + "PART      " + i10(99) + "\n" + nodes_to_surface(1))},
 }
 
 for name, files in CASES.items():

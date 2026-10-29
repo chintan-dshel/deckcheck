@@ -94,11 +94,19 @@ def extract_class(cls) -> dict:
         inst = cls(card_set_count=1)  # a CardSet only exposes its cards once it holds an item
     specs = list(getattr(cls, "_option_spec_list", []))
     specs += [o for c in inst._cards if type(c).__name__ == "CardSet" for o in c._option_specs]
-    return {"class": cls.__name__,
-            "options": [{"name": o.name, "position": str(o._position), "title_order": o._title_order}
-                        for o in specs],
-            "links": {f: t.name for f, t in sorted(getattr(cls, "_link_fields", {}).items())},
-            "cards": [c for card in inst._cards for c in _flat(_card(card, None))]}
+    out = {"class": cls.__name__,
+           "options": [{"name": o.name, "position": str(o._position), "title_order": o._title_order}
+                       for o in specs],
+           "links": {f: t.name for f, t in sorted(getattr(cls, "_link_fields", {}).items())},
+           "cards": [c for card in inst._cards for c in _flat(_card(card, None))]}
+    if hasattr(cls, "set_legacy_format"):
+        # pydyna's before_read switches to this layout when the first card is longer than 16 characters
+        # (keyword_classes/manual/element_solid.py, element_solid_ortho.py)
+        legacy = cls()
+        legacy.set_legacy_format()
+        out["legacy"] = {"first_card_longer_than": 16,
+                         "cards": [c for card in legacy._cards for c in _flat(_card(card, None))]}
+    return out
 
 
 def extract_all() -> dict:

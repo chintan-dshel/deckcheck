@@ -41,7 +41,22 @@ def _is_field(chain) -> bool:
                                   or len(chain) == 3 and chain[:2] == ("self", "parent"))
 
 
+def _column(n) -> str | None:
+    """`self.<table>['<col>'].any()`: pydyna asks whether any row has the column set. The field reader evaluates
+    conditions row by row, as LS-DYNA reads each element, so it means: this row's column is set."""
+    if (isinstance(n, ast.Call) and not n.args and not n.keywords and isinstance(n.func, ast.Attribute)
+            and n.func.attr == "any" and isinstance(n.func.value, ast.Subscript)):
+        sub = n.func.value
+        chain = _chain(sub.value)
+        if chain and len(chain) == 2 and chain[0] == "self" and isinstance(sub.slice, ast.Constant) \
+                and isinstance(sub.slice.value, str):
+            return sub.slice.value
+    return None
+
+
 def _allowed(n) -> bool:
+    if _column(n):
+        return True
     if isinstance(n, ast.Constant):
         return True
     if isinstance(n, (ast.List, ast.Tuple)):
@@ -76,7 +91,10 @@ def names_in(text: str) -> frozenset[str]:
     tree = compile_expr(text)
     if tree is None:
         return frozenset()
-    return frozenset(c[-1] for n in ast.walk(tree) if _is_field(c := _chain(n)))
+    columns = {c for n in ast.walk(tree) if (c := _column(n))}
+    tables = {_chain(n.func.value.value)[1] for n in ast.walk(tree) if _column(n)}
+    fields = {c[-1] for n in ast.walk(tree) if _is_field(c := _chain(n))}
+    return frozenset(columns | (fields - tables))
 
 
 def evaluate(tree: ast.Expression, scope: Scope) -> object:
@@ -130,5 +148,8 @@ def _eval(n, s: Scope) -> object:
     if isinstance(n, ast.IfExp):
         t = _eval(n.test, s)
         return UNKNOWN if t is UNKNOWN else _eval(n.body if t else n.orelse, s)
+    if col := _column(n):
+        v = s.values.get(col, UNKNOWN)
+        return UNKNOWN if v is UNKNOWN else bool(v)
     args = [_eval(a, s) for a in n.args]  # ast.Call: _allowed admitted only FUNCS
     return UNKNOWN if any(a is UNKNOWN for a in args) else FUNCS[_chain(n.func)](*args)

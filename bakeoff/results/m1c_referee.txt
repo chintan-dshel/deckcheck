@@ -328,3 +328,221 @@
 == spc_set_id: accepted
 == spc_set_none: accepted
 == zero_ref: accepted
+== repeat_velocity: rejected
+ *** Error 10144 (KEY+144)
+     node set for initial velocity generation # 99 is not found.
+ *** Error 10133 (KEY+133)
+ 
+ *** Error 10144 (KEY+144)
+     CHECKING GENERATED VELOCITY DATA GENERATION set 2
+     node set for initial velocity generation # 99 is not found.
+     (This is #2 in the input order)
+ 
+ *** Error 10133 (KEY+133)
+     keyword input phase failed with: 2 errors
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 08:44:17
+
+ S t o r a g e   a l l o c a t i o n   
+
+ Memory required to complete solution   :     165K
+ Additional dynamically allocated memory:    2123K
+                                   Total:    2287K
+
+ T i m i n g   i n f o r m a t i o n
+                        CPU(seconds)   %CPU  Clock(seconds) %Clock
+  ----------------------------------------------------------------
+  Keyword Processing ... 0.0000E+00    0.00     1.7000E-02    0.68
+    KW Writing ......... 0.0000E+00    0.00     1.5000E-02    0.60
+  Initialization ....... 2.0000E+00  100.00     2.4950E+00   99.32
+  ----------------------------------------------------------------
+  T o t a l s            2.0000E+00  100.00     2.5120E+00  100.00
+
+ Problem time       =    0.0000E+00
+ Problem cycle      =         0
+ Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
+ CPU time per zone cycle  =          0.000 picoseconds
+ Clock time per zone cycle=          0.000 picoseconds
+
+ Number of CPU's    1
+ NLQ used/max     192/  192
+ Start time   10/29/2026 08:44:17  
+ End time     10/29/2026 08:44:17  
+ Elapsed time       0 second  for       0 cycles using  1 SMP thread 
+             (      0 hour   0 minute   0 second )
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 08:44:17
+== repeat_mat: accepted
+== repeat_history_id: rejected
+ *** Error 20211 (STR+211)
+ *** Error 20211 (STR+211)
+ expanding   memory to       22500 d     2036324  
+ expanding   memory to       52500 d     2036324  
+ expanding   memory to       73713 d     2096336  
+ expanding   memory to      102273 d     2104344  
+ expanding   memory to      164273 d     2119344  
+ expanding   memory to      189532 d     2120344  
+
+ Memory required to process keyword     :     189532  
+ Additional dynamic memory required     :    2122471  
+
+ contracting memory to           1 d     2122463 end of keyword reader
+
+ LS-DYNA will perform a structural only analysis 
+
+ deckcheck torture: history node repeated                                
+                    ls-dyna smp d R16 R16.1_180_d50332d date 07/09/2025
+ 
+ *** Warning 20006 (STR+6)
+     reset D3PLOT output interval from 0. to 5.0000E-08
+ expanding   memory to        2001 d     1984798 material, node and element data
+ expanding   memory to        2071 d     1984813 material properties
+ expanding   memory to        2085 d     1984982 gradient of damage data
+ expanding   memory to        2106 d     1987348 user control for contact interfaces
+ contracting memory to        2086 d     1987349 thermal expansion 0
+ expanding   memory to        2088 d     1987350 cross-sectional force definitions 0
+ expanding   memory to        2092 d     1987365 temp index array for node sorting
+ contracting memory to        2088 d     1987373 just because?
+ expanding   memory to        2089 d     1987394 arbitrary element numbering input
+ 
+ *** Error 20211 (STR+211)
+     reading nodal time history blocks
+     undefined node # 99
+        1       1      99      99
+     input phase will continue if possible
+ 
+ *** Error 20211 (STR+211)
+     reading nodal time history blocks
+     undefined node # 99
+        1       1      99      99
+     input phase will continue if possible
+== repeat_load_node_set: rejected
+ *** Error 10144 (KEY+144)
+     node set for point load # 99 is not found.
+ *** Error 10133 (KEY+133)
+     (This is #2 in the input order)
+ 
+ *** Warning 10383 (KEY+383)
+     skipping nonexistent *LOAD_NODE_SET setid 99
+ 
+ *** Error 10133 (KEY+133)
+     keyword input phase failed with: 2 errors
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 08:44:25
+
+ S t o r a g e   a l l o c a t i o n   
+
+ Memory required to complete solution   :     252K
+ Additional dynamically allocated memory:    2123K
+                                   Total:    2374K
+
+ T i m i n g   i n f o r m a t i o n
+                        CPU(seconds)   %CPU  Clock(seconds) %Clock
+  ----------------------------------------------------------------
+  Keyword Processing ... 0.0000E+00    0.00     1.0000E-02    0.40
+    KW Reading ......... 0.0000E+00    0.00     1.0000E-03    0.04
+    KW Writing ......... 0.0000E+00    0.00     4.0000E-03    0.16
+  Initialization ....... 2.0000E+00  100.00     2.4770E+00   99.60
+  ----------------------------------------------------------------
+  T o t a l s            2.0000E+00  100.00     2.4870E+00  100.00
+
+ Problem time       =    0.0000E+00
+ Problem cycle      =         0
+ Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
+ CPU time per zone cycle  =          0.000 picoseconds
+ Clock time per zone cycle=          0.000 picoseconds
+
+ Number of CPU's    1
+ NLQ used/max     192/  192
+ Start time   10/29/2026 08:44:25  
+ End time     10/29/2026 08:44:25  
+ Elapsed time       0 second  for       0 cycles using  1 SMP thread 
+             (      0 hour   0 minute   0 second )
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 08:44:25
+== nodal_rigid_part: accepted
+== nodal_rigid_none: rejected
+ *** Error 20368 (STR+368)
+ contracting memory to        2106 d     2038948 contact definition
+ expanding   memory to        2111 d     2038967 rigid body
+ 
+ *** Error 20368 (STR+368)
+     mat/set id used in prescribed b.c.
+     must be defined as rigid see card no.= 1 mat= 0
+     in the velocity b.c. input section
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 08:44:31
+
+ S t o r a g e   a l l o c a t i o n   
+
+ Memory required to complete solution   :     374K
+ Additional dynamically allocated memory:    2174K
+                                   Total:    2547K
+
+ T i m i n g   i n f o r m a t i o n
+                        CPU(seconds)   %CPU  Clock(seconds) %Clock
+  ----------------------------------------------------------------
+  Keyword Processing ... 0.0000E+00    0.00     2.3000E-02    0.92
+    KW Writing ......... 0.0000E+00    0.00     1.5000E-02    0.60
+  Initialization ....... 2.0000E+00  100.00     2.4730E+00   99.08
+    Init Proc Phase 1 .. 0.0000E+00    0.00     7.0000E-03    0.28
+  ----------------------------------------------------------------
+  T o t a l s            2.0000E+00  100.00     2.4960E+00  100.00
+
+ Problem time       =    0.0000E+00
+ Problem cycle      =         0
+ Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
+ CPU time per zone cycle  =          0.000 picoseconds
+ Clock time per zone cycle=          0.000 picoseconds
+
+ Number of CPU's    1
+ NLQ used/max     192/  192
+ Start time   10/29/2026 08:44:30  
+ End time     10/29/2026 08:44:31  
+ Elapsed time       1 second  for       0 cycles using  1 SMP thread 
+             (      0 hour   0 minute   1 second )
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 08:44:31
+== set_general_rows: rejected
+ *** Error 10147 (KEY+147)
+ *** Error 10133 (KEY+133)
+ 
+ *** Error 10147 (KEY+147)
+     part 99 to be added to node set is not defined
+ expanding   memory to      212925 d     2122418  
+ 
+ *** Error 10133 (KEY+133)
+     keyword input phase failed with: 2 errors
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 08:44:33
+
+ S t o r a g e   a l l o c a t i o n   
+
+ Memory required to complete solution   :     213K
+ Additional dynamically allocated memory:    2123K
+                                   Total:    2336K
+
+ T i m i n g   i n f o r m a t i o n
+                        CPU(seconds)   %CPU  Clock(seconds) %Clock
+  ----------------------------------------------------------------
+  Keyword Processing ... 0.0000E+00    0.00     1.0000E-02    0.40
+    KW Reading ......... 0.0000E+00    0.00     2.0000E-03    0.08
+    KW Writing ......... 0.0000E+00    0.00     3.0000E-03    0.12
+  Initialization ....... 2.0000E+00  100.00     2.4830E+00   99.60
+  ----------------------------------------------------------------
+  T o t a l s            2.0000E+00  100.00     2.4930E+00  100.00
+
+ Problem time       =    0.0000E+00
+ Problem cycle      =         0
+ Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
+ CPU time per zone cycle  =          0.000 picoseconds
+ Clock time per zone cycle=          0.000 picoseconds
+
+ Number of CPU's    1
+ NLQ used/max     192/  192
+ Start time   10/29/2026 08:44:33  
+ End time     10/29/2026 08:44:33  
+ Elapsed time       0 second  for       0 cycles using  1 SMP thread 
+             (      0 hour   0 minute   0 second )
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 08:44:33

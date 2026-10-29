@@ -8,7 +8,8 @@
 # not_definers: keyword names (or name prefixes ending in "_") in a family that refer to the kind but define none.
 # ICFD_PART definitions come from overrides.toml (set.defines).
 
-not_definers = ["MAT_ADD_", "MAT_THERMAL_", "MAT_NONLOCAL"]
+# PART_ADAPTIVE_FAILURE: examples/Self_Piercing_Rivet/spr4.k:136-138 (pid 4 names the part to adapt)
+not_definers = ["MAT_ADD_", "MAT_THERMAL_", "MAT_NONLOCAL", "PART_ADAPTIVE_FAILURE"]
 
 [[definer]]
 kind = "NODE"
@@ -21,6 +22,12 @@ kind = "PART"
 keywords = ["PART", "PART_INERTIA", "PART_CONTACT", "PART_COMPOSITE"]
 field = "pid"
 evidence = "torture base, part_inertia (LS-DYNA accepted part 1 defined only by *PART_INERTIA)"
+
+[[definer]]
+kind = "PART"
+keyword = "CONSTRAINED_NODAL_RIGID_BODY"
+field = "pid"
+evidence = "torture nodal_rigid_part (accepted: a rigid motion names part 5, defined only as a nodal rigid body) and nodal_rigid_none (part 6: rejected); benchmarks/B02_implicit_stress/mesh_solid_initial.key:337595-337596"
 
 [[definer]]
 kind = "MAT"

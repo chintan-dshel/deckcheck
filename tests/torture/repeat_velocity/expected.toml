@@ -1,0 +1,6 @@
+lsdyna_valid = false
+findings = []
+note = "Q: is a second two-card instance under one *INITIAL_VELOCITY_GENERATION read? The second names node set 99, which does not exist. LS-DYNA R16.1 Student 2026-10-29: rejected, 'Error 10144 node set for initial velocity generation # 99 is not found.' Cards left after the layout start another instance."
+
+[index]
+dangling = [{kind = "SET_NODE", id = 99, file = "main.k", line = 24, columns = [8, 10]}]

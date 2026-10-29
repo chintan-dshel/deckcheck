@@ -1,0 +1,6 @@
+lsdyna_valid = false
+findings = []
+note = "Q: control for nodal_rigid_part: the motion names part 6, which nothing defines. LS-DYNA R16.1 Student 2026-10-29: rejected, 'Error 20368 mat/set id used in prescribed b.c. must be defined as rigid'."
+
+[index]
+dangling = [{kind = "PART", id = 6, file = "main.k", line = 27, columns = [9, 10]}]

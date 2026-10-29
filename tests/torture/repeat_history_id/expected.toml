@@ -1,0 +1,6 @@
+lsdyna_valid = false
+findings = []
+note = "Q: is a second *DATABASE_HISTORY_NODE_ID line read as another instance? It names node 99. LS-DYNA R16.1 Student 2026-10-29: rejected, 'Error 20211 undefined node # 99'."
+
+[index]
+dangling = [{kind = "NODE", id = 99, file = "main.k", line = 23, columns = [8, 10]}]

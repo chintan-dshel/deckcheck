@@ -30,7 +30,7 @@ OFFSET_FIELD: dict[str, str] = {
 # a reference of the key kind resolves against definitions of any listed kind: curves and tables share ids; a
 # missing part set id falls back to the part with that id (torture contact_type2_bad/_none, velocity_styp1_bad/_none)
 LOOKUP = {"DEFINE_CURVE": ("DEFINE_CURVE", "DEFINE_TABLE"), "DEFINE_CURVE_OR_TABLE": ("DEFINE_CURVE", "DEFINE_TABLE"),
-          "SET_PART": ("SET_PART", "PART")}
+          "SET_PART": ("SET_PART", "PART"), "ICFD_PART": ("ICFD_PART", "ICFD_PART_VOL")}
 STRUCTURAL = frozenset({"KEYWORD", "TITLE", "END"})
 
 
@@ -186,7 +186,8 @@ class Index:
         spec, v = f.spec, f.value
         if "link_by" in spec:
             t = row.get(spec["link_by"])
-            kind = spec["link_map"].get(str(t.value)) if t is not None and isinstance(t.value, int) else None
+            ok = t is not None and isinstance(t.value, (int, str))  # a type number, or a row name (SET_*_GENERAL)
+            kind = spec["link_map"].get(str(t.value).strip().upper()) if ok else None
         else:
             kind = spec.get("link")
         if kind is None or v is None or v == 0:

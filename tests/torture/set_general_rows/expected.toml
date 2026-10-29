@@ -1,0 +1,6 @@
+lsdyna_valid = false
+findings = []
+note = "Q: is the second option row of *SET_NODE_GENERAL read? It names part 99. LS-DYNA R16.1 Student 2026-10-29: rejected, 'Error 10147 part 99 to be added to node set is not defined'."
+
+[index]
+dangling = [{kind = "PART", id = 99, file = "main.k", line = 24, columns = [18, 20]}]

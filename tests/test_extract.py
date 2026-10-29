@@ -109,3 +109,11 @@ def test_every_card_has_when_and_counts_have_length(data):
             assert "when" in c and c["conditional"] == (c["when"] is not None)
             if c["kind"] in ("table", "series", "card_set", "table_group"):
                 assert "length" in c
+
+
+def test_legacy_element_solid_layout(data):
+    legacy = data["keywords"]["ELEMENT_SOLID"]["legacy"]
+    assert legacy["first_card_longer_than"] == 16
+    rows = legacy["cards"][0]
+    assert rows["kind"] == "table" and [f["name"] for f in rows["fields"]][:3] == ["eid", "pid", "n1"]
+    assert "legacy" in data["keywords"]["ELEMENT_SOLID_ORTHO"] and "legacy" not in data["keywords"]["NODE"]

@@ -103,10 +103,15 @@ def _link_facts(s: dict) -> dict:
 @functools.cache
 def layout(key: str) -> dict:
     """The keyword's data entry with every override applied: per-field link facts (link, link_by + link_map,
-    link_when), replaced series layouts and added option cards. Read-only: callers share the cached dict."""
+    link_when), replaced series layouts, added option cards, cards read as rows (set.rows) and cards deckcheck
+    stops at (set.stop). Read-only: callers share the cached dict."""
     entry = copy.deepcopy(load()["keywords"][key])
     links = entry["links"]
-    for card in walk_cards(entry["cards"]):
+
+    def every_card():
+        return walk_cards(entry["cards"] + entry.get("legacy", {}).get("cards", []))
+
+    for card in every_card():
         if card["kind"] == "series" and card["name"] in links:
             card["link"] = links[card["name"]]
         for f in card.get("fields", []):
@@ -131,7 +136,12 @@ def layout(key: str) -> dict:
                 if c.get("name") == o["card"] else c for c in entry["cards"]]
             continue
         names = {o["field"]} if "field" in o else set(o.get("fields", []))
-        for card in walk_cards(entry["cards"]):
+        for card in every_card():
+            if card["kind"] == "card" and names & {f["name"] for f in card["fields"]}:
+                if s.get("rows"):
+                    card.update(kind="table", length=None)
+                if "stop" in s:
+                    card["stop"] = s["stop"]
             if card["kind"] == "series" and card.get("name") == o.get("card"):
                 card.update(_link_facts(s))
             for f in card.get("fields", []):
