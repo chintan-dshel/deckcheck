@@ -136,3 +136,12 @@ option = "ID"
 set = { add_option = { name = "ID", position = "pre/1", fields = [ { name = "id", type = "int", offset = 0, width = 10 }, { name = "heading", type = "str", offset = 10, width = 70 } ] } }
 evidence = "guidelines/explicit/EX04_POST_BUCKLING_STRENGTH/static_buckling.k:385023 *LOAD_SEGMENT_SET_NONUNIFORM_ID then '1Pressure load' before ssid/lcid"
 reason = "ID card precedes the load card."
+
+# --- References LS-DYNA does not check: a use, never a dangling reference.
+
+[[override]]
+keyword = "BOUNDARY_SPC_SET"
+field = "nsid"
+set = { when = "unchecked" }
+evidence = "tests/torture/spc_set_none (*BOUNDARY_SPC_SET names node set 99, none defined: LS-DYNA R16.1 Student accepted, no warning)"
+reason = "LS-DYNA accepts a missing node set here, so a dangling nsid is not a deckcheck error; the id still counts as a use."

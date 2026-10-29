@@ -5,3 +5,6 @@ note = "Q: is a nested include searched in the including file's folder? LS-DYNA 
 [resolver]
 files = ["main.k", "sub/a.k"]
 problems = [{kind = "missing", file = "sub/a.k", line = 3, name = "b.k"}]
+
+[index]
+dangling = [{kind = "MAT", id = 1, file = "main.k", line = 10, columns = [29, 30]}]

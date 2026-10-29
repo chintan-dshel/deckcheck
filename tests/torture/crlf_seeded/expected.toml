@@ -11,3 +11,7 @@ note = "seeded_mistakes with CRLF line endings: line numbers must match the LF o
 [resolver]
 files = ["main.k"]
 problems = [{kind = "missing", file = "main.k", line = 3, name = "missing_file.k"}]
+
+[index]
+dangling = [{kind = "MAT", id = 99, file = "main.k", line = 8, columns = [28, 30]}]
+duplicates = [{kind = "PART", id = 1, file = "main.k", line = 11, columns = [9, 10]}]

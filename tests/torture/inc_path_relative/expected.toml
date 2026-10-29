@@ -4,3 +4,6 @@ note = "Q: is *INCLUDE_PATH_RELATIVE relative to the file holding it, or to the 
 
 [resolver]
 files = ["main.k", "sub/a.k", "lib/mat.k"]
+
+[index]
+dangling = [{kind = "MAT", id = 1, file = "main.k", line = 10, columns = [29, 30]}]

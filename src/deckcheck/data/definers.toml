@@ -1,0 +1,204 @@
+# Which keywords define an entity of which kind, and through which id field. pydyna marks only the referring side
+# (docs/m1a-keyword-data.md §4.1). A row applies to the keywords it names that have its field; each row is checked by
+# tests/test_definers.py and by the M1c corpus run (docs/m1c-field-reader-index.md).
+#
+# [[definer]]: kind, keyword | keywords | keyword_prefix (+ exclude_prefix), field, evidence
+# [[family]]:  kind, prefix. A keyword named prefix or prefix_* that no definer row covers and that is not listed in
+#              not_definers makes the kind uncertain in a deck that uses it: references into the kind go unchecked.
+# not_definers: keyword names (or name prefixes ending in "_") in a family that refer to the kind but define none.
+# ICFD_PART definitions come from overrides.toml (set.defines).
+
+not_definers = ["MAT_ADD_", "MAT_THERMAL_", "MAT_NONLOCAL"]
+
+[[definer]]
+kind = "NODE"
+keyword = "NODE"
+field = "nid"
+evidence = "torture base; M0 tier-1 runs (every element node defined by *NODE)"
+
+[[definer]]
+kind = "PART"
+keywords = ["PART", "PART_INERTIA", "PART_CONTACT", "PART_COMPOSITE"]
+field = "pid"
+evidence = "torture base, part_inertia (LS-DYNA accepted part 1 defined only by *PART_INERTIA)"
+
+[[definer]]
+kind = "MAT"
+keyword_prefix = "MAT_"
+exclude_prefix = ["MAT_ADD_", "MAT_THERMAL_", "MAT_NONLOCAL", "MAT_T0", "MAT_T1"]
+field = "mid"
+evidence = "torture base (MAT_ELASTIC), table_ids (MAT_PIECEWISE_LINEAR_PLASTICITY); MAT_ADD_* refer to a material; MAT_THERMAL_*/MAT_Tnn are the thermal namespace"
+
+[[definer]]
+kind = "SECTION"
+keyword_prefix = "SECTION_"
+field = "secid"
+evidence = "torture base (SECTION_SHELL)"
+
+[[definer]]
+kind = "HOURGLASS"
+keyword = "HOURGLASS"
+field = "hgid"
+evidence = "M1c offset probe HOURGLASS control (LS-DYNA accepted part hgid 1 = *HOURGLASS 1)"
+
+[[definer]]
+kind = "DEFINE_CURVE"
+keyword_prefix = "DEFINE_CURVE"
+field = "lcid"
+evidence = "torture table_ids (curves 5, 6 named by table rows)"
+
+[[definer]]
+kind = "DEFINE_TABLE"
+keyword_prefix = "DEFINE_TABLE"
+field = "tbid"
+evidence = "torture table_ids (lcss 10 = *DEFINE_TABLE 10)"
+
+[[definer]]
+kind = "SET_PART"
+keyword_prefix = "SET_PART"
+field = "sid"
+evidence = "torture part_inertia (contact ssid 1, sstyp 2 = *SET_PART_LIST 1)"
+
+[[definer]]
+kind = "SET_NODE"
+keyword_prefix = "SET_NODE"
+field = "sid"
+evidence = "torture spc_set_id (nsid 1 = *SET_NODE_LIST 1)"
+
+[[definer]]
+kind = "SET_SEGMENT"
+keyword_prefix = "SET_SEGMENT"
+field = "sid"
+evidence = "data: every SET_SEGMENT* first card is sid; corpus run checks"
+
+[[definer]]
+kind = "SET_SOLID"
+keyword_prefix = "SET_SOLID"
+field = "sid"
+evidence = "data: sid first; corpus run checks"
+
+[[definer]]
+kind = "SET_BEAM"
+keyword_prefix = "SET_BEAM"
+field = "sid"
+evidence = "data: sid first; corpus run checks"
+
+[[definer]]
+kind = "SET_DISCRETE"
+keyword_prefix = "SET_DISCRETE"
+field = "sid"
+evidence = "data: sid first; corpus run checks"
+
+[[definer]]
+kind = "DEFINE_BOX"
+keyword_prefix = "DEFINE_BOX"
+field = "boxid"
+evidence = "data: boxid first; corpus run checks"
+
+[[definer]]
+kind = "DEFINE_VECTOR"
+keyword_prefix = "DEFINE_VECTOR"
+field = "vid"
+evidence = "data: vid first; corpus run checks"
+
+[[definer]]
+kind = "DEFINE_COORDINATE_SYSTEM"
+keyword_prefix = "DEFINE_COORDINATE"
+field = "cid"
+evidence = "data: DEFINE_COORDINATE_SYSTEM/_NODES/_VECTOR all start with cid; corpus run checks"
+
+[[definer]]
+kind = "DEFINE_TRANSFORMATION"
+keyword = "DEFINE_TRANSFORMATION"
+field = "tranid"
+evidence = "Yaris combine.key:101 (*INCLUDE_TRANSFORM tranid; M1a check)"
+
+[[definer]]
+kind = "ELEMENT_SHELL"
+keyword_prefix = "ELEMENT_SHELL"
+field = "eid"
+evidence = "torture base"
+
+[[definer]]
+kind = "ELEMENT_SOLID"
+keyword_prefix = "ELEMENT_SOLID"
+field = "eid"
+evidence = "data: eid first; corpus run checks"
+
+[[definer]]
+kind = "ELEMENT_BEAM"
+keyword_prefix = "ELEMENT_BEAM"
+field = "eid"
+evidence = "data: eid first; corpus run checks"
+
+[[family]]
+kind = "NODE"
+prefix = "NODE"
+
+[[family]]
+kind = "PART"
+prefix = "PART"
+
+[[family]]
+kind = "MAT"
+prefix = "MAT"
+
+[[family]]
+kind = "SECTION"
+prefix = "SECTION"
+
+[[family]]
+kind = "DEFINE_CURVE"
+prefix = "DEFINE_CURVE"
+
+[[family]]
+kind = "DEFINE_TABLE"
+prefix = "DEFINE_TABLE"
+
+[[family]]
+kind = "SET_PART"
+prefix = "SET_PART"
+
+[[family]]
+kind = "SET_NODE"
+prefix = "SET_NODE"
+
+[[family]]
+kind = "SET_SEGMENT"
+prefix = "SET_SEGMENT"
+
+[[family]]
+kind = "SET_SOLID"
+prefix = "SET_SOLID"
+
+[[family]]
+kind = "SET_BEAM"
+prefix = "SET_BEAM"
+
+[[family]]
+kind = "SET_DISCRETE"
+prefix = "SET_DISCRETE"
+
+[[family]]
+kind = "DEFINE_BOX"
+prefix = "DEFINE_BOX"
+
+[[family]]
+kind = "DEFINE_VECTOR"
+prefix = "DEFINE_VECTOR"
+
+[[family]]
+kind = "DEFINE_COORDINATE_SYSTEM"
+prefix = "DEFINE_COORDINATE"
+
+[[family]]
+kind = "ELEMENT_SHELL"
+prefix = "ELEMENT_SHELL"
+
+[[family]]
+kind = "ELEMENT_SOLID"
+prefix = "ELEMENT_SOLID"
+
+[[family]]
+kind = "ELEMENT_BEAM"
+prefix = "ELEMENT_BEAM"

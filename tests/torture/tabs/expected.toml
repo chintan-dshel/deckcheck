@@ -1,3 +1,7 @@
 lsdyna_valid = false
 findings = []
 note = "Tabs between values. LS-DYNA Student R16.1 (2026-10-28) misreads the tab-separated MAT_ELASTIC card: 'PART ID 1 with SECTION ID 1 and MATERIAL ID 1 does not exist', Error 10133, error termination. Tabs are a silent card misread, a DC003 candidate deckcheck should flag."
+
+[index]
+dangling = []
+note_index = "the tab makes mid a bad value (uncertain, not dangling); DC003 reports the tab"

@@ -5,3 +5,7 @@ note = "Q: what does LS-DYNA do with a.k -> b.k -> a.k? LS-DYNA R16.1 Student 20
 [resolver]
 files = ["main.k", "a.k", "b.k"]
 problems = [{kind = "cycle", file = "b.k", line = 3, name = "a.k"}]
+
+[index]
+dangling = []
+note_index = "the model is complete; the cycle itself is DC004's"
