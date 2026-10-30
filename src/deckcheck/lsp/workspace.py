@@ -10,6 +10,37 @@ from deckcheck.includes import _key, _norm, resolve_tree
 from deckcheck.reader import SourceFile, read_includes
 
 DECK_SUFFIXES = (".k", ".key", ".dyn")
+CHUNK = 20_000
+
+
+def drain(x) -> None:
+    """Empty a large container a chunk at a time. Freeing a 5-million-entry list or dict is one C call that holds
+    the GIL for hundreds of milliseconds and stalls the protocol thread (spec §3, measured on a 300 MB mesh)."""
+    if isinstance(x, dict):
+        for v in x.values():
+            if isinstance(v, (dict, list, set)):
+                drain(v)
+        while x:
+            for _ in range(min(CHUNK, len(x))):
+                x.popitem()
+    elif isinstance(x, list):
+        while x:
+            del x[-CHUNK:]
+    elif isinstance(x, set):
+        while x:
+            for _ in range(min(CHUNK, len(x))):
+                x.pop()
+
+
+def drain_source(src: SourceFile) -> None:
+    for b in src.blocks:
+        drain(b.cards)
+    drain(src.blocks)
+
+
+def drain_index(ix) -> None:
+    for name in ("defs", "possible", "dups", "refs", "problems", "unchecked", "uncertain_defs", "uncertain_uses"):
+        drain(getattr(ix, name))
 
 
 @dataclass
@@ -37,6 +68,7 @@ class Workspace:
         self._reach: dict[str, set[str]] = {}   # main key -> keys of every file its include tree reaches
         self._mains: dict[str, Path] = {}
         self._caches: dict[str, dict[str, SourceFile]] = {}
+        self._drops: set[str] = set()
         self._dirty = True
         self._lock = threading.Lock()
 
@@ -65,20 +97,33 @@ class Workspace:
         return self._caches.setdefault(_key(_norm(main)), {})
 
     def drop_file(self, path: Path) -> None:
-        k = _key(_norm(path))
+        """Record that a file's parse is stale; the worker frees it (apply_drops) before the next check."""
+        with self._lock:
+            self._drops.add(_key(_norm(path)))
+
+    def apply_drops(self) -> None:
+        """Worker thread: free the parses of changed files, a chunk at a time."""
+        with self._lock:
+            drops, self._drops = self._drops, set()
         for cache in list(self._caches.values()):
-            cache.pop(k, None)
+            for k in drops:
+                src = cache.pop(k, None)
+                if src is not None:
+                    drain_source(src)
 
     def open_models(self) -> set[str]:
         open_files = set(self._overlay)
         return {m for m in self._caches if self._reach.get(m, {m}) & open_files}
 
     def release_closed(self) -> None:
-        """Drop the parse caches of models with no open file (M2 spec §6)."""
+        """Worker thread: free the parse caches of models with no open file (M2 spec §6)."""
         keep = self.open_models()
         for m in list(self._caches):
             if m not in keep:
-                del self._caches[m]
+                cache = self._caches.pop(m)
+                for src in cache.values():
+                    drain_source(src)
+                drain(cache)
 
     # main decks
     def mark_dirty(self) -> None:

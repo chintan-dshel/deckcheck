@@ -1,3 +1,6 @@
+import os
+import sys
+import pytest
 import tomllib
 from pathlib import Path
 
@@ -103,3 +106,26 @@ def test_read_from_text_uses_the_text_not_the_disk():
 
 def test_block_keeps_its_keyword_line():
     assert _read("base").blocks[0].text.startswith("*KEYWORD")
+
+
+@pytest.mark.parametrize("chunk", [1, 2, 7, 4096])
+@pytest.mark.parametrize("case", ["base", "crlf", "latin1", "crlf_seeded", "end_main"])
+def test_chunked_lines_match_reading_whole(case, chunk):
+    from deckcheck.reader import _lines, _split
+    path = TORTURE / case / "main.k"
+    assert _lines(path, chunk=chunk) == _split(path.read_bytes().decode("latin-1"))
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="POSIX never locks an open file against deletion")
+def test_reading_never_blocks_saving_or_deleting_the_file(tmp_path):
+    """Windows' default open refuses deletion while a file is read. Replacing by rename stays refused by Windows
+    itself while any program has the target open, so deckcheck only keeps files open while reading them."""
+    from deckcheck.reader import _stream
+    deck = tmp_path / "m.k"
+    deck.write_text("*KEYWORD\n" + "$ c\n" * 1000 + "*END\n", encoding="latin-1")
+    lines = _stream(deck)
+    next(lines)                       # deckcheck is mid-read: the file is open
+    with open(deck, "r+b") as f:      # VS Code saves by writing in place
+        f.write(b"*KEYWORD")
+    os.remove(deck)                   # a user deleting it
+    list(lines)

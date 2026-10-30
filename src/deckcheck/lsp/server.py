@@ -1,6 +1,8 @@
 """Protocol handlers (M2 spec §4.2). Each handler records what changed and asks the runner; none waits for a check
 (spec §3). Results are published from the runner's thread through the event loop."""
 import asyncio
+import gc
+from dataclasses import dataclass
 from pathlib import Path
 
 from lsprotocol import types
@@ -12,7 +14,7 @@ from deckcheck.includes import _key, _norm
 from deckcheck.lsp.__main__ import start_watchdog
 from deckcheck.lsp.convert import merge, to_lsp
 from deckcheck.lsp.runner import Runner
-from deckcheck.lsp.workspace import Settings, Workspace
+from deckcheck.lsp.workspace import Settings, Workspace, drain_index
 from deckcheck.rules import check
 
 
@@ -32,36 +34,59 @@ def _path(uri: str) -> Path | None:
     return _norm(Path(p)) if p else None
 
 
-def _status(ls: DeckServer, main: Path, state: str, report=None) -> None:
-    items = [{"what": n.what, "reasons": list(n.reasons), "count": n.count}
-             for n in (report.not_checked if report else [])]
+@dataclass
+class Result:
+    """What the protocol thread needs from a check; built in the worker so the report is freed there."""
+    diagnostics: dict[str, list[types.Diagnostic]]
+    not_checked: list[dict]
+
+
+def _status(ls: DeckServer, main: Path, state: str, items: list[dict]) -> None:
     ls.protocol.notify("deckcheck/status", {"main": from_fs_path(str(main)), "state": state, "notChecked": items})
 
 
-def _publish(ls: DeckServer, main: Path, report, error) -> None:
+def _publish(ls: DeckServer, main: Path, result: Result | None, error) -> None:
     k = _key(main)
     previous = set(ls.results.get(k, {}))
-    if error is not None or report is None:
+    if error is not None or result is None:
         ls.results[k] = {u: [] for u in previous}
-        state = "check failed"
+        state, items = "check failed", []
         ls.window_log_message(types.LogMessageParams(types.MessageType.Error, f"deckcheck: {main}: {error!r}"))
     else:
-        report.diagnostics[:] = [d for d in report.diagnostics if d.code not in ls.ws.settings.ignore]
-        ls.results[k] = to_lsp(report, ls.ws.synced)
+        ls.results[k] = result.diagnostics
         for u in previous - set(ls.results[k]):
             ls.results[k][u] = []
-        state = "ok" if ls.runner.live(main) else "checks on save"
+        state, items = ("ok" if ls.runner.live(main) else "checks on save"), result.not_checked
     ls.names[k] = main.name
     merged = merge(ls.results, ls.names)
     main_uri = from_fs_path(str(main))
     for u in sorted(ls.results[k], key=lambda u: u == main_uri):  # included files first, the main deck last
         ls.text_document_publish_diagnostics(types.PublishDiagnosticsParams(uri=u, diagnostics=merged.get(u, [])))
-    _status(ls, main, state, report)
-    ls.ws.release_closed()
+    _status(ls, main, state, items)
 
 
-def _check(ls: DeckServer, main: Path):
-    return check(main, source=ls.ws.source, cache=ls.ws.cache_for(main))
+def _check(ls: DeckServer, main: Path) -> Result:
+    """Worker thread. Everything that frees or builds big structures happens here, never on the protocol thread:
+    a full garbage collection over a big model's millions of objects holds the GIL for ~200 ms (measured on the
+    Yaris), so collection pauses during a check and the survivors are frozen out of later scans (still freed by
+    reference counting); M1's structures are acyclic. The report's index is emptied a chunk at a time."""
+    gc.disable()
+    try:
+        report = check(main, source=ls.ws.source, cache=ls.ws.cache_for(main))
+        report.diagnostics[:] = [d for d in report.diagnostics if d.code not in ls.ws.settings.ignore]
+        result = Result(to_lsp(report, ls.ws.synced),
+                        [{"what": n.what, "reasons": list(n.reasons), "count": n.count} for n in report.not_checked])
+        drain_index(report.index)
+        return result
+    finally:
+        ls.ws.release_closed()
+        gc.freeze()
+        gc.enable()
+
+
+def _prepare(ls: DeckServer) -> None:
+    ls.ws.apply_drops()
+    ls.ws.ensure_scanned()
 
 
 @server.feature(types.INITIALIZE)
@@ -77,7 +102,7 @@ def initialize(ls: DeckServer, params: types.InitializeParams) -> None:
     ls.results, ls.names = {}, {}
     ls.runner = Runner(models=ls.ws.models_for, check=lambda m: _check(ls, m),
                        publish=lambda m, r, e: ls.loop.call_soon_threadsafe(_publish, ls, m, r, e),
-                       threshold=settings.live_threshold, prepare=ls.ws.ensure_scanned)
+                       threshold=settings.live_threshold, prepare=lambda: _prepare(ls))
     ls.runner.start()
 
 

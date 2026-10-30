@@ -61,6 +61,10 @@ def start_watchdog(budget_mb: int) -> None:
 
 def main() -> None:
     lower_priority()
+    # The check thread must hand the GIL to the protocol thread promptly (spec §3). Measured on the Yaris, ping
+    # during a check: 5 ms and 1 ms intervals give a ~100 ms median, 0.1 ms gives 2 ms. A forced switch only
+    # happens while another thread waits, so an idle protocol thread costs the check nothing.
+    sys.setswitchinterval(0.0001)
     from deckcheck.lsp.server import server
     server.start_io()
 

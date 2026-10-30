@@ -1,4 +1,6 @@
 """Split a deck file into keyword blocks and cards, with positions. Never interprets a keyword's meaning (spec §2)."""
+import os
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import NamedTuple
@@ -41,8 +43,40 @@ def _split(text: str) -> list[str]:
     return [ln[:-1] if ln.endswith("\r") else ln for ln in lines]
 
 
-def _lines(path: Path) -> list[str]:
-    return _split(path.read_bytes().decode("latin-1"))
+def _open(path: Path):
+    """Open for reading without locking the file against deletion or rename (M2 spec §3: an editor saving by
+    rename, or a user deleting a file, must never fail because deckcheck is reading it). Windows' default open
+    leaves out FILE_SHARE_DELETE; POSIX never locks."""
+    if sys.platform != "win32":
+        return open(path, "rb")
+    import ctypes
+    import msvcrt
+    from ctypes import wintypes
+    k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    k32.CreateFileW.restype = wintypes.HANDLE
+    k32.CreateFileW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, wintypes.LPVOID,
+                                wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+    # GENERIC_READ; share read, write and delete; OPEN_EXISTING; FILE_ATTRIBUTE_NORMAL
+    handle = k32.CreateFileW(str(path), 0x80000000, 0x7, None, 3, 0x80, None)
+    if handle in (None, wintypes.HANDLE(-1).value):
+        raise ctypes.WinError(ctypes.get_last_error())  # an OSError subclass, as open() raises
+    return os.fdopen(msvcrt.open_osfhandle(handle, os.O_RDONLY | os.O_BINARY), "rb")
+
+
+def _lines(path: Path, chunk: int = 1 << 20) -> list[str]:
+    """As _split of the whole file, decoded and split a chunk at a time: one decode or split of a 170 MB file holds
+    Python's GIL for about 250 ms, which would stall the language server's protocol thread (M2 spec §3)."""
+    out: list[str] = []
+    tail = ""
+    with _open(path) as f:
+        while block := f.read(chunk):
+            parts = (tail + block.decode("latin-1")).split("\n")
+            tail = parts.pop()
+            out.extend(parts)
+    out.append(tail)
+    if out[-1] == "":
+        out.pop()
+    return [ln[:-1] if ln.endswith("\r") else ln for ln in out]
 
 
 def _name(line: str) -> str:
@@ -67,7 +101,7 @@ def read_file(path: Path, text: str | None = None) -> SourceFile:
 
 
 def _stream(path: Path):
-    with open(path, "rb") as f:
+    with _open(path) as f:
         for raw in f:  # binary iteration splits on b"\n" only, as _split does
             line = raw.decode("latin-1")
             if line.endswith("\n"):

@@ -1,6 +1,6 @@
 # deckcheck M2: VS Code extension — design
 
-Status: draft for Chintan's review, 2026-10-30. Binds M2a, M2b and M2c. Parent spec:
+Status: approved 2026-10-30; M2a done 2026-10-30 (`docs/m2a-server-squiggles.md`). Binds M2a, M2b and M2c. Parent spec:
 `docs/specs/2026-10-27-deckcheck-design.md` (§8 front doors, §12 edge-case register).
 
 ## 1. Goal and bracketing
@@ -82,7 +82,15 @@ VS Code ── extension host ── client (TypeScript, thin) ──stdio JSON-
 - `runner.py`: §6.
 - `features.py`: §5.
 - `server.py`: protocol handlers only; each calls the three modules above.
-- `__main__.py`: sets priority, starts the memory watchdog, runs the server on stdio.
+- `__main__.py`: sets priority and a 0.1 ms GIL switch interval, starts the memory watchdog, runs the server on
+  stdio.
+- Protocol additions (M2a): client → server notification `deckcheck/check {uri}` (check the models of a file the
+  client does not sync); server → client notification `deckcheck/status {main, state, notChecked}` with state
+  `ok | checks on save | check failed | save to check`; request `deckcheck/ping` → `{ok: true}`; exit code 75 =
+  paused over the memory budget. Settings arrive as `initializationOptions`.
+- Keeping the protocol thread responsive (M2a, measured on the Yaris): checks run with automatic garbage
+  collection paused and survivors frozen; files are read and split a megabyte at a time; big results are converted
+  and freed in the worker, a chunk at a time. Ping during a Yaris check: 16 ms worst (was 515 ms).
 
 ### 4.3 Changes to the M1 core (minimal, test-first, CLI output unchanged byte for byte)
 - `resolve_tree(main, source=None, cache=None)`: `source(path) -> str | None` supplies overlay text; the existing
@@ -105,8 +113,10 @@ VS Code ── extension host ── client (TypeScript, thin) ──stdio JSON-
 
 ### 5.1 Diagnostics and status
 - Every M1 diagnostic becomes an LSP diagnostic: severity, code (linked to the README check table), message,
-  `related` as related information. Columns carry over unchanged: M1 reads Latin-1, one byte per character, and every
-  Latin-1 character is one UTF-16 unit.
+  `related` as related information. Columns are converted to UTF-16 units of the text the editor shows: a file read
+  from disk is mapped through UTF-8 decoding with replacement (VS Code's default), editor text is counted directly
+  (`lsp/convert.py`). (Revised in M2a: the draft said columns carry over unchanged, which is wrong for UTF-8 files.)
+  No link to the README yet: there is no public URL until the release decision.
 - Diagnostics are published for every file of a model; files that no longer have any are cleared. `deckcheck.ignore`
   matches the CLI's `--ignore`.
 - "Not checked" never becomes a diagnostic. The status bar shows `deckcheck: N not checked` (or `checks on save`,
@@ -151,6 +161,9 @@ code action, "Insert field ruler", writes a `$#` comment line naming the fields 
 - Multi-root workspaces: settings, detection and models per folder.
 - `.k` is also used by other languages; `deckcheck.enable: false` per folder is the way out.
 - Remote, WSL and Codespaces: not tested in M2; stated in the README.
+- Windows file locks: deckcheck opens files with delete sharing, so deleting a file or saving it in place (VS Code's
+  way) works while deckcheck reads it. Windows still refuses replacing a file by rename while any program has it
+  open; deckcheck keeps a file open only while reading it.
 
 ## 8. Settings
 
