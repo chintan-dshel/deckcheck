@@ -1,0 +1,33 @@
+# Corpus findings for DC003-DC006 judged real (M1d Task 7). Each cites its evidence. A deck not listed has none.
+# DC001/DC002 are judged in expected_index.toml. Small ids occur on thousands of element lines, so DC005 is judged
+# from every referrer of the kind (the *PART cards' secid/mid), not by a text search for the number.
+
+[[deck]]
+name = "lsdyna-doc-examples-implicit_postbuckling-step_2_postbuckl-b4_postbuckling_frame"
+findings = [{code = "DC005", file = "B4_Postbuckling_Frame.key", line = 6597}, {code = "DC005", file = "B4_Postbuckling_Frame.key", line = 6600}]
+evidence = "MAT 1 and MAT 2 are *MAT_ELASTIC 'Default MAT1 Material'; both *PARTs (lines 6575, 6582) use mid 100, and no other keyword names a material."
+
+[[deck]]
+name = "lsdyna-doc-examples-self_piercing_rivet-spr4"
+findings = [{code = "DC005", file = "spr4.k", line = 141}]
+evidence = "*SECTION_SHELL 2 at line 141; all six *PARTs (lines 69-135) use secid 1."
+
+[[deck]]
+name = "lsdyna-doc-guidelines-implicit-frequency_domain-psd_fatigue_example-set_4"
+findings = [{code = "DC005", file = "set_4.key", line = 102}]
+evidence = "*MAT_ELASTIC 1 at line 102; the two *PARTs (lines 76, 90) use mid 3 and mid 2."
+
+[[deck]]
+name = "lsdyna-doc-guidelines-implicit-examples-bolts001"
+findings = [{code = "DC004", file = "bolts001.key", line = 8}, {code = "DC004", file = "bolts001.key", line = 24}]
+evidence = "INCLUDE_FILES/ is not beside the deck in the Student install; LS-DYNA Error 10087 (docs/m1b-reader-includes.md, tier-1 missing includes)."
+
+[[deck]]
+name = "lsdyna-doc-guidelines-implicit-examples-eigen001"
+findings = [{code = "DC004", file = "eigen001.key", line = 7}, {code = "DC004", file = "eigen001.key", line = 11}]
+evidence = "As bolts001: INCLUDE_FILES/ missing beside the deck (M1b, Error 10087)."
+
+[[deck]]
+name = "lsdyna-doc-guidelines-implicit-examples-doorstiff001"
+findings = [{code = "DC004", file = "doorstiff001.key", line = 6}, {code = "DC004", file = "doorstiff001.key", line = 13}]
+evidence = "As bolts001: INCLUDE_FILES/ missing beside the deck (M1b, Error 10087)."
