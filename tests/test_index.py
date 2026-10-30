@@ -273,3 +273,12 @@ def test_block_failure_is_recorded_and_run_continues(tmp_path, monkeypatch):
 def test_uncertain_reasons_name_the_file(tmp_path):
     ix = index(tmp_path, BASE + "*PART\nother\n" + i10(2, 1, "&nope") + "\n")
     assert any(r.startswith("main.k:") for r in ix.uncertain_uses["MAT"])
+
+
+def test_long_deck_reads_the_parsed_line_not_the_disk(tmp_path):
+    from deckcheck.index import _long_deck
+    deck = tmp_path / "main.k"
+    deck.write_text("*KEYWORD LONG=Y\n*END\n", encoding="latin-1")
+    tree = resolve_tree(deck)
+    deck.write_text("*KEYWORD\n*END\n", encoding="latin-1")
+    assert _long_deck(tree) is True

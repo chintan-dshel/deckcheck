@@ -96,8 +96,7 @@ def _long_deck(tree: Tree) -> bool:
     main = tree.files[0].source
     for block in main.blocks:
         if block.name in ("KEYWORD", "KEYWORD_ID", "KEYWORD_JOBID"):  # LONG=Y on either: m1d_keyword_id_long
-            line = main.path.read_bytes().decode("latin-1").split("\n")[block.line - 1]
-            return LONG_KEYWORD and "LONG=Y" in line.upper().replace(" ", "")
+            return LONG_KEYWORD and "LONG=Y" in block.text.upper().replace(" ", "")
     return False
 
 

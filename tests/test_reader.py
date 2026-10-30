@@ -88,3 +88,18 @@ def test_text_after_end_is_read_as_lsdyna_reads_it():
     lsdyna_ignores_it = tomllib.loads((TORTURE / "end_main" / "expected.toml").read_text(encoding="utf-8"))["lsdyna_valid"]
     names = [b.name for b in _read("end_main").blocks]
     assert ("NOT_A_KEYWORD" not in names) == lsdyna_ignores_it
+
+
+def test_read_from_text_matches_disk():
+    path = TORTURE / "base" / "main.k"
+    assert read_file(path, text=path.read_bytes().decode("latin-1")) == read_file(path)
+
+
+def test_read_from_text_uses_the_text_not_the_disk():
+    src = read_file(TORTURE / "base" / "main.k", text="*KEYWORD\n*PART\nedited\n         9         1         1\n")
+    assert [b.name for b in src.blocks] == ["KEYWORD", "PART"]
+    assert src.blocks[1].cards[1] == Card(4, "         9         1         1")
+
+
+def test_block_keeps_its_keyword_line():
+    assert _read("base").blocks[0].text.startswith("*KEYWORD")

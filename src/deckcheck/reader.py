@@ -23,6 +23,7 @@ class Block:
     line: int
     resolved: Resolved | None
     cards: list[Card] = field(default_factory=list)
+    text: str = ""  # the keyword line as read (*KEYWORD LONG=Y needs it; M2 reads it instead of the disk)
 
 
 @dataclass
@@ -32,13 +33,16 @@ class SourceFile:
     end_line: int | None
 
 
-def _lines(path: Path) -> list[str]:
+def _split(text: str) -> list[str]:
     # split on '\n' only: str.splitlines() would also break on Latin-1 bytes such as \x85
-    text = path.read_bytes().decode("latin-1")
     lines = text.split("\n")
     if lines[-1] == "":
         lines.pop()
     return [ln[:-1] if ln.endswith("\r") else ln for ln in lines]
+
+
+def _lines(path: Path) -> list[str]:
+    return _split(path.read_bytes().decode("latin-1"))
 
 
 def _name(line: str) -> str:
@@ -46,16 +50,17 @@ def _name(line: str) -> str:
     return head[0].rstrip("+-").upper() if head else ""
 
 
-def read_file(path: Path) -> SourceFile:
+def read_file(path: Path, text: str | None = None) -> SourceFile:
+    """text: the file's content when it must not come from disk (an editor's unsaved buffer, M2)."""
     blocks: list[Block] = []
-    for n, text in enumerate(_lines(path), start=1):
-        if text.startswith("$"):
+    for n, line in enumerate(_lines(path) if text is None else _split(text), start=1):
+        if line.startswith("$"):
             continue
-        if text.startswith("*"):
-            name = _name(text)
+        if line.startswith("*"):
+            name = _name(line)
             if name == "END" and STOP_AT_END:
                 return SourceFile(path, blocks, n)
-            blocks.append(Block(name, n, resolve(text)))
+            blocks.append(Block(name, n, resolve(line), text=line))
         elif blocks:
-            blocks[-1].cards.append(Card(n, text))
+            blocks[-1].cards.append(Card(n, line))
     return SourceFile(path, blocks, None)
