@@ -7,6 +7,7 @@ findings = [
   {rule = "unreferenced_entities", line = 20},
 ]
 note = "seeded_mistakes with a Latin-1 byte (0xFC) in the first part title: line numbers must match the LF original."
+note_m1d = "the M0 findings' line numbers come from dynars; M1d's harness reads the [index]/[resolver] tables"
 
 [resolver]
 files = ["main.k"]

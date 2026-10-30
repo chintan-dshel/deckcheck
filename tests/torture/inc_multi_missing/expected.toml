@@ -1,0 +1,7 @@
+lsdyna_valid = false
+findings = []
+note = "Q: does LS-DYNA report every missing name on one *INCLUDE? LS-DYNA R16.1 Student 2026-10-29: rejected, Error 10087 File missing_a.k does not exist, and nothing about missing_b.k: it stops at the first. deckcheck reports both: each is a file the engineer must supply."
+
+[resolver]
+files = ["main.k"]
+problems = [{kind = "missing", file = "main.k", line = 7, name = "missing_a.k"}, {kind = "missing", file = "main.k", line = 8, name = "missing_b.k"}]

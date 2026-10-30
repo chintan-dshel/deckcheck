@@ -7,6 +7,7 @@ findings = [
   {rule = "unreferenced_entities", line = 20},
 ]
 note = "Missing include, PART 1 -> MAT 99 undefined, PART 1 defined twice, MAT 7 unused."
+note_m1d = "the M0 findings' line numbers come from dynars; M1d's harness reads the [index]/[resolver] tables"
 
 [resolver]
 files = ["main.k"]
