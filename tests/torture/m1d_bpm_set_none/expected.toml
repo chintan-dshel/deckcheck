@@ -1,0 +1,6 @@
+lsdyna_valid = false
+findings = []
+note = "Error 10144: node set for imposed boundary # 99 is not found"
+
+[index]
+dangling = [{kind = "SET_NODE", id = 99, file = "main.k", line = 29, columns = [8, 10]}]

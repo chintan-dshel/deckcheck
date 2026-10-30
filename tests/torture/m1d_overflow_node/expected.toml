@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "accepted, no warning, but misread: d3hsp echoes node 12345678 at x = 95.0 (deck: id 123456789, x 5.0). A silent misread deckcheck does not detect in M1 (M4)."

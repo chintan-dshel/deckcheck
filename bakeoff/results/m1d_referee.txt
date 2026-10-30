@@ -1,0 +1,495 @@
+== m1d_base: accepted
+== m1d_bpm_set_none: rejected
+ *** Error 10144 (KEY+144)
+     node set for imposed boundary # 99 is not found.
+ *** Error 10133 (KEY+133)
+ *** Error 10144 (KEY+144)
+      
+     node set for imposed boundary # 99 is not found.
+     (This is #1 in the input order)
+ 
+ *** Error 10133 (KEY+133)
+     keyword input phase failed with: 2 errors
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 20:57:07
+
+ S t o r a g e   a l l o c a t i o n   
+
+ Memory required to complete solution   :     165K
+ Additional dynamically allocated memory:    2123K
+                                   Total:    2287K
+
+ T i m i n g   i n f o r m a t i o n
+                        CPU(seconds)   %CPU  Clock(seconds) %Clock
+  ----------------------------------------------------------------
+  Keyword Processing ... 0.0000E+00    0.00     1.0000E-02    0.40
+    KW Reading ......... 0.0000E+00    0.00     2.0000E-03    0.08
+    KW Writing ......... 0.0000E+00    0.00     3.0000E-03    0.12
+  Initialization ....... 2.0000E+00  100.00     2.4950E+00   99.60
+  ----------------------------------------------------------------
+  T o t a l s            2.0000E+00  100.00     2.5050E+00  100.00
+
+ Problem time       =    0.0000E+00
+ Problem cycle      =         0
+ Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
+ CPU time per zone cycle  =          0.000 picoseconds
+ Clock time per zone cycle=          0.000 picoseconds
+
+ Number of CPU's    1
+ NLQ used/max     192/  192
+ Start time   10/29/2026 20:57:07  
+ End time     10/29/2026 20:57:07  
+ Elapsed time       0 second  for       0 cycles using  1 SMP thread 
+             (      0 hour   0 minute   0 second )
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 20:57:07
+== m1d_load_node_set_none: rejected
+ *** Error 10144 (KEY+144)
+     node set for point load # 99 is not found.
+ *** Error 10133 (KEY+133)
+     node set for point load # 99 is not found.
+     (This is #1 in the input order)
+ 
+ *** Warning 10383 (KEY+383)
+     skipping nonexistent *LOAD_NODE_SET setid 99
+ 
+ *** Error 10133 (KEY+133)
+     keyword input phase failed with: 2 errors
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 20:57:09
+
+ S t o r a g e   a l l o c a t i o n   
+
+ Memory required to complete solution   :     252K
+ Additional dynamically allocated memory:    2123K
+                                   Total:    2374K
+
+ T i m i n g   i n f o r m a t i o n
+                        CPU(seconds)   %CPU  Clock(seconds) %Clock
+  ----------------------------------------------------------------
+  Keyword Processing ... 0.0000E+00    0.00     1.6000E-02    0.64
+    KW Writing ......... 0.0000E+00    0.00     1.6000E-02    0.64
+  Initialization ....... 2.0000E+00  100.00     2.4790E+00   99.36
+  ----------------------------------------------------------------
+  T o t a l s            2.0000E+00  100.00     2.4950E+00  100.00
+
+ Problem time       =    0.0000E+00
+ Problem cycle      =         0
+ Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
+ CPU time per zone cycle  =          0.000 picoseconds
+ Clock time per zone cycle=          0.000 picoseconds
+
+ Number of CPU's    1
+ NLQ used/max     192/  192
+ Start time   10/29/2026 20:57:09  
+ End time     10/29/2026 20:57:09  
+ Elapsed time       0 second  for       0 cycles using  1 SMP thread 
+             (      0 hour   0 minute   0 second )
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 20:57:09
+== m1d_load_segment_set_none: rejected
+ *** Error 10144 (KEY+144)
+     segment set for pressure load # 99 is not found.
+ *** Error 10133 (KEY+133)
+     segment set for pressure load # 99 is not found.
+     (This is #1 in the input order)
+ 
+ *** Warning 10390 (KEY+390)
+ 
+ *** Error 10133 (KEY+133)
+     keyword input phase failed with: 2 errors
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 20:57:12
+
+ S t o r a g e   a l l o c a t i o n   
+
+ Memory required to complete solution   :     165K
+ Additional dynamically allocated memory:    2123K
+                                   Total:    2287K
+
+ T i m i n g   i n f o r m a t i o n
+                        CPU(seconds)   %CPU  Clock(seconds) %Clock
+  ----------------------------------------------------------------
+  Keyword Processing ... 0.0000E+00    0.00     9.0000E-03    0.36
+    KW Reading ......... 0.0000E+00    0.00     2.0000E-03    0.08
+    KW Writing ......... 0.0000E+00    0.00     3.0000E-03    0.12
+  Initialization ....... 2.0000E+00  100.00     2.4690E+00   99.64
+  ----------------------------------------------------------------
+  T o t a l s            2.0000E+00  100.00     2.4780E+00  100.00
+
+ Problem time       =    0.0000E+00
+ Problem cycle      =         0
+ Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
+ CPU time per zone cycle  =          0.000 picoseconds
+ Clock time per zone cycle=          0.000 picoseconds
+
+ Number of CPU's    1
+ NLQ used/max     192/  192
+ Start time   10/29/2026 20:57:12  
+ End time     10/29/2026 20:57:12  
+ Elapsed time       0 second  for       0 cycles using  1 SMP thread 
+             (      0 hour   0 minute   0 second )
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 20:57:12
+== m1d_initial_velocity_none: rejected
+ *** Error 10144 (KEY+144)
+     node set for initial velocities # 99 is not found.
+ *** Error 10133 (KEY+133)
+ *** Error 10144 (KEY+144)
+     CHECKING INITIAL VELOCITY INPUT
+     node set for initial velocities # 99 is not found.
+     (This is #1 in the input order)
+ 
+ *** Error 10133 (KEY+133)
+     keyword input phase failed with: 2 errors
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 20:57:15
+
+ S t o r a g e   a l l o c a t i o n   
+
+ Memory required to complete solution   :     165K
+ Additional dynamically allocated memory:    2123K
+                                   Total:    2287K
+
+ T i m i n g   i n f o r m a t i o n
+                        CPU(seconds)   %CPU  Clock(seconds) %Clock
+  ----------------------------------------------------------------
+  Keyword Processing ... 0.0000E+00    0.00     1.0000E-02    0.40
+    KW Reading ......... 0.0000E+00    0.00     1.0000E-03    0.04
+    KW Writing ......... 0.0000E+00    0.00     4.0000E-03    0.16
+  Initialization ....... 2.0000E+00  100.00     2.5110E+00   99.60
+  ----------------------------------------------------------------
+  T o t a l s            2.0000E+00  100.00     2.5210E+00  100.00
+
+ Problem time       =    0.0000E+00
+ Problem cycle      =         0
+ Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
+ CPU time per zone cycle  =          0.000 picoseconds
+ Clock time per zone cycle=          0.000 picoseconds
+
+ Number of CPU's    1
+ NLQ used/max     192/  192
+ Start time   10/29/2026 20:57:15  
+ End time     10/29/2026 20:57:15  
+ Elapsed time       0 second  for       0 cycles using  1 SMP thread 
+             (      0 hour   0 minute   0 second )
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 20:57:15
+== m1d_history_node_set_none: rejected
+ *** Error 10144 (KEY+144)
+     node set for node time history # 99 is not found.
+ *** Error 10144 (KEY+144)
+     node set for node time history # 99 is not found.
+ *** Error 10133 (KEY+133)
+ *** Error 10144 (KEY+144)
+     CHECKING NODAL OUTPUT BLOCKS [*DATABASE]
+     node set for node time history # 99 is not found.
+     (This is #1 in the input order)
+ 
+ *** Error 10133 (KEY+133)
+     keyword input phase failed with: 4 errors
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 20:57:17
+
+ S t o r a g e   a l l o c a t i o n   
+
+ Memory required to complete solution   :     165K
+ Additional dynamically allocated memory:    2123K
+                                   Total:    2287K
+
+ T i m i n g   i n f o r m a t i o n
+                        CPU(seconds)   %CPU  Clock(seconds) %Clock
+  ----------------------------------------------------------------
+  Keyword Processing ... 0.0000E+00    0.00     1.0000E-02    0.40
+    KW Reading ......... 0.0000E+00    0.00     2.0000E-03    0.08
+    KW Writing ......... 0.0000E+00    0.00     3.0000E-03    0.12
+  Initialization ....... 2.0000E+00  100.00     2.4760E+00   99.60
+  ----------------------------------------------------------------
+  T o t a l s            2.0000E+00  100.00     2.4860E+00  100.00
+
+ Problem time       =    0.0000E+00
+ Problem cycle      =         0
+ Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
+ CPU time per zone cycle  =          0.000 picoseconds
+ Clock time per zone cycle=          0.000 picoseconds
+
+ Number of CPU's    1
+ NLQ used/max     192/  192
+ Start time   10/29/2026 20:57:17  
+ End time     10/29/2026 20:57:17  
+ Elapsed time       0 second  for       0 cycles using  1 SMP thread 
+             (      0 hour   0 minute   0 second )
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 20:57:17
+== m1d_dup_part: rejected
+ *** Error 10176 (KEY+176)
+ *** Error 10133 (KEY+133)
+ expanding   memory to      102663 d     2104344  
+ expanding   memory to      164675 d     2119344  
+ 
+ *** Error 10176 (KEY+176)
+     repeated part ID 1
+ 
+ *** Error 10133 (KEY+133)
+     keyword input phase failed with: 2 errors
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 20:57:20
+
+ S t o r a g e   a l l o c a t i o n   
+
+ Memory required to complete solution   :     165K
+ Additional dynamically allocated memory:    2123K
+                                   Total:    2288K
+
+ T i m i n g   i n f o r m a t i o n
+                        CPU(seconds)   %CPU  Clock(seconds) %Clock
+  ----------------------------------------------------------------
+  Keyword Processing ... 0.0000E+00    0.00     9.0000E-03    0.36
+    KW Writing ......... 0.0000E+00    0.00     7.0000E-03    0.28
+  Initialization ....... 2.0000E+00  100.00     2.4930E+00   99.64
+  ----------------------------------------------------------------
+  T o t a l s            2.0000E+00  100.00     2.5020E+00  100.00
+
+ Problem time       =    0.0000E+00
+ Problem cycle      =         0
+ Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
+ CPU time per zone cycle  =          0.000 picoseconds
+ Clock time per zone cycle=          0.000 picoseconds
+
+ Number of CPU's    1
+ NLQ used/max     192/  192
+ Start time   10/29/2026 20:57:20  
+ End time     10/29/2026 20:57:20  
+ Elapsed time       0 second  for       0 cycles using  1 SMP thread 
+             (      0 hour   0 minute   0 second )
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 20:57:20
+== m1d_dup_mat: rejected
+ *** Error 10137 (KEY+137)
+ *** Error 10133 (KEY+133)
+ expanding   memory to      164462 d     2119344  
+ 
+ *** Error 10137 (KEY+137)
+     Multiply defined MATERIAL ID MATERIAL 1 at 2th input
+ 
+ *** Error 10133 (KEY+133)
+     keyword input phase failed with: 3 errors
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 20:57:23
+
+ S t o r a g e   a l l o c a t i o n   
+
+ Memory required to complete solution   :     165K
+ Additional dynamically allocated memory:    2123K
+                                   Total:    2287K
+
+ T i m i n g   i n f o r m a t i o n
+                        CPU(seconds)   %CPU  Clock(seconds) %Clock
+  ----------------------------------------------------------------
+  Keyword Processing ... 0.0000E+00    0.00     9.0000E-03    0.36
+    KW Reading ......... 0.0000E+00    0.00     1.0000E-03    0.04
+    KW Writing ......... 0.0000E+00    0.00     2.0000E-03    0.08
+  Initialization ....... 2.0000E+00  100.00     2.4950E+00   99.64
+  ----------------------------------------------------------------
+  T o t a l s            2.0000E+00  100.00     2.5040E+00  100.00
+
+ Problem time       =    0.0000E+00
+ Problem cycle      =         0
+ Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
+ CPU time per zone cycle  =          0.000 picoseconds
+ Clock time per zone cycle=          0.000 picoseconds
+
+ Number of CPU's    1
+ NLQ used/max     192/  192
+ Start time   10/29/2026 20:57:23  
+ End time     10/29/2026 20:57:23  
+ Elapsed time       0 second  for       0 cycles using  1 SMP thread 
+             (      0 hour   0 minute   0 second )
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 20:57:23
+== m1d_dup_section: rejected
+ *** Error 10137 (KEY+137)
+ *** Error 10133 (KEY+133)
+ expanding   memory to       52500 d     2036324  
+ expanding   memory to       73753 d     2096336  
+ expanding   memory to      102495 d     2104344  
+ expanding   memory to      164507 d     2119344  
+ 
+ *** Error 10137 (KEY+137)
+     Multiply defined SECTION ID SECTION 1 at 2th input
+ 
+ *** Error 10133 (KEY+133)
+     keyword input phase failed with: 3 errors
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 20:57:25
+
+ S t o r a g e   a l l o c a t i o n   
+
+ Memory required to complete solution   :     165K
+ Additional dynamically allocated memory:    2123K
+                                   Total:    2287K
+
+ T i m i n g   i n f o r m a t i o n
+                        CPU(seconds)   %CPU  Clock(seconds) %Clock
+  ----------------------------------------------------------------
+  Initialization ....... 2.0000E+00  100.00     2.4850E+00  100.00
+  ----------------------------------------------------------------
+  T o t a l s            2.0000E+00  100.00     2.4850E+00  100.00
+
+ Problem time       =    0.0000E+00
+ Problem cycle      =         0
+ Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
+ CPU time per zone cycle  =          0.000 picoseconds
+ Clock time per zone cycle=          0.000 picoseconds
+
+ Number of CPU's    1
+ NLQ used/max     192/  192
+ Start time   10/29/2026 20:57:25  
+ End time     10/29/2026 20:57:25  
+ Elapsed time       0 second  for       0 cycles using  1 SMP thread 
+             (      0 hour   0 minute   0 second )
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 20:57:25
+== m1d_dup_curve: rejected
+ *** Error 10173 (KEY+173)
+ *** Error 10133 (KEY+133)
+ expanding   memory to      102485 d     2104344  
+ expanding   memory to      164509 d     2119344  
+ 
+ *** Error 10173 (KEY+173)
+     repeated load curve/table id 1 in *DEFINE_CURVE
+ 
+ *** Error 10133 (KEY+133)
+     keyword input phase failed with: 2 errors
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 20:57:28
+
+ S t o r a g e   a l l o c a t i o n   
+
+ Memory required to complete solution   :     165K
+ Additional dynamically allocated memory:    2123K
+                                   Total:    2288K
+
+ T i m i n g   i n f o r m a t i o n
+                        CPU(seconds)   %CPU  Clock(seconds) %Clock
+  ----------------------------------------------------------------
+  Keyword Processing ... 0.0000E+00    0.00     8.0000E-03    0.32
+    KW Writing ......... 0.0000E+00    0.00     2.0000E-03    0.08
+  Initialization ....... 2.0000E+00  100.00     2.4830E+00   99.68
+  ----------------------------------------------------------------
+  T o t a l s            2.0000E+00  100.00     2.4910E+00  100.00
+
+ Problem time       =    0.0000E+00
+ Problem cycle      =         0
+ Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
+ CPU time per zone cycle  =          0.000 picoseconds
+ Clock time per zone cycle=          0.000 picoseconds
+
+ Number of CPU's    1
+ NLQ used/max     192/  192
+ Start time   10/29/2026 20:57:28  
+ End time     10/29/2026 20:57:28  
+ Elapsed time       0 second  for       0 cycles using  1 SMP thread 
+             (      0 hour   0 minute   0 second )
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 20:57:28
+== m1d_dup_node_set: rejected
+ *** Error 10110 (KEY+110)
+ *** Error 10111 (KEY+111)
+ *** Error 10133 (KEY+133)
+     duplicate *SET_NODE id # 1
+ 
+ *** Error 10111 (KEY+111)
+     *SET_NODE id has 1 total duplications
+ 
+ *** Error 10133 (KEY+133)
+     keyword input phase failed with: 3 errors
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 20:57:31
+
+ S t o r a g e   a l l o c a t i o n   
+
+ Memory required to complete solution   :     165K
+ Additional dynamically allocated memory:    2123K
+                                   Total:    2287K
+
+ T i m i n g   i n f o r m a t i o n
+                        CPU(seconds)   %CPU  Clock(seconds) %Clock
+  ----------------------------------------------------------------
+  Keyword Processing ... 0.0000E+00    0.00     9.0000E-03    0.36
+    KW Reading ......... 0.0000E+00    0.00     3.0000E-03    0.12
+    KW Writing ......... 0.0000E+00    0.00     2.0000E-03    0.08
+  Initialization ....... 2.0000E+00  100.00     2.4810E+00   99.64
+  ----------------------------------------------------------------
+  T o t a l s            2.0000E+00  100.00     2.4900E+00  100.00
+
+ Problem time       =    0.0000E+00
+ Problem cycle      =         0
+ Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
+ CPU time per zone cycle  =          0.000 picoseconds
+ Clock time per zone cycle=          0.000 picoseconds
+
+ Number of CPU's    1
+ NLQ used/max     192/  192
+ Start time   10/29/2026 20:57:31  
+ End time     10/29/2026 20:57:31  
+ Elapsed time       0 second  for       0 cycles using  1 SMP thread 
+             (      0 hour   0 minute   0 second )
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 20:57:31
+== m1d_dup_node: rejected
+ *** Error 11168 (KEY+1168)
+ *** Error 10133 (KEY+133)
+ expanding   memory to      102379 d     2104351  
+ expanding   memory to      164391 d     2119351  
+ 
+ *** Error 11168 (KEY+1168)
+     Duplicate node ID 1 with non-matching coordinates.
+     *NODE_MERGE_TOLERANCE with TOLR > 5.0000E+00 could be used to unite those nodes.
+ 
+ *** Error 10133 (KEY+133)
+     keyword input phase failed with: 2 errors
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 20:57:33
+
+ S t o r a g e   a l l o c a t i o n   
+
+ Memory required to complete solution   :     165K
+ Additional dynamically allocated memory:    2123K
+                                   Total:    2287K
+
+ T i m i n g   i n f o r m a t i o n
+                        CPU(seconds)   %CPU  Clock(seconds) %Clock
+  ----------------------------------------------------------------
+  Keyword Processing ... 0.0000E+00    0.00     1.6000E-02    0.65
+  Initialization ....... 2.0000E+00  100.00     2.4490E+00   99.35
+  ----------------------------------------------------------------
+  T o t a l s            2.0000E+00  100.00     2.4650E+00  100.00
+
+ Problem time       =    0.0000E+00
+ Problem cycle      =         0
+ Total CPU time     =         2 seconds (   0 hours  0 minutes  2 seconds)
+ CPU time per zone cycle  =          0.000 picoseconds
+ Clock time per zone cycle=          0.000 picoseconds
+
+ Number of CPU's    1
+ NLQ used/max     192/  192
+ Start time   10/29/2026 20:57:33  
+ End time     10/29/2026 20:57:33  
+ Elapsed time       0 second  for       0 cycles using  1 SMP thread 
+             (      0 hour   0 minute   0 second )
+
+ E r r o r   t e r m i n a t i o n                             10/29/26 20:57:33
+== m1d_dup_node_same: accepted
+== m1d_overflow_node: accepted
+== m1d_mixed_free: accepted
+== m1d_umat: accepted
+== ECHO m1d_overflow_node (python -m bakeoff.m1d_winner m1d_overflow_node 12345678)
+3497   12345678     0.0     0.9500E+02     0.5000E+01     0.0000E+00     0.0
+   -> node 123456789 read as id 12345678 with x = 95.0 (deck: 5.0), no warning: silent misread
+== ECHO m1d_mixed_free (python -m bakeoff.m1d_winner m1d_mixed_free ' e ......' 'vnu ....')
+3529      e ................................ = 2.10000E+05
+3530      vnu .............................. = 3.00000E-01
+   -> material 2 read as e = 210000, vnu = 0.3: two values in one comma slot are read correctly
+== ACCEPTED_DUPLICATES (Task 1 Step 3)
+{}  # every tested kind rejected; NODE accepted only at identical coordinates (m1d_dup_node_same)

@@ -13,7 +13,10 @@ CASES = ["base", "free_format", "long_format", "parameter", "include_path", "com
          "inc_path_in_include", "inc_blank_in_continuation", "inc_empty", "long_keyword", "long_section",
          "parameter_ref", "spc_set_id", "spc_set_none", "zero_ref",
          "repeat_velocity", "repeat_mat", "repeat_history_id", "repeat_load_node_set", "nodal_rigid_part",
-         "nodal_rigid_none", "set_general_rows"]
+         "nodal_rigid_none", "set_general_rows",
+         "m1d_base", "m1d_bpm_set_none", "m1d_load_node_set_none", "m1d_load_segment_set_none", "m1d_initial_velocity_none",
+         "m1d_history_node_set_none", "m1d_dup_part", "m1d_dup_mat", "m1d_dup_section", "m1d_dup_curve", "m1d_dup_node_set",
+         "m1d_dup_node", "m1d_dup_node_same", "m1d_overflow_node", "m1d_mixed_free", "m1d_umat"]
 
 
 def test_every_case_has_main_and_expected():

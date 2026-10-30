@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "accepted and read correctly: d3hsp echoes material 2 with e = 2.1E+05, vnu = 0.3"

@@ -1,0 +1,6 @@
+lsdyna_valid = false
+findings = []
+note = "Error 10176: repeated part ID 1"
+
+[index]
+duplicates = [{kind = "PART", id = 1, file = "main.k", line = 30, columns = [9, 10]}]

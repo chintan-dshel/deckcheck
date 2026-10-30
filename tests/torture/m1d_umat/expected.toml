@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "accepted, no warning (umat41 built in)"

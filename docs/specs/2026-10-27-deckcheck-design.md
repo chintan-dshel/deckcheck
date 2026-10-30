@@ -260,11 +260,13 @@ model-quality checks) and M7 (rule packs) draw on this list.
 | Case | Class (§5) | Status | Where handled |
 |---|---|---|---|
 | `*BOUNDARY_SPC_SET` with a missing node set: accepted, constraint applies to nothing | 2 | tested (`spc_set_none`) | DC006 |
-| Other set-taking boundary and load keywords with a missing set | 1 or 2 | untested; M1d tests | DC001 or DC006 |
-| Two definitions with the same ID (PART, MAT, SECTION, CURVE, node set, NODE) | 1 or 2 | untested; M1d tests | DC002 severity |
+| Other set-taking keywords with a missing set (`*BOUNDARY_PRESCRIBED_MOTION_SET`, `*LOAD_NODE_SET`, `*LOAD_SEGMENT_SET`, `*INITIAL_VELOCITY`, `*DATABASE_HISTORY_NODE_SET`) | 1 | tested (`m1d_*_set_none`: all rejected, Error 10144) | DC001 |
+| Two definitions with the same ID (PART, MAT, SECTION, CURVE, node set, NODE at different coordinates) | 1 | tested (`m1d_dup_*`: all rejected, Errors 10176, 10137, 10173, 10110, 11168) | DC002 error |
+| A node defined twice at identical coordinates | 2 | tested (`m1d_dup_node_same`: accepted, no warning) | DC002 warning (deckcheck doesn't compare coordinates) |
 | Tab-separated card: silently misread | 2 | tested (`tabs`) | DC003 |
-| Value overflowing its field; fixed and free format mixed in a card | 2 or none | untested; M1d tests | DC003 or removed |
+| Value overflowing its field (a 9-digit node id in an 8-wide field) | 2 | tested (`m1d_overflow_node`: accepted, read as node 12345678 at x = 95.0 instead of 5.0, no warning) | not detected yet (needs full-card field reading, M4); DC003 only where the spill makes a value not of its type |
+| Two values in one comma-separated slot | none | tested (`m1d_mixed_free`: accepted and read correctly) | not a finding; removed from DC003 |
 | `*DEFINE_FUNCTION` id where a curve is expected: rejected (Error 10141) | 1 | tested | DC001 |
-| User-defined materials (`*MAT_USER_DEFINED_MATERIAL_MODELS`, variable card count) | 3 | untested; M1d torture case | read, or not checked |
+| User-defined materials (`*MAT_USER_DEFINED_MATERIAL_MODELS`, variable card count) | 3 | tested (`m1d_umat`: umat41 accepted); deckcheck reading checked in M1d Task 5 | read, or not checked |
 | Dummy or placeholder definitions (e.g. a material kept for rigid parts, an unused definition library kept as policy) | 3 | untested | DC005 warning; suppression in M4 |
 | Team workarounds and site conventions | 3 | collected as reported | rule packs (M7) |

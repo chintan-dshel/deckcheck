@@ -1,0 +1,6 @@
+lsdyna_valid = false
+findings = []
+note = "Error 10110/10111: *SET_NODE id has 1 total duplications"
+
+[index]
+duplicates = [{kind = "SET_NODE", id = 1, file = "main.k", line = 29, columns = [9, 10]}]

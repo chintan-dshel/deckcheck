@@ -1,0 +1,6 @@
+lsdyna_valid = true
+findings = []
+note = "accepted, no warning: a duplicate node at identical coordinates (compare m1d_dup_node, Error 11168)"
+
+[index]
+duplicates = [{kind = "NODE", id = 1, file = "main.k", line = 29, columns = [7, 8]}]

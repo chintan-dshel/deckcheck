@@ -1,0 +1,6 @@
+lsdyna_valid = false
+findings = []
+note = "Error 11168: Duplicate node ID 1 with non-matching coordinates"
+
+[index]
+duplicates = [{kind = "NODE", id = 1, file = "main.k", line = 29, columns = [7, 8]}]
