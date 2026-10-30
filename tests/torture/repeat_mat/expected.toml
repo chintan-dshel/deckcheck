@@ -1,3 +1,11 @@
 lsdyna_valid = true
 findings = []
 note = "Q: is a second *MAT_ELASTIC line another material? The part uses material 2, defined only there. LS-DYNA R16.1 Student 2026-10-29: accepted. With repeat_velocity, repeat_history_id and repeat_load_node_set: cards left after the layout start another instance, for every keyword family asked."
+
+[[diagnostics]]
+code = "DC005"
+severity = "warning"
+file = "main.k"
+line = 13
+columns = [9, 10]
+evidence = "id 1 appears nowhere else in the files LS-DYNA reads (decoy or unused definition by design)"

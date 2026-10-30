@@ -29,8 +29,12 @@ def dc005_silent(tree: Tree, ix: Index) -> dict[str, str]:
     why: dict[str, str] = {}
     unknown = unknown_keywords(tree)
     present = {b.resolved.name for node in tree.files for b in node.source.blocks if b.resolved}
+    missing = [p for p in tree.problems if p.kind == "missing"]
     for kind in DC005_KINDS:
-        if ix.blind:
+        if missing:  # a missing file could hold the only reference
+            p = missing[0]
+            why[kind] = f"{p.file.name}:{p.line} missing include '{p.name}' may refer to it"
+        elif ix.blind:
             why[kind] = sorted(ix.blind)[0]
         elif ix.failures:
             fi, line, text = ix.failures[0]

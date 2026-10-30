@@ -8,7 +8,8 @@ from deckcheck.rules import CODES, check
 
 TORTURE = Path(__file__).parent / "torture"
 CASES = sorted(p.parent.name for p in TORTURE.glob("*/expected.toml"))
-IMPLEMENTED = ["DC000", "DC001", "DC002", "DC003", "DC004", "DC006"]  # Task 5 adds DC005
+IMPLEMENTED = ["DC000", "DC001", "DC002", "DC003", "DC004", "DC005", "DC006"]
+EXPECTED_SEEDED_DC005 = []  # a missing include could hold the only reference to MAT 7
 
 
 def expected(case: str, code: str) -> list[dict]:
@@ -117,3 +118,35 @@ def test_dc003_bad_value(tmp_path):
     [d] = [d for d in check(tmp_path / "main.k").diagnostics if d.code == "DC003"]
     assert (d.line, d.start, d.end, d.severity) == (4, 28, 30, "warning")
     assert d.message == "mid: '1x' is not int; LS-DYNA may misread this card"
+
+
+def test_dc005_unused_material_in_seeded_mistakes_is_silent_because_of_missing_include():
+    ds = [d for d in check(TORTURE / "seeded_mistakes" / "main.k").diagnostics if d.code == "DC005"]
+    assert [(d.line, d.start, d.end) for d in ds] == EXPECTED_SEEDED_DC005
+
+
+def test_dc005_message(tmp_path):
+    body = ((TORTURE / "base" / "main.k").read_text(encoding="latin-1").replace(
+        "*END", "*MAT_ELASTIC\n" + f"{7:>10}{'7.85E-9':>10}{'210000.0':>10}{0.3:>10}" + "\n*END"))
+    (tmp_path / "main.k").write_text(body, encoding="latin-1")
+    [d] = [d for d in check(tmp_path / "main.k").diagnostics if d.code == "DC005"]
+    assert d.severity == "warning" and d.message == "MAT 7 is defined but nothing refers to it"
+
+
+def test_dc005_silent_on_unknown_keyword(tmp_path):
+    body = ((TORTURE / "base" / "main.k").read_text(encoding="latin-1").replace(
+        "*END", "*MAT_ELASTIC\n" + f"{7:>10}{'7.85E-9':>10}{'210000.0':>10}{0.3:>10}" + "\n*NOT_A_REAL_KEYWORD\n7\n*END"))
+    (tmp_path / "main.k").write_text(body, encoding="latin-1")
+    assert [d for d in check(tmp_path / "main.k").diagnostics if d.code == "DC005"] == []
+
+
+def test_dc005_silent_when_an_include_is_missing(tmp_path):
+    body = ((TORTURE / "base" / "main.k").read_text(encoding="latin-1").replace(
+        "*END", "*INCLUDE\nnowhere.k\n*MAT_ELASTIC\n" + f"{7:>10}{'7.85E-9':>10}{'210000.0':>10}{0.3:>10}" + "\n*END"))
+    (tmp_path / "main.k").write_text(body, encoding="latin-1")
+    assert [d for d in check(tmp_path / "main.k").diagnostics if d.code == "DC005"] == []
+
+
+def test_umat_part_material_is_not_reported():
+    ds = check(TORTURE / "m1d_umat" / "main.k").diagnostics
+    assert not [d for d in ds if d.code in ("DC001", "DC005") and "MAT 2" in d.message]

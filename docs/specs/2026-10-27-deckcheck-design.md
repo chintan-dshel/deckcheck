@@ -267,6 +267,6 @@ model-quality checks) and M7 (rule packs) draw on this list.
 | Value overflowing its field (a 9-digit node id in an 8-wide field) | 2 | tested (`m1d_overflow_node`: accepted, read as node 12345678 at x = 95.0 instead of 5.0, no warning) | not detected yet (needs full-card field reading, M4); DC003 only where the spill makes a value not of its type |
 | Two values in one comma-separated slot | none | tested (`m1d_mixed_free`: accepted and read correctly) | not a finding; removed from DC003 |
 | `*DEFINE_FUNCTION` id where a curve is expected: rejected (Error 10141) | 1 | tested | DC001 |
-| User-defined materials (`*MAT_USER_DEFINED_MATERIAL_MODELS`, variable card count) | 3 | tested (`m1d_umat`: umat41 accepted); deckcheck reading checked in M1d Task 5 | read, or not checked |
+| User-defined materials (`*MAT_USER_DEFINED_MATERIAL_MODELS`, variable card count) | 3 | tested (`m1d_umat`: umat41 accepted); deckcheck reads it: MAT 2 defined and used, no finding, nothing unread | read |
 | Dummy or placeholder definitions (e.g. a material kept for rigid parts, an unused definition library kept as policy) | 3 | untested | DC005 warning; suppression in M4 |
 | Team workarounds and site conventions | 3 | collected as reported | rule packs (M7) |

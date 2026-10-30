@@ -3,3 +3,444 @@
 #   verdict = "namespace": it refers to another id space (reason says which), so it is not a use;
 #   verdict = "undecided": DC005 stays silent on the kind in any deck containing this keyword.
 # A field that does refer to the kind gets a link in overrides.toml instead (with evidence), not an entry here.
+
+[[field]]
+keyword = "BATTERY_ECHEM_INITIAL"
+field = "mid"
+kind = "MAT"
+verdict = "namespace"
+reason = "a battery material id (pydyna: 'Identifier of the battery material to use. Currently not used')"
+
+[[field]]
+keyword = "BATTERY_ECHEM_PART"
+field = "mid"
+kind = "MAT"
+verdict = "namespace"
+reason = "a *ECHEM_BATTERY_MAT_ id (pydyna: 'Material identifier defined by *ECHEM_BATTERY_MAT_... card')"
+
+[[field]]
+keyword = "CESE_MAT_001"
+field = "mid"
+kind = "MAT"
+verdict = "namespace"
+reason = "defines a CESE solver material (*CESE_MAT_ ids), not a structural *MAT_"
+
+[[field]]
+keyword = "CESE_MAT_002"
+field = "mid"
+kind = "MAT"
+verdict = "namespace"
+reason = "defines a CESE solver material (*CESE_MAT_ ids), not a structural *MAT_"
+
+[[field]]
+keyword = "CESE_MAT_GAS"
+field = "mid"
+kind = "MAT"
+verdict = "namespace"
+reason = "defines a CESE solver material (*CESE_MAT_ ids), not a structural *MAT_"
+
+[[field]]
+keyword = "CESE_PART"
+field = "mid"
+kind = "MAT"
+verdict = "namespace"
+reason = "a *CESE_MAT id (pydyna: 'Material identification defined in the *CESE_MAT')"
+
+[[field]]
+keyword = "CONTROL_IMPLICIT_MODAL_DYNAMIC_DAMPING_SPECIFIC"
+field = "mid1"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "CONTROL_IMPLICIT_MODAL_DYNAMIC_DAMPING_SPECIFIC"
+field = "mid2"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "CONTROL_IMPLICIT_MODAL_DYNAMIC_DAMPING_SPECIFIC"
+field = "mid3"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "CONTROL_IMPLICIT_MODAL_DYNAMIC_DAMPING_SPECIFIC"
+field = "mid4"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "CONTROL_IMPLICIT_MODAL_DYNAMIC_MODE_LIST"
+field = "mid1"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "CONTROL_IMPLICIT_MODAL_DYNAMIC_MODE_LIST"
+field = "mid2"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "CONTROL_IMPLICIT_MODAL_DYNAMIC_MODE_LIST"
+field = "mid3"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "CONTROL_IMPLICIT_MODAL_DYNAMIC_MODE_LIST"
+field = "mid4"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "CONTROL_IMPLICIT_MODAL_DYNAMIC_MODE_LIST"
+field = "mid5"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "CONTROL_IMPLICIT_MODAL_DYNAMIC_MODE_LIST"
+field = "mid6"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "CONTROL_IMPLICIT_MODAL_DYNAMIC_MODE_LIST"
+field = "mid7"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "CONTROL_IMPLICIT_MODAL_DYNAMIC_MODE_LIST"
+field = "mid8"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "DUALCESE_MAT_GAS"
+field = "mid"
+kind = "MAT"
+verdict = "namespace"
+reason = "defines a DUALCESE solver material, not a structural *MAT_"
+
+[[field]]
+keyword = "DUALCESE_MAT_GAS_0"
+field = "mid"
+kind = "MAT"
+verdict = "namespace"
+reason = "defines a DUALCESE solver material, not a structural *MAT_"
+
+[[field]]
+keyword = "DUALCESE_MAT_GAS_2"
+field = "mid"
+kind = "MAT"
+verdict = "namespace"
+reason = "defines a DUALCESE solver material, not a structural *MAT_"
+
+[[field]]
+keyword = "DUALCESE_PART"
+field = "mid"
+kind = "MAT"
+verdict = "namespace"
+reason = "a *DUALCESE_MAT_ id (pydyna: 'Material ID refering to DUALCESE_MAT_material')"
+
+[[field]]
+keyword = "DUALCESE_PART_MULTIPHASE"
+field = "mid"
+kind = "MAT"
+verdict = "namespace"
+reason = "a *DUALCESE_MAT_ id, as *DUALCESE_PART"
+
+[[field]]
+keyword = "EM_EP_CELLMODEL_TOMEK"
+field = "matid"
+kind = "MAT"
+verdict = "undecided"
+reason = "pydyna: 'Material ID: refers to MID in the *PART card' - a structural material, not refereed by LS-DYNA"
+
+[[field]]
+keyword = "EM_EP_CELLMODEL_USERMAT"
+field = "mid"
+kind = "MAT"
+verdict = "undecided"
+reason = "pydyna: 'Material ID: refers to MID in the *PART card' - a structural material, not refereed by LS-DYNA"
+
+[[field]]
+keyword = "EM_SOLVER_BEMMAT"
+field = "matid"
+kind = "MAT"
+verdict = "namespace"
+reason = "selects a BEM matrix (pydyna: 'Defines which BEM matrix the card refers to'), not a material"
+
+[[field]]
+keyword = "FREQUENCY_DOMAIN_MODE_LIST"
+field = "mid1"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID 1' ...)"
+
+[[field]]
+keyword = "FREQUENCY_DOMAIN_MODE_LIST"
+field = "mid2"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID 1' ...)"
+
+[[field]]
+keyword = "FREQUENCY_DOMAIN_MODE_LIST"
+field = "mid3"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID 1' ...)"
+
+[[field]]
+keyword = "FREQUENCY_DOMAIN_MODE_LIST"
+field = "mid4"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID 1' ...)"
+
+[[field]]
+keyword = "FREQUENCY_DOMAIN_MODE_LIST"
+field = "mid5"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID 1' ...)"
+
+[[field]]
+keyword = "FREQUENCY_DOMAIN_MODE_LIST"
+field = "mid6"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID 1' ...)"
+
+[[field]]
+keyword = "FREQUENCY_DOMAIN_MODE_LIST"
+field = "mid7"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID 1' ...)"
+
+[[field]]
+keyword = "FREQUENCY_DOMAIN_MODE_LIST"
+field = "mid8"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID 1' ...)"
+
+[[field]]
+keyword = "FREQUENCY_DOMAIN_MODE_LIST_EXCLUDE"
+field = "mid1"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number, as *FREQUENCY_DOMAIN_MODE_LIST"
+
+[[field]]
+keyword = "FREQUENCY_DOMAIN_MODE_LIST_EXCLUDE"
+field = "mid2"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number, as *FREQUENCY_DOMAIN_MODE_LIST"
+
+[[field]]
+keyword = "FREQUENCY_DOMAIN_MODE_LIST_EXCLUDE"
+field = "mid3"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number, as *FREQUENCY_DOMAIN_MODE_LIST"
+
+[[field]]
+keyword = "FREQUENCY_DOMAIN_MODE_LIST_EXCLUDE"
+field = "mid4"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number, as *FREQUENCY_DOMAIN_MODE_LIST"
+
+[[field]]
+keyword = "FREQUENCY_DOMAIN_MODE_LIST_EXCLUDE"
+field = "mid5"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number, as *FREQUENCY_DOMAIN_MODE_LIST"
+
+[[field]]
+keyword = "FREQUENCY_DOMAIN_MODE_LIST_EXCLUDE"
+field = "mid6"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number, as *FREQUENCY_DOMAIN_MODE_LIST"
+
+[[field]]
+keyword = "FREQUENCY_DOMAIN_MODE_LIST_EXCLUDE"
+field = "mid7"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number, as *FREQUENCY_DOMAIN_MODE_LIST"
+
+[[field]]
+keyword = "FREQUENCY_DOMAIN_MODE_LIST_EXCLUDE"
+field = "mid8"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number, as *FREQUENCY_DOMAIN_MODE_LIST"
+
+[[field]]
+keyword = "ICFD_MAT"
+field = "mid"
+kind = "MAT"
+verdict = "namespace"
+reason = "defines an ICFD fluid material (*ICFD_MAT ids), not a structural *MAT_"
+
+[[field]]
+keyword = "ICFD_PART"
+field = "mid"
+kind = "MAT"
+verdict = "namespace"
+reason = "ICFD parts take an *ICFD_SECTION and an *ICFD_MAT, their own id spaces (as ICFD_PART itself, overrides.toml)"
+
+[[field]]
+keyword = "ICFD_PART"
+field = "secid"
+kind = "SECTION"
+verdict = "namespace"
+reason = "ICFD parts take an *ICFD_SECTION and an *ICFD_MAT, their own id spaces (as ICFD_PART itself, overrides.toml)"
+
+[[field]]
+keyword = "ICFD_PART_VOL"
+field = "mid"
+kind = "MAT"
+verdict = "namespace"
+reason = "as *ICFD_PART: *ICFD_SECTION and *ICFD_MAT ids"
+
+[[field]]
+keyword = "ICFD_PART_VOL"
+field = "secid"
+kind = "SECTION"
+verdict = "namespace"
+reason = "as *ICFD_PART: *ICFD_SECTION and *ICFD_MAT ids"
+
+[[field]]
+keyword = "SET_MODE"
+field = "mid1"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "SET_MODE"
+field = "mid2"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "SET_MODE"
+field = "mid3"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "SET_MODE"
+field = "mid4"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "SET_MODE"
+field = "mid5"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "SET_MODE"
+field = "mid6"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "SET_MODE"
+field = "mid7"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "SET_MODE"
+field = "mid8"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "SET_MODE_LIST"
+field = "mid1"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "SET_MODE_LIST"
+field = "mid2"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "SET_MODE_LIST"
+field = "mid3"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "SET_MODE_LIST"
+field = "mid4"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "SET_MODE_LIST"
+field = "mid5"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "SET_MODE_LIST"
+field = "mid6"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "SET_MODE_LIST"
+field = "mid7"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"
+
+[[field]]
+keyword = "SET_MODE_LIST"
+field = "mid8"
+kind = "MAT"
+verdict = "namespace"
+reason = "a mode number (pydyna: 'Mode ID')"

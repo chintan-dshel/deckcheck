@@ -7,3 +7,11 @@ files = ["main.k", "mat.k"]
 
 [index]
 dangling = [{kind = "MAT", id = 1, file = "main.k", line = 12, columns = [29, 30]}]
+
+[[diagnostics]]
+code = "DC005"
+severity = "warning"
+file = "mat.k"
+line = 3
+columns = [9, 10]
+evidence = "id 2 appears nowhere else in the files LS-DYNA reads (decoy or unused definition by design)"
