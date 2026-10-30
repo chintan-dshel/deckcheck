@@ -1,0 +1,5 @@
+# DC005 audit (spec §5, plan M1d Task 5). Every field whose name looks like a reference to MAT, SECTION or
+# HOURGLASS but carries no link in the layout, outside that kind's own defining keywords, is listed here:
+#   verdict = "namespace": it refers to another id space (reason says which), so it is not a use;
+#   verdict = "undecided": DC005 stays silent on the kind in any deck containing this keyword.
+# A field that does refer to the kind gets a link in overrides.toml instead (with evidence), not an entry here.

@@ -132,12 +132,17 @@ class Index:
     uncertain_uses: dict[str, set[str]] = field(default_factory=dict)
     blind: set[str] = field(default_factory=set)
     problems: list[tuple[int, FieldProblem]] = field(default_factory=list)
+    unchecked: list[tuple[str, int, int, str]] = field(default_factory=list)  # kind, id, packed loc, "KEY.field"
+    failures: list[tuple[int, int, str]] = field(default_factory=list)        # file index, block line, what failed
     names: list[str] = field(default_factory=list)
     _name_ids: dict[str, int] = field(default_factory=dict)
 
     def where(self, loc: int) -> tuple[Path, int, int, int]:
         f, line, start, end = unpack(loc)
         return self.tree.files[f].path, line, start, end
+
+    def _at(self, fi: int, line: int) -> str:
+        return f"{self.tree.files[fi].path.name}:{line}"
 
     def checked(self, kind: str) -> bool:
         return not self.blind and not any(k in self.uncertain_defs for k in LOOKUP.get(kind, (kind,)))
@@ -151,6 +156,14 @@ class Index:
             for i, id_ in enumerate(ids):
                 if not any(id_ in t for t in targets):
                     out.append(Ref(kind, id_, *self.where(files[i] << 64 | locs[i]), self.names[names[i]]))
+        return sorted(out, key=lambda r: (str(r.path), r.line, r.start))
+
+    def ignored(self) -> list[Ref]:
+        """References LS-DYNA accepts without checking (link_when "unchecked") whose target is not defined (DC006)."""
+        out = []
+        for kind, id_, loc, name in self.unchecked:
+            if self.checked(kind) and not any(id_ in self.defs.get(k, {}) for k in LOOKUP.get(kind, (kind,))):
+                out.append(Ref(kind, id_, *self.where(loc), name))
         return sorted(out, key=lambda r: (str(r.path), r.line, r.start))
 
     def duplicates(self) -> list[Dup]:
@@ -171,12 +184,12 @@ class Index:
 
     def _define(self, kind: str, f: Field, fi: int, offs) -> None:
         if f.value is UNKNOWN:
-            self._uncertain(self.uncertain_defs, kind, f"{f.line}: id not known")
+            self._uncertain(self.uncertain_defs, kind, f"{self._at(fi, f.line)}: id not known")
             return
         if f.value is None or f.value == 0:
             return
         if not isinstance(f.value, int):  # a str or non-integral float: not an id deckcheck can match
-            self._uncertain(self.uncertain_defs, kind, f"{f.line}: id not an integer")
+            self._uncertain(self.uncertain_defs, kind, f"{self._at(fi, f.line)}: id not an integer")
             return
         if f.value < 0:
             return
@@ -186,7 +199,7 @@ class Index:
             return
         id_, loc = f.value + shift, pack(fi, f.line, f.start, f.end)
         if id_ > ID_MAX:
-            self._uncertain(self.uncertain_defs, kind, f"{f.line}: id out of range")
+            self._uncertain(self.uncertain_defs, kind, f"{self._at(fi, f.line)}: id out of range")
             return
         seen = self.defs.setdefault(kind, {})
         if id_ in seen:
@@ -202,19 +215,19 @@ class Index:
             kind = spec["link_map"].get(str(t.value).strip().upper()) if ok else None
             if kind is None and v is not None and v != 0:  # a type deckcheck doesn't map: a use it can't place
                 for k in set(spec["link_map"].values()):
-                    self._uncertain(self.uncertain_uses, k, f"{f.line}: {spec['link_by']} not mapped")
+                    self._uncertain(self.uncertain_uses, k, f"{self._at(fi, f.line)}: {spec['link_by']} not mapped")
                 return
         else:
             kind = spec.get("link")
         if kind is None or v is None or v == 0:
             return
         if v is UNKNOWN:
-            self._uncertain(self.uncertain_uses, kind, f"{f.line}: reference not known")
+            self._uncertain(self.uncertain_uses, kind, f"{self._at(fi, f.line)}: reference not known")
             return
         if isinstance(v, float) and v.is_integer():  # an id in a float field (airbag cn)
             v = int(v)
         if not isinstance(v, int) or abs(v) > ID_MAX:
-            self._uncertain(self.uncertain_uses, kind, f"{f.line}: reference not an id")
+            self._uncertain(self.uncertain_uses, kind, f"{self._at(fi, f.line)}: reference not an id")
             return
         shift = _shift(kind, offs)
         if shift is None:
@@ -224,8 +237,9 @@ class Index:
             # a fallback kind shifted by another offset (SET_PART -> PART): not refereed, so a use, never checked
             self.possible.setdefault(kind, set()).add(abs(v) + shift)
             return
-        if spec.get("link_when") == "unchecked":  # LS-DYNA accepts a missing target here: a use, never checked
+        if spec.get("link_when") == "unchecked":  # LS-DYNA accepts a missing target here: a use, never dangling
             self.possible.setdefault(kind, set()).add(abs(v) + shift)
+            self.unchecked.append((kind, abs(v) + shift, pack(fi, f.line, f.start, f.end), f"{key}.{f.name}"))
             return
         if spec.get("link_when") == "negative":
             if v > 0:
@@ -273,15 +287,23 @@ def build(tree: Tree) -> Index:
             if key is None or not _wanted(key):
                 continue
             problems: list[FieldProblem] = []
-            fields = read_fields(block, params, long_deck, _wanted(key), problems)
-            for _, group in itertools.groupby(fields, key=attrgetter("group")):
-                row = list(group)
-                by = {f.name: f for f in row}
-                for f in row:
-                    for kind, idf in kinds:
-                        if f.name == idf:
-                            ix._define(kind, f, fi, offs)
-                    ix._reference(f, by, fi, offs, key)
+            try:
+                fields = read_fields(block, params, long_deck, _wanted(key), problems)
+                for _, group in itertools.groupby(fields, key=attrgetter("group")):
+                    row = list(group)
+                    by = {f.name: f for f in row}
+                    for f in row:
+                        for kind, idf in kinds:
+                            if f.name == idf:
+                                ix._define(kind, f, fi, offs)
+                        ix._reference(f, by, fi, offs, key)
+            except Exception as e:  # a reader bug must not stop the run (spec §6): record it, don't trust the block
+                ix.failures.append((fi, block.line, f"*{name}: {type(e).__name__}: {e}"))
+                for kind, _ in kinds:
+                    ix._uncertain(ix.uncertain_defs, kind, f"{ix._at(fi, block.line)} *{name} failed")
+                for kind in _link_kinds(key):
+                    ix._uncertain(ix.uncertain_uses, kind, f"{ix._at(fi, block.line)} *{name} failed")
+                continue
             for p in problems:
                 ix.problems.append((fi, p))
                 if p.kind == "unread":

@@ -238,3 +238,38 @@ def test_part_set_fallback_under_different_offsets_is_not_checked(tmp_path):
 
 def test_pack_clamps_columns_past_16_bits():
     assert unpack(pack(0, 1, 70004, 70010)) == (0, 1, 65535, 65535)
+
+
+def test_unchecked_reference_to_missing_set_is_ignored_not_dangling():
+    ix = build(resolve_tree(TORTURE / "spc_set_none" / "main.k"))
+    assert ix.dangling() == []
+    [r] = ix.ignored()
+    assert (r.kind, r.id, r.path.name, r.line, r.start, r.end, r.field) == (
+        "SET_NODE", 99, "main.k", 22, 8, 10, "BOUNDARY_SPC_SET.nsid")
+
+
+def test_unchecked_reference_to_defined_set_is_not_ignored():
+    ix = build(resolve_tree(TORTURE / "spc_set_id" / "main.k"))
+    assert ix.ignored() == []
+
+
+def test_block_failure_is_recorded_and_run_continues(tmp_path, monkeypatch):
+    import deckcheck.index as index_mod
+    real = index_mod.read_fields
+
+    def flaky(block, *args, **kwargs):
+        if block.name == "MAT_ELASTIC":
+            raise RuntimeError("boom")
+        return real(block, *args, **kwargs)
+
+    monkeypatch.setattr(index_mod, "read_fields", flaky)
+    ix = index(tmp_path, BASE + "*PART\nother\n" + i10(2, 1, 99) + "\n")
+    [(fi, line, text)] = ix.failures
+    assert (fi, text) == (0, "*MAT_ELASTIC: RuntimeError: boom")
+    assert "MAT" in ix.uncertain_defs           # its definitions can't be seen: DC001 stays silent on MAT
+    assert 1 in ix.defs.get("SECTION", {})     # the rest of the deck was still read
+
+
+def test_uncertain_reasons_name_the_file(tmp_path):
+    ix = index(tmp_path, BASE + "*PART\nother\n" + i10(2, 1, "&nope") + "\n")
+    assert any(r.startswith("main.k:") for r in ix.uncertain_uses["MAT"])
