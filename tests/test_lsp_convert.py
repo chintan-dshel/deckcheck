@@ -46,3 +46,9 @@ def test_merge_dedupes_and_names_models():
     per_model = {"a": {"u": [_d("same"), _d("only a")]}, "b": {"u": [_d("same")]}}
     got = merge(per_model, {"a": "case_a.k", "b": "case_b.k"})["u"]
     assert [d.message for d in got] == ["same", "only a (in model case_a.k)"]
+
+
+def test_line_texts_are_collected_only_for_lines_with_findings():
+    from deckcheck.lsp.convert import _lines
+    src = check(TORTURE / "seeded_mistakes" / "main.k").tree.files[0].source
+    assert set(_lines(src, {8, 11})) == {8, 11}

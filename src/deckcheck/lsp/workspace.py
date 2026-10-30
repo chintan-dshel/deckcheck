@@ -69,6 +69,7 @@ class Workspace:
         self._mains: dict[str, Path] = {}
         self._caches: dict[str, dict[str, SourceFile]] = {}
         self._drops: set[str] = set()
+        self._light: dict[str, SourceFile] = {}  # include-only parses, kept across scans until their file changes
         self._dirty = True
         self._lock = threading.Lock()
 
@@ -105,6 +106,8 @@ class Workspace:
         """Worker thread: free the parses of changed files, a chunk at a time."""
         with self._lock:
             drops, self._drops = self._drops, set()
+        for k in drops:
+            self._light.pop(k, None)
         for cache in list(self._caches.values()):
             for k in drops:
                 src = cache.pop(k, None)
@@ -152,7 +155,7 @@ class Workspace:
         return sorted(out)
 
     def scan(self) -> None:
-        light: dict[str, SourceFile] = {}
+        light = self._light
         reach: dict[str, set[str]] = {}
         mains: dict[str, Path] = {}
         candidates = self.settings.main_decks or self._decks()
@@ -170,6 +173,10 @@ class Workspace:
             self._reach = {k: reach[k] for k in mains}
             self._mains = mains
             self._dirty = False
+
+    def is_orphan(self, main_key: str) -> bool:
+        """A deck checked as its own model that another main deck now includes: its old findings must go."""
+        return main_key not in self._mains and any(main_key in r for r in self._reach.values())
 
     def models_for(self, path: Path) -> list[Path]:
         k = _key(_norm(path))

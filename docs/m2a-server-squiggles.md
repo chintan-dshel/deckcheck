@@ -78,6 +78,8 @@ re-measured:
   save.
 - Exit code 75: show "paused", offer raising the budget, never restart. Kill the whole process tree on stop (a venv's
   `python.exe` starts the real interpreter as a child).
-- Register file watchers for `.k`, `.key`, `.dyn` (the server already handles `didChangeWatchedFiles`).
+- Register file watchers for `.k`, `.key`, `.dyn` (the server already handles `didChangeWatchedFiles`). They are
+  required, not optional: the include scan keeps its parses across scans and learns of outside edits only from
+  them. Events for files open in the editor are ignored by the server (the editor's own save already asked).
 - Status bar from `deckcheck/status`; read its params by attribute or JSON.
 - Re-run the harm gate end to end with the client: open time on vs off, activation time, command round trip.

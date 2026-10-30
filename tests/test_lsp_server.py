@@ -179,3 +179,24 @@ async def test_ping_answers(tmp_path):
     async with session(tmp_path) as client:
         reply = await client.protocol.send_request_async("deckcheck/ping", {})
         assert (reply["ok"] if isinstance(reply, dict) else reply.ok) is True
+
+
+async def test_former_main_now_included_loses_its_findings(tmp_path):
+    (tmp_path / "part.k").write_text(PART, encoding="latin-1")
+    (tmp_path / "mat.k").write_text(MAT, encoding="latin-1")
+    async with session(tmp_path) as client:
+        open_doc(client, tmp_path / "part.k")    # nothing includes it yet: checked alone, MAT 1 missing
+        assert [d for d in await published(client, uri(tmp_path / "part.k")) if d.code == "DC001"]
+        (tmp_path / "main.k").write_text(MAIN, encoding="latin-1")
+        client.text_document_did_save(types.DidSaveTextDocumentParams(types.TextDocumentIdentifier(uri(tmp_path / "part.k"))))
+        await published(client, uri(tmp_path / "main.k"))
+        assert not [d for d in client.diagnostics[uri(tmp_path / "part.k")] if d.code == "DC001"]
+
+
+def test_watcher_events_for_synced_files_are_ignored(tmp_path):
+    from deckcheck.lsp.server import _watched_paths
+    from deckcheck.lsp.workspace import Settings, Workspace
+    ws = Workspace([tmp_path], Settings())
+    ws.open(tmp_path / "open.k", "*KEYWORD\n")
+    changes = [types.FileEvent(uri(tmp_path / n), types.FileChangeType.Changed) for n in ("open.k", "closed.k")]
+    assert [p.name for p in _watched_paths(ws, changes)] == ["closed.k"]

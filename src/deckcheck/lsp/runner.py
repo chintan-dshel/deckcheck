@@ -21,8 +21,11 @@ class _Job:
 class Runner:
     def __init__(self, models: Callable[[Path], list[Path]], check: Callable, publish: Callable,
                  threshold: float, clock: Callable[[], float] = time.monotonic, debounce: float = 0.3,
-                 prepare: Callable[[], None] = lambda: None):
+                 prepare: Callable[[], None] = lambda: None,
+                 report_error: Callable[[BaseException], None] = lambda e: None):
         self.models, self.check, self.publish, self.prepare = models, check, publish, prepare
+        self.report_error = report_error
+        self._typed_unknown: dict[str, float] = {}  # typed while the model's speed was unknown (its first check)
         self.threshold, self.clock, self.debounce = threshold, clock, debounce
         self.durations: dict[str, float] = {}
         self.active: str | None = None
@@ -46,9 +49,11 @@ class Runner:
             self._cv.notify()
 
     def _schedule(self, main: Path, reason: str, at: float) -> None:
-        if reason == "change" and not self.live(main):
-            return
         k = self.key(main)
+        if reason == "change" and not self.live(main):
+            if k not in self.durations:  # first check still running: decide once its speed is known
+                self._typed_unknown[k] = at
+            return
         self._gen[k] = self._gen.get(k, 0) + 1
         due = at + (self.debounce if reason == "change" else 0.0)
         self._pending[k] = _Job(main, due, next(self._order))
@@ -76,6 +81,13 @@ class Runner:
                 self._schedule(main, reason, at)
 
     def step(self) -> bool:
+        try:
+            return self._step()
+        except Exception as e:  # outside check() (the scan, a model lookup): reported, and the worker lives on
+            self.report_error(e)
+            return True
+
+    def _step(self) -> bool:
         self._drain()
         with self._cv:
             job = self._next()
@@ -93,6 +105,9 @@ class Runner:
         with self._cv:
             if error is None:
                 self.durations[k] = took
+            typed = self._typed_unknown.pop(k, None)
+            if typed is not None and self.live(job.main):  # a small model: the typing supersedes this result
+                self._schedule(job.main, "change", typed)
             stale = self._gen[k] != gen
         if not stale:
             self.publish(job.main, report, error)

@@ -129,3 +129,11 @@ def test_reading_never_blocks_saving_or_deleting_the_file(tmp_path):
         f.write(b"*KEYWORD")
     os.remove(deck)                   # a user deleting it
     list(lines)
+
+
+def test_open_error_names_the_file(tmp_path):
+    from deckcheck.reader import _lines
+    missing = tmp_path / "nope.k"
+    with pytest.raises(FileNotFoundError) as e:
+        _lines(missing)
+    assert e.value.filename == str(missing)

@@ -58,8 +58,14 @@ def _publish(ls: DeckServer, main: Path, result: Result | None, error) -> None:
             ls.results[k][u] = []
         state, items = ("ok" if ls.runner.live(main) else "checks on save"), result.not_checked
     ls.names[k] = main.name
+    orphaned: set[str] = set()
+    for m in [m for m in ls.results if m != k and ls.ws.is_orphan(m)]:  # now included by another main deck
+        orphaned |= set(ls.results.pop(m))
+        ls.names.pop(m, None)
     merged = merge(ls.results, ls.names)
     main_uri = from_fs_path(str(main))
+    for u in orphaned - set(ls.results[k]):
+        ls.text_document_publish_diagnostics(types.PublishDiagnosticsParams(uri=u, diagnostics=merged.get(u, [])))
     for u in sorted(ls.results[k], key=lambda u: u == main_uri):  # included files first, the main deck last
         ls.text_document_publish_diagnostics(types.PublishDiagnosticsParams(uri=u, diagnostics=merged.get(u, [])))
     _status(ls, main, state, items)
@@ -102,7 +108,10 @@ def initialize(ls: DeckServer, params: types.InitializeParams) -> None:
     ls.results, ls.names = {}, {}
     ls.runner = Runner(models=ls.ws.models_for, check=lambda m: _check(ls, m),
                        publish=lambda m, r, e: ls.loop.call_soon_threadsafe(_publish, ls, m, r, e),
-                       threshold=settings.live_threshold, prepare=lambda: _prepare(ls))
+                       threshold=settings.live_threshold, prepare=lambda: _prepare(ls),
+                       report_error=lambda e: ls.loop.call_soon_threadsafe(
+                           ls.window_log_message, types.LogMessageParams(types.MessageType.Error,
+                                                                         f"deckcheck: worker error: {e!r}")))
     ls.runner.start()
 
 
@@ -145,14 +154,21 @@ def did_close(ls: DeckServer, params: types.DidCloseTextDocumentParams) -> None:
         ls.runner.request(path, "external")  # the disk version applies again
 
 
+def _watched_paths(ws: Workspace, changes) -> list[Path]:
+    """Files changed outside the editor. An open file's text is the editor's, and its own save already asked for
+    a check: a watcher event for it would only discard that check and run it again."""
+    paths = [_path(c.uri) for c in changes]
+    return [p for p in paths if p is not None and not ws.synced(p)]
+
+
 @server.feature(types.WORKSPACE_DID_CHANGE_WATCHED_FILES)
 def watched(ls: DeckServer, params: types.DidChangeWatchedFilesParams) -> None:
-    ls.ws.mark_dirty()
-    for change in params.changes:
-        path = _path(change.uri)
-        if path is not None:
-            ls.ws.drop_file(path)
-            ls.runner.request(path, "external")
+    paths = _watched_paths(ls.ws, params.changes)
+    if paths:
+        ls.ws.mark_dirty()
+    for path in paths:
+        ls.ws.drop_file(path)
+        ls.runner.request(path, "external")
 
 
 @server.feature("deckcheck/check")

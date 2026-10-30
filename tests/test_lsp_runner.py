@@ -112,3 +112,52 @@ def test_prepare_runs_before_mapping():
     r.request(Path("a.k"), "open")
     r.step()
     assert order == ["scan", "map"]
+
+
+def test_change_during_first_check_supersedes_it():
+    r, clock, ran, pub = _runner()
+    real = r.check
+
+    def check_then_type(main):
+        rep = real(main)
+        r.request(Path("a.k"), "change")  # typing while the very first check runs: duration not known yet
+        return rep
+    r.check = check_then_type
+    r.request(Path("a.k"), "open")
+    r.step()
+    assert pub == []                       # the first result read older text: discarded
+    r.check = real
+    clock.t += 0.31
+    assert r.step() and [p[1] for p in pub] == ["report a.k #2"]
+
+
+def test_big_model_keeps_its_first_result_when_typed_during_it():
+    r, clock, ran, pub = _runner(durations={"big.k": 63.0})
+    real = r.check
+
+    def check_then_type(main):
+        rep = real(main)
+        r.request(Path("big.k"), "change")
+        return rep
+    r.check = check_then_type
+    r.request(Path("big.k"), "open")
+    r.step()
+    assert len(pub) == 1                   # on-save model: the result stands until the next save
+
+
+def test_worker_survives_a_failing_prepare():
+    errors, calls = [], []
+
+    def prepare():
+        calls.append(1)
+        if len(calls) == 1:
+            raise RecursionError("deep include chain")
+    published = []
+    r = Runner(models=lambda f: [f], check=lambda m: "r", publish=lambda *a: published.append(a),
+               threshold=2.0, prepare=prepare, report_error=errors.append)
+    r.request(Path("a.k"), "open")
+    r.step()
+    assert isinstance(errors[0], RecursionError)
+    r.request(Path("a.k"), "open")
+    r.step()
+    assert published

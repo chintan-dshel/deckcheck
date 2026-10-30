@@ -59,7 +59,9 @@ def _open(path: Path):
     # GENERIC_READ; share read, write and delete; OPEN_EXISTING; FILE_ATTRIBUTE_NORMAL
     handle = k32.CreateFileW(str(path), 0x80000000, 0x7, None, 3, 0x80, None)
     if handle in (None, wintypes.HANDLE(-1).value):
-        raise ctypes.WinError(ctypes.get_last_error())  # an OSError subclass, as open() raises
+        code = ctypes.get_last_error()
+        err = ctypes.WinError(code)
+        raise OSError(err.errno, err.strerror, str(path), code)  # the subclass and file name open() would give
     return os.fdopen(msvcrt.open_osfhandle(handle, os.O_RDONLY | os.O_BINARY), "rb")
 
 

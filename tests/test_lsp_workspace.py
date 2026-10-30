@@ -120,3 +120,31 @@ def test_drain_empties_containers_and_parses():
     cards = src.blocks[0].cards
     drain_source(src)
     assert not src.blocks and not cards
+
+
+def test_scan_reuses_light_parses_until_dropped(tmp_path, monkeypatch):
+    import deckcheck.lsp.workspace as wsmod
+    _write(tmp_path, {"main.k": "*KEYWORD\n*INCLUDE\nmat.k\n*END\n", "mat.k": MAT})
+    reads = []
+    real = wsmod.read_includes
+    monkeypatch.setattr(wsmod, "read_includes", lambda p, t=None: reads.append(p.name) or real(p, t))
+    ws = _ws(tmp_path)
+    first = len(reads)
+    ws.scan()
+    assert len(reads) == first                  # nothing changed: nothing re-read
+    ws.drop_file(tmp_path / "mat.k")
+    ws.apply_drops()
+    ws.scan()
+    assert reads[first:] == ["mat.k"]
+
+
+def test_former_main_now_included_is_an_orphan(tmp_path):
+    _write(tmp_path, {"part.k": PART, "main.k": "*KEYWORD\n*END\n"})
+    ws = _ws(tmp_path)
+    part = _key(_norm(tmp_path / "part.k"))
+    assert not ws.is_orphan(part)
+    (tmp_path / "main.k").write_text("*KEYWORD\n*INCLUDE\npart.k\n*END\n", encoding="latin-1")
+    ws.drop_file(tmp_path / "main.k")
+    ws.apply_drops()
+    ws.scan()
+    assert ws.is_orphan(part)

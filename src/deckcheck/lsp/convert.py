@@ -20,12 +20,16 @@ def utf16_column(line: str, col: int, from_disk: bool) -> int:
     return len(prefix.encode("utf-16-le")) // 2
 
 
-def _lines(source) -> dict[int, str]:
+def _lines(source, wanted: set[int]) -> dict[int, str]:
+    """The text of only the lines that carry a finding: a dict of every line of a 5-million-card mesh would add
+    hundreds of MB for one finding."""
     out = {}
     for b in source.blocks:
-        out[b.line] = b.text
+        if b.line in wanted:
+            out[b.line] = b.text
         for c in b.cards:
-            out[c.line] = c.text
+            if c.line in wanted:
+                out[c.line] = c.text
     return out
 
 
@@ -37,12 +41,15 @@ def to_lsp(report: Report, synced: Callable[[Path], bool]) -> dict[str, list[typ
     """uri -> diagnostics for every file of the report's model, empty lists included so stale ones are cleared."""
     files = {_uri(f.path): f for f in report.tree.files}
     out: dict[str, list[types.Diagnostic]] = {u: [] for u in files}
+    wanted: dict[str, set[int]] = {}
+    for d in report.diagnostics:
+        wanted.setdefault(_uri(d.path), set()).add(d.line)
     texts: dict[str, dict[int, str]] = {}
     for d in report.diagnostics:
         uri = _uri(d.path)
         node = files.get(uri)
         if node is not None and uri not in texts:
-            texts[uri] = _lines(node.source)
+            texts[uri] = _lines(node.source, wanted[uri])
         line = texts.get(uri, {}).get(d.line)
         disk = node is None or not synced(node.path)
         start, end = ((utf16_column(line, d.start, disk), utf16_column(line, d.end, disk)) if line is not None
