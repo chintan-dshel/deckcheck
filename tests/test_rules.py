@@ -150,3 +150,68 @@ def test_dc005_silent_when_an_include_is_missing(tmp_path):
 def test_umat_part_material_is_not_reported():
     ds = check(TORTURE / "m1d_umat" / "main.k").diagnostics
     assert not [d for d in ds if d.code in ("DC001", "DC005") and "MAT 2" in d.message]
+
+
+# --- final review fixes (M1d)
+
+BASE_DECK = (TORTURE / "m1d_base" / "main.k").read_text(encoding="latin-1")
+
+
+def deck(tmp_path, extra="", files=None, head="*KEYWORD"):
+    (tmp_path / "main.k").write_text(BASE_DECK.replace("*KEYWORD", head, 1).replace("*END", extra + "*END"),
+                                     encoding="latin-1")
+    for name, text in (files or {}).items():
+        (tmp_path / name).write_text(text, encoding="latin-1")
+    return check(tmp_path / "main.k").diagnostics
+
+
+def test_dc002_node_plus_duplicate_is_not_compared(tmp_path):
+    # review C1: a 20-wide *NODE + card read at 8/16 columns compared as different: a false error
+    ds = [d for d in deck(tmp_path, "*NODE +\n" + "".join(f"{v:>20}" for v in (1, 0.0, 0.0, 0.0)) + "\n")
+          if d.code == "DC002"]
+    assert [(d.severity, "could not compare" in d.message) for d in ds] == [("warning", True)]
+
+
+def test_dc002_node_under_transform_is_not_compared(tmp_path):
+    # review I2: a translation moves the nodes; deckcheck doesn't apply it, so it can't say "same coordinates"
+    nodes = "*KEYWORD\n*NODE\n       1             0.0             0.0             0.0\n*END\n"
+    ds = [d for d in deck(tmp_path, "*INCLUDE_TRANSFORM\nnodes.k\n         0\n\n\n\n", {"nodes.k": nodes})
+          if d.code == "DC002"]
+    assert [(d.severity, "could not compare" in d.message) for d in ds] == [("warning", True)]
+
+
+def test_dc002_node_duplicates_scale(tmp_path):
+    # review I5: each duplicate searched the whole tree; a mesh included twice must stay fast
+    import time
+    mesh = "*KEYWORD\n*NODE\n" + "".join(f"{i:>8}{float(i):>16}{0.0:>16}{0.0:>16}\n" for i in range(100, 20100)) + "*END\n"
+    start = time.monotonic()
+    ds = [d for d in deck(tmp_path, "*INCLUDE\nmesh.k\n*INCLUDE\nmesh.k\n", {"mesh.k": mesh}) if d.code == "DC002"]
+    assert len(ds) == 20000 and time.monotonic() - start < 5
+
+
+def test_keyword_id_is_structural(tmp_path):
+    # review I1: *KEYWORD_ID with its job-id card is the deck header, not an unknown keyword
+    (tmp_path / "main.k").write_text(BASE_DECK.replace("*KEYWORD", "*KEYWORD_ID\nmyjob", 1), encoding="latin-1")
+    report = check(tmp_path / "main.k")
+    assert not [n for n in report.not_checked if "doesn't know" in n.what or n.what.startswith("unused MAT")]
+
+
+def test_keyword_id_long_reads_long_format(tmp_path):
+    long_deck = (TORTURE / "m1d_keyword_id_long" / "main.k")
+    assert [d.code for d in check(long_deck).diagnostics] == []
+
+
+def test_tab_in_text_or_unknown_block_is_no_finding(tmp_path):
+    # review I3: *TITLE and *COMMENT are text; an unknown keyword passes through untouched (spec §4)
+    text = BASE_DECK.replace("deckcheck torture: base model for M1d cases", "review\tdeck").replace(
+        "*END", "*COMMENT\nnote\twith tab\n*NOT_A_REAL_KEYWORD\n1\t2\n*END")
+    (tmp_path / "main.k").write_text(text, encoding="latin-1")
+    assert [d for d in check(tmp_path / "main.k").diagnostics if d.code == "DC003"] == []
+
+
+def test_declared_python_floor_has_tomllib():
+    # review I4: the runtime imports tomllib (3.11+); requires-python must not promise 3.10
+    root = Path(__file__).parent.parent
+    meta = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+    assert meta["requires-python"] == ">=3.11"
+    assert "Python 3.11 or newer" in (root / "README.md").read_text(encoding="utf-8")

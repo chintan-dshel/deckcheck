@@ -4,6 +4,7 @@ A kind not tested is reported as a warning that says so, never as a confirmed er
 from pathlib import Path
 
 from deckcheck.diagnostics import Diagnostic, Related
+from deckcheck.fields import is_long
 from deckcheck.includes import Tree
 from deckcheck.index import Index, _long_deck
 
@@ -13,18 +14,34 @@ ACCEPTED_DUPLICATES: dict[str, str] = {}  # kind -> "first" | "last" | "unknown"
 # NODE: rejected at different coordinates (m1d_dup_node, Error 11168), accepted at identical ones (m1d_dup_node_same)
 
 
-def _card(tree: Tree, path: Path, line: int) -> str | None:
-    for node in tree.files:
-        if node.path == path:
-            for block in node.source.blocks:
+def _transformed(tree: Tree, fi: int) -> bool:
+    """Brought in, directly or through an ancestor, by *INCLUDE_TRANSFORM (its offsets dict is set even when all zero):
+    a translation or scaling moves the nodes, and deckcheck does not apply it."""
+    i = fi
+    while i is not None:
+        if tree.files[i].offsets:
+            return True
+        i = tree.files[i].parent
+    return False
+
+
+def _node_cards(tree: Tree) -> dict[tuple[Path, int], str | None]:
+    """Each *NODE card's text by (file, line), or None where the coordinates can't be trusted at 8/16/16/16:
+    a long-format block (+ suffix or LONG=Y) or a transformed file."""
+    long_deck, out = _long_deck(tree), {}
+    for fi, node in enumerate(tree.files):
+        moved = _transformed(tree, fi)
+        for block in node.source.blocks:
+            if block.resolved is not None and block.resolved.name == "NODE":
+                trusted = not moved and not is_long(block, long_deck)
                 for card in block.cards:
-                    if card.line == line:
-                        return card.text
-    return None
+                    out[(node.path, card.line)] = card.text if trusted else None
+    return out
 
 
 def _coords(text: str | None) -> tuple[float, ...] | None:
-    """A *NODE card's x, y, z: columns 8-56 (16 wide each), or the comma slots after the id; None if unreadable."""
+    """A standard-width *NODE card's x, y, z: columns 8-56 (16 wide each), or the comma slots after the id. None if
+    unreadable, which includes Fortran D exponents and *PARAMETER references: deckcheck then doesn't compare."""
     if text is None:
         return None
     parts = text.split(",")[1:4] if "," in text else [text[8:24], text[24:40], text[40:56]]
@@ -35,9 +52,9 @@ def _coords(text: str | None) -> tuple[float, ...] | None:
     return tuple(values + [0.0] * (3 - len(values)))
 
 
-def _node(tree: Tree, d, head: str) -> tuple[str, str]:
-    a, b = _coords(_card(tree, d.first_path, d.first_line)), _coords(_card(tree, d.path, d.line))
-    if a is None or b is None or _long_deck(tree):
+def _node(cards: dict, d, head: str) -> tuple[str, str]:
+    a, b = _coords(cards.get((d.first_path, d.first_line))), _coords(cards.get((d.path, d.line)))
+    if a is None or b is None:  # compared only when both cards are standard width, untransformed and readable
         return "warning", (f"{head}; LS-DYNA rejects this if the coordinates differ and accepts it if they match "
                            "(deckcheck could not compare them)")
     if a == b:
@@ -46,12 +63,13 @@ def _node(tree: Tree, d, head: str) -> tuple[str, str]:
 
 
 def dc002(tree: Tree, ix: Index) -> list[Diagnostic]:
-    out = []
+    out, cards = [], None
     for d in ix.duplicates():
         head = f"{d.kind} {d.id} is defined twice (first at {d.first_path.name}:{d.first_line})"
         related = (Related(d.first_path, d.first_line, "first definition"),)
         if d.kind == "NODE":
-            severity, message = _node(tree, d, head)
+            cards = _node_cards(tree) if cards is None else cards  # built once, on the first node duplicate
+            severity, message = _node(cards, d, head)
         elif d.kind in REJECTED:
             severity, message = "error", head
         elif d.kind in ACCEPTED_DUPLICATES:

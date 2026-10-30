@@ -260,7 +260,8 @@ model-quality checks) and M7 (rule packs) draw on this list.
 | `*BOUNDARY_SPC_SET` with a missing node set: accepted, constraint applies to nothing | 2 | tested (`spc_set_none`) | DC006 |
 | Other set-taking keywords with a missing set (`*BOUNDARY_PRESCRIBED_MOTION_SET`, `*LOAD_NODE_SET`, `*LOAD_SEGMENT_SET`, `*INITIAL_VELOCITY`, `*DATABASE_HISTORY_NODE_SET`) | 1 | tested (`m1d_*_set_none`: all rejected, Error 10144) | DC001 |
 | Two definitions with the same ID (PART, MAT, SECTION, CURVE, node set, NODE at different coordinates) | 1 | tested (`m1d_dup_*`: all rejected, Errors 10176, 10137, 10173, 10110, 11168) | DC002 error |
-| A node defined twice at identical coordinates | 2 | tested (`m1d_dup_node_same`: accepted, no warning) | DC002 warning (deckcheck doesn't compare coordinates) |
+| A node defined twice at identical coordinates | 2 | tested (`m1d_dup_node_same`: accepted, no warning) | DC002: deckcheck compares the two cards' coordinates only when both are standard width, untransformed and readable (same: warning, different: error); otherwise a warning that it could not compare. `*NODE +` and `*INCLUDE_TRANSFORM` duplicates are untested |
+| `*KEYWORD_ID LONG=Y`: long format, as `*KEYWORD LONG=Y` | 1 (reading rule) | tested (`m1d_keyword_id_long`, control `m1d_keyword_long`: accepted, 20-wide cards read) | `*KEYWORD_ID`/`_JOBID` are the deck header; their `LONG=Y` makes the deck long |
 | Tab-separated card: silently misread | 2 | tested (`tabs`) | DC003 |
 | Value overflowing its field (a 9-digit node id in an 8-wide field) | 2 | tested (`m1d_overflow_node`: accepted, read as node 12345678 at x = 95.0 instead of 5.0, no warning) | not detected yet (needs full-card field reading, M4); DC003 only where the spill makes a value not of its type |
 | Two values in one comma-separated slot | none | tested (`m1d_mixed_free`: accepted and read correctly) | not a finding; removed from DC003 |

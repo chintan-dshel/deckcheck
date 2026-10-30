@@ -493,3 +493,5 @@
    -> material 2 read as e = 210000, vnu = 0.3: two values in one comma slot are read correctly
 == ACCEPTED_DUPLICATES (Task 1 Step 3)
 {}  # every tested kind rejected; NODE accepted only at identical coordinates (m1d_dup_node_same)
+== m1d_keyword_long: accepted
+== m1d_keyword_id_long: accepted

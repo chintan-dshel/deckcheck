@@ -3,17 +3,33 @@ past a keyword's layout. LS-DYNA decided the rest (M1d Task 1): two values in on
 (torture m1d_mixed_free), so they are no finding; a value spilling into the next fixed field is a silent misread
 (m1d_overflow_node) that needs every field of the card read to detect, so M1 reports it only where the spill
 makes a value not of its type."""
+import functools
+
 from deckcheck.diagnostics import Diagnostic
 from deckcheck.includes import Tree
-from deckcheck.index import Index
+from deckcheck.index import STRUCTURAL, Index
+from deckcheck.keywords import layout
 
 TAB = "tab in card: LS-DYNA misreads tab-separated cards (use spaces or commas)"
+
+
+@functools.cache
+def _has_text(key: str) -> bool:
+    return any(c["kind"] in ("text", "include") for c in layout(key)["cards"])
+
+
+def _field_cards(block) -> bool:
+    """Cards LS-DYNA splits into fields: not the header or *TITLE, not text such as *COMMENT or a *DEFINE_FUNCTION
+    body, not file names, and not a keyword the data doesn't cover (it passes through untouched, spec §4)."""
+    return block.name not in STRUCTURAL and block.resolved is not None and not _has_text(block.resolved.name)
 
 
 def dc003(tree: Tree, ix: Index) -> list[Diagnostic]:
     out, tab_lines = [], set()
     for fi, node in enumerate(tree.files):
         for block in node.source.blocks:
+            if not _field_cards(block):
+                continue
             for card in block.cards:
                 if "\t" in card.text:
                     i = card.text.index("\t")

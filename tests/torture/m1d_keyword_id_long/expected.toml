@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "Q: does LONG=Y on *KEYWORD_ID set long format? Every card is 20 wide. LS-DYNA R16.1 Student 2026-10-29: accepted, no warning (read at 10 wide, the part and section cards would fail). Control: m1d_keyword_long."

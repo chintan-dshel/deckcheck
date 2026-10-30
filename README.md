@@ -18,7 +18,7 @@ Until then, from a clone of this repository:
 pip install .
 ```
 
-deckcheck needs Python 3.10 or newer and nothing else.
+deckcheck needs Python 3.11 or newer and nothing else.
 
 ## Usage
 

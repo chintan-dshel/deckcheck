@@ -34,7 +34,7 @@ OFFSET_FIELD: dict[str, str] = {
 LOOKUP = {"DEFINE_CURVE": ("DEFINE_CURVE", "DEFINE_TABLE"), "DEFINE_CURVE_OR_TABLE": ("DEFINE_CURVE", "DEFINE_TABLE"),
           "SET_PART": ("SET_PART", "PART"), "ICFD_PART": ("ICFD_PART", "ICFD_PART_VOL")}
 ID_MAX = 2**63 - 1  # array('q')
-STRUCTURAL = frozenset({"KEYWORD", "TITLE", "END"})
+STRUCTURAL = frozenset({"KEYWORD", "KEYWORD_ID", "KEYWORD_JOBID", "TITLE", "END"})  # m1d_keyword_id_long
 
 
 def pack(file: int, line: int, start: int, end: int) -> int:
@@ -95,7 +95,7 @@ def _link_kinds(key: str) -> frozenset[str]:
 def _long_deck(tree: Tree) -> bool:
     main = tree.files[0].source
     for block in main.blocks:
-        if block.name == "KEYWORD":
+        if block.name in ("KEYWORD", "KEYWORD_ID", "KEYWORD_JOBID"):  # LONG=Y on either: m1d_keyword_id_long
             line = main.path.read_bytes().decode("latin-1").split("\n")[block.line - 1]
             return LONG_KEYWORD and "LONG=Y" in line.upper().replace(" ", "")
     return False

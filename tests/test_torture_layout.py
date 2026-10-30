@@ -16,7 +16,7 @@ CASES = ["base", "free_format", "long_format", "parameter", "include_path", "com
          "nodal_rigid_none", "set_general_rows",
          "m1d_base", "m1d_bpm_set_none", "m1d_load_node_set_none", "m1d_load_segment_set_none", "m1d_initial_velocity_none",
          "m1d_history_node_set_none", "m1d_dup_part", "m1d_dup_mat", "m1d_dup_section", "m1d_dup_curve", "m1d_dup_node_set",
-         "m1d_dup_node", "m1d_dup_node_same", "m1d_overflow_node", "m1d_mixed_free", "m1d_umat", "inc_multi_missing"]
+         "m1d_dup_node", "m1d_dup_node_same", "m1d_overflow_node", "m1d_mixed_free", "m1d_umat", "inc_multi_missing", "m1d_keyword_long", "m1d_keyword_id_long"]
 
 
 def test_every_case_has_main_and_expected():

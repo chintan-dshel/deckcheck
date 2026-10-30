@@ -1,0 +1,3 @@
+lsdyna_valid = true
+findings = []
+note = "Control for m1d_keyword_id_long: *KEYWORD LONG=Y, every card 20 wide. LS-DYNA R16.1 Student 2026-10-29: accepted, no warning."
