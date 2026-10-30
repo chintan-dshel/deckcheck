@@ -15,7 +15,8 @@ deckcheck = "deckcheck.cli:main"
 
 [project.optional-dependencies]
 bakeoff = ["dynars==1.1.0", "psutil>=5.9"]
-dev = ["pytest>=8"]
+lsp = ["pygls==2.1.1"]
+dev = ["pytest>=8", "pytest-lsp==1.0.1"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/deckcheck"]
@@ -26,4 +27,6 @@ packages = ["src/deckcheck"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-markers = ["lsdyna: needs the local LS-DYNA Student install", "extract: needs .venv-extract (ansys-dyna-core)", "corpus: needs a downloaded corpus deck", "install: builds a wheel and a fresh venv (slow, needs hatchling from PyPI)"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = ["stress: generated heavy decks; run with DECKCHECK_STRESS=1","lsdyna: needs the local LS-DYNA Student install", "extract: needs .venv-extract (ansys-dyna-core)", "corpus: needs a downloaded corpus deck", "install: builds a wheel and a fresh venv (slow, needs hatchling from PyPI)"]
