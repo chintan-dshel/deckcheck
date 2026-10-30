@@ -1,3 +1,130 @@
 # deckcheck
 
-A linter for LS-DYNA keyword decks. Early development: see `docs/specs/` for the design.
+deckcheck checks keyword decks for LS-DYNA before you run them. It finds dangling references, duplicate ids, values
+that don't fit their field, missing or circular include files, unused materials and sections, and references that
+LS-DYNA accepts but ignores. It reads the deck only. It never runs the solver and makes no physics judgments.
+
+## Install
+
+After the first release:
+
+```
+pip install deckcheck
+```
+
+Until then, from a clone of this repository:
+
+```
+pip install .
+```
+
+deckcheck needs Python 3.10 or newer and nothing else.
+
+## Usage
+
+Give it the main deck. It follows every `*INCLUDE` the way LS-DYNA does.
+
+```
+$ deckcheck seeded_mistakes/main.k
+seeded_mistakes/main.k:3:1  error    DC004  include file 'missing_file.k' not found
+seeded_mistakes/main.k:8:29  error    DC001  *PART mid refers to MAT 99, which is not defined; it may be defined in missing include 'missing_file.k'
+seeded_mistakes/main.k:11:10  error    DC002  PART 1 is defined twice (first at main.k:8)
+
+3 problems (3 errors, 0 warnings)
+
+Not checked:
+  unused MAT (DC005): main.k:3 missing include 'missing_file.k' may refer to it
+  unused SECTION (DC005): main.k:3 missing include 'missing_file.k' may refer to it
+  unused HOURGLASS (DC005): main.k:3 missing include 'missing_file.k' may refer to it
+  unused definitions of other kinds (DC005): checked for MAT, SECTION, HOURGLASS only
+```
+
+Each line is `file:line:column  severity  code  message`. In VS Code's terminal, the location is a clickable link.
+
+For scripts and CI, use `--format json`:
+
+```
+$ deckcheck --format json spc_set_none/main.k
+{
+  "version": 1,
+  "diagnostics": [
+    {
+      "file": "spc_set_none/main.k",
+      "line": 22,
+      "column": 9,
+      "end_column": 11,
+      "severity": "warning",
+      "code": "DC006",
+      "message": "*BOUNDARY_SPC_SET nsid refers to SET_NODE 99, which is not defined; LS-DYNA accepts this, but the reference has no effect",
+      "related": []
+    }
+  ],
+  "not_checked": [ ... ],
+  "summary": {"errors": 0, "warnings": 1}
+}
+```
+
+Lines and columns count from 1, and `end_column` is exclusive. The field names stay the same for every release
+that writes `"version": 1`.
+
+Other options:
+- `--ignore DC005` leaves a code out of the output and the exit code. Repeat it to leave out more codes.
+- Give several main decks to check them as separate models.
+
+Exit codes:
+
+| Code | Meaning |
+|---|---|
+| 0 | No errors. Warnings and "Not checked" items don't fail the run. |
+| 1 | At least one error. |
+| 2 | deckcheck could not run: the main file is missing, or the arguments are wrong. |
+
+In CI: `deckcheck model.k || exit 1`.
+
+## The checks
+
+| Code | Severity | What it finds |
+|---|---|---|
+| DC001 | error | A reference to an id that is never defined (`*PART` names material 99, and there is no material 99). |
+| DC002 | error, or warning where LS-DYNA accepts it | The same id defined twice. A node defined twice at the same coordinates is a warning, because LS-DYNA accepts it. |
+| DC003 | warning | A value that is not of its field's type, a tab in a card (LS-DYNA misreads tab-separated cards), or cards past the end of a keyword's layout. |
+| DC004 | error | An include file that can't be found, or an include that includes itself. |
+| DC005 | warning | A material, section or hourglass control that nothing refers to. |
+| DC006 | warning | A reference LS-DYNA accepts without checking, to an id that doesn't exist, so it has no effect (for example, `*BOUNDARY_SPC_SET` naming a missing node set). |
+| DC000 | warning | deckcheck itself failed to read a block. The rest of the deck is still checked. Please report it. |
+
+Findings fall into three classes:
+1. **LS-DYNA rejects it.** This is an error: the run would stop.
+2. **LS-DYNA accepts it, but the effect is surprising or there is none.** This is a warning that states the fact.
+3. **It looks wrong but is deliberate**, such as a placeholder material kept as team policy. deckcheck can't know
+   your intent. Use `--ignore` for now; per-line suppression is planned.
+
+Which class a pattern belongs to was decided by running LS-DYNA on a small test deck for each one. It was never
+assumed.
+
+## "Not checked"
+
+deckcheck would rather say nothing than guess. When it can't see everything it needs, it stays silent on that part
+and says so in the "Not checked" footer. For example:
+- an include file is missing;
+- a keyword isn't in its keyword data;
+- a block couldn't be read;
+- a `*PARAMETER` can't be resolved.
+
+An empty footer, apart from the DC005 scope line, means every check ran on the whole deck.
+
+## Known limits
+
+- No physics checks: units, time step, contact settings and material sanity are out of scope for now.
+- Long-format decks (`*KEYWORD LONG=Y`) are only partly read; the affected blocks are listed as not checked.
+- DC005 covers materials, sections and hourglass controls only.
+- DC003 checks values only in keywords that define or refer to ids.
+- A value that spills over into the next fixed-width field is caught only when the spill makes a value of the
+  wrong type.
+- The rules were checked with LS-DYNA Student, which can't run very large models. On those, results are checked
+  against the deck text rather than by LS-DYNA.
+
+## License and credits
+
+Apache-2.0. The keyword field data is extracted from PyDYNA (`ansys-dyna-core`, MIT License); see `NOTICE`.
+deckcheck is an independent project, not affiliated with or endorsed by Ansys. LS-DYNA is a trademark of its owner.

@@ -1,7 +1,7 @@
 # deckcheck — design spec
 
 Date: 2026-10-27, revised 2026-10-28 for route B1′, revised 2026-10-29 for M1d scope · Owner: Chintan Shelat ·
-Status: M1d revision awaiting review
+Status: M1d revision approved 2026-10-29; M1d done
 Living report: https://claude.ai/artifact/A1dTFKALfhzDWuxSnqUGKS
 
 ## 1. Purpose
@@ -97,6 +97,7 @@ edge-case register (§12).
 | DC004 | `*INCLUDE` problem: a missing file or a circular include | error |
 | DC005 | Unused definition: a material (MAT), section or hourglass control that nothing references. M1 covers only these three kinds, after an audit that every field referring to them is linked (`Index.used()` is a lower bound otherwise); other kinds are listed as not checked. | warning |
 | DC006 | Accepted but no effect: a reference LS-DYNA does not check, to an ID that is not defined (e.g. `*BOUNDARY_SPC_SET` with a missing node set: accepted, and the constraint applies to nothing). Which references belong here is decided per keyword by LS-DYNA tests; the rest stay under DC001. | warning |
+| DC000 | deckcheck itself could not read a block: one diagnostic, the block's kinds listed as not checked, the run continues; the message asks for a report | warning |
 
 Users can suppress a code with `--ignore DC005` (repeatable) in M1. Inline suppression comments and a config
 file come in M4.
@@ -235,11 +236,8 @@ Tests:
     codes, the six checks, what "Not checked" means, and known limits (no physics checks, `LONG=Y` not read, large
     models not refereed by LS-DYNA).
   - The package is published to PyPI only with Chintan's explicit yes.
-- **M1 progress (2026-10-29):** M1a (keyword data), M1b (reader, includes) and M1c (field reader, index) are done.
-  M1c's corpus gate passed: zero unexplained index findings on tier 1, VIVA+ and the Yaris (1,155 MB peak), and
-  the seven M0 defects pass as tests (`docs/m1c-field-reader-index.md` §4). M1d (DC001–DC005, CLI, JSON, README,
-  clean install) remains; scoped 2026-10-29 (coverage footer, DC005 to MAT/SECTION/HOURGLASS, DC006, exit codes,
-  LS-DYNA tests for DC002/DC003/DC006).
+- **M1 progress (2026-10-29): M1a–M1d done.** M1d (checks, CLI, JSON, README, clean install) on branch `m1d`; evidence
+  per criterion in `docs/m1d-checks-cli.md` §4. Publishing to PyPI waits for Chintan's explicit yes.
 
 ## 12. Open questions
 
