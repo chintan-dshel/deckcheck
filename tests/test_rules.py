@@ -8,7 +8,7 @@ from deckcheck.rules import CODES, check
 
 TORTURE = Path(__file__).parent / "torture"
 CASES = sorted(p.parent.name for p in TORTURE.glob("*/expected.toml"))
-IMPLEMENTED = ["DC000", "DC001", "DC002", "DC004", "DC006"]  # Task 4 adds DC003, Task 5 DC005
+IMPLEMENTED = ["DC000", "DC001", "DC002", "DC003", "DC004", "DC006"]  # Task 5 adds DC005
 
 
 def expected(case: str, code: str) -> list[dict]:
@@ -102,3 +102,18 @@ def test_dc002_untested_kind_says_so(tmp_path):
     (tmp_path / "main.k").write_text(text, encoding="latin-1")
     d = [d for d in check(tmp_path / "main.k").diagnostics if d.code == "DC002"][0]
     assert d.severity == "warning" and d.message.endswith("; not tested whether LS-DYNA rejects this")
+
+
+def test_dc003_tab_is_one_warning_per_card():
+    ds = [d for d in check(TORTURE / "tabs" / "main.k").diagnostics if d.code == "DC003"]
+    assert [(d.line, d.start, d.end) for d in ds] == [(19, 1, 2)]
+    assert ds[0].message == "tab in card: LS-DYNA misreads tab-separated cards (use spaces or commas)"
+
+
+def test_dc003_bad_value(tmp_path):
+    body = ("*KEYWORD\n*PART\nplate\n" + f"{1:>10}{1:>10}{'1x':>10}" + "\n*SECTION_SHELL\n" + f"{1:>10}{2:>10}"
+            + "\n" + f"{1.0:>10}" * 4 + "\n*MAT_ELASTIC\n" + f"{1:>10}{'7.85E-9':>10}{'210000.0':>10}{0.3:>10}" + "\n*END\n")
+    (tmp_path / "main.k").write_text(body, encoding="latin-1")
+    [d] = [d for d in check(tmp_path / "main.k").diagnostics if d.code == "DC003"]
+    assert (d.line, d.start, d.end, d.severity) == (4, 28, 30, "warning")
+    assert d.message == "mid: '1x' is not int; LS-DYNA may misread this card"

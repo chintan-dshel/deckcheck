@@ -10,9 +10,10 @@ from deckcheck.rules.duplicates import dc002
 from deckcheck.rules.failures import dc000
 from deckcheck.rules.include_files import dc004
 from deckcheck.rules.references import dc001, dc006
+from deckcheck.rules.values import dc003
 
 CODES = ("DC000", "DC001", "DC002", "DC003", "DC004", "DC005", "DC006")
-RULES = [dc000, dc001, dc002, dc004, dc006]
+RULES = [dc000, dc001, dc002, dc003, dc004, dc006]
 
 
 def check(main: Path) -> Report:

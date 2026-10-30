@@ -5,3 +5,10 @@ note = "Tabs between values. LS-DYNA Student R16.1 (2026-10-28) misreads the tab
 [index]
 dangling = []
 note_index = "the tab makes mid a bad value (uncertain, not dangling); DC003 reports the tab"
+
+[[diagnostics]]
+code = "DC003"
+severity = "warning"
+file = "main.k"
+line = 19
+columns = [1, 2]
