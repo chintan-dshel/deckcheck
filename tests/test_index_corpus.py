@@ -33,3 +33,12 @@ def test_icfd_parts_are_their_own_namespace():
     entry = [e for e in SMALL if "main_fsi" in e.name][0]
     ix = build(resolve_tree(fetch(entry)))
     assert ix.defs.get("ICFD_PART") and "ICFD_PART" not in {r.kind for r in ix.dangling()}
+
+
+@pytest.mark.parametrize("entry", load_manifest(MANIFEST), ids=lambda e: e.name)
+def test_light_walk_finds_the_same_files_on_the_corpus(entry):
+    from deckcheck.reader import read_includes
+    main = fetch(entry)
+    full, light = resolve_tree(main), resolve_tree(main, reader=read_includes)
+    assert [f.path for f in light.files] == [f.path for f in full.files]
+    assert [(p.kind, p.line) for p in light.problems] == [(p.kind, p.line) for p in full.problems]

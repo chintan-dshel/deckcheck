@@ -64,3 +64,32 @@ def read_file(path: Path, text: str | None = None) -> SourceFile:
         elif blocks:
             blocks[-1].cards.append(Card(n, line))
     return SourceFile(path, blocks, None)
+
+
+def _stream(path: Path):
+    with open(path, "rb") as f:
+        for raw in f:  # binary iteration splits on b"\n" only, as _split does
+            line = raw.decode("latin-1")
+            if line.endswith("\n"):
+                line = line[:-1]
+            yield line[:-1] if line.endswith("\r") else line
+
+
+def read_includes(path: Path, text: str | None = None) -> SourceFile:
+    """Only the *INCLUDE* blocks, to find which files a deck pulls in without parsing it (M2 spec §4.4). Streams
+    from disk, so a large mesh file is never held in memory."""
+    blocks: list[Block] = []
+    keep = False
+    for n, line in enumerate(_stream(path) if text is None else _split(text), start=1):
+        if line.startswith("$"):
+            continue
+        if line.startswith("*"):
+            name = _name(line)
+            if name == "END" and STOP_AT_END:
+                return SourceFile(path, blocks, n)
+            keep = name.startswith("INCLUDE")
+            if keep:
+                blocks.append(Block(name, n, resolve(line), text=line))
+        elif keep:
+            blocks[-1].cards.append(Card(n, line))
+    return SourceFile(path, blocks, None)

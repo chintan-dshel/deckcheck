@@ -215,3 +215,46 @@ def test_declared_python_floor_has_tomllib():
     meta = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))["project"]
     assert meta["requires-python"] == ">=3.11"
     assert "Python 3.11 or newer" in (root / "README.md").read_text(encoding="utf-8")
+
+
+MAIN = ("*KEYWORD\n*INCLUDE\nmat.k\n*PART\np\n         1         1        99\n"
+        "*SECTION_SHELL\n         1\n*END\n")
+MAT = "*KEYWORD\n*MAT_ELASTIC\n         1   7.85E-9  210000.0       0.3\n*END\n"
+
+
+def _model(tmp):
+    (tmp / "main.k").write_text(MAIN, encoding="latin-1")
+    (tmp / "mat.k").write_text(MAT, encoding="latin-1")
+    return tmp / "main.k", tmp / "mat.k"
+
+
+def _dc001(report):
+    return [d for d in report.diagnostics if d.code == "DC001"]
+
+
+def _same(a, b) -> bool:
+    return os.path.normcase(os.path.abspath(a)) == os.path.normcase(os.path.abspath(b))
+
+
+def test_check_reads_an_unsaved_include_from_source(tmp_path):
+    main, mat = _model(tmp_path)
+    assert _dc001(check(main))
+    edited = MAT.replace("         1", "        99", 1)
+    assert not _dc001(check(main, source=lambda p: edited if _same(p, mat) else None))
+
+
+def test_cache_keeps_parsed_files_until_the_caller_drops_them(tmp_path):
+    main, mat = _model(tmp_path)
+    cache = {}
+    check(main, cache=cache)
+    assert len(cache) == 2
+    mat.write_text(MAT.replace("         1", "        99", 1), encoding="latin-1")
+    assert _dc001(check(main, cache=cache))  # the stale parse is still used
+    cache.pop(next(k for k in cache if k.endswith("mat.k")))
+    assert not _dc001(check(main, cache=cache))
+
+
+def test_report_carries_tree_and_index(tmp_path):
+    main, _ = _model(tmp_path)
+    r = check(main)
+    assert len(r.tree.files) == 2 and r.index.tree is r.tree

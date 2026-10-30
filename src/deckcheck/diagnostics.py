@@ -2,6 +2,7 @@
 front doors convert. Coverage (what was not checked) is kept apart from diagnostics: it is never a finding (§5)."""
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -35,3 +36,5 @@ class Report:
     main: Path
     diagnostics: list[Diagnostic]
     not_checked: list[NotChecked]
+    tree: Any = None   # the resolved Tree, kept for the language server (M2)
+    index: Any = None  # the Index, kept for hover and navigation (M2c)

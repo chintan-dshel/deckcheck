@@ -116,3 +116,24 @@ def test_dangling_continuation_is_reported_missing(tmp_path):
     (tmp_path / "main.k").write_text("*KEYWORD\n*INCLUDE\nsub/ +\n*PART\n*END\n")
     tree = resolve_tree(tmp_path / "main.k")
     assert [(p.kind, p.line, p.name) for p in tree.problems] == [("missing", 3, "sub/")]
+
+
+LIGHT_CASES = sorted(p.parent.name for p in TORTURE.glob("*/main.k"))
+
+
+def _shape(tree):
+    return ([(f.path, f.parent, f.line, f.offsets) for f in tree.files],
+            [(p.kind, p.file, p.line, p.name) for p in tree.problems])
+
+
+@pytest.mark.parametrize("case", LIGHT_CASES)
+def test_light_walk_finds_the_same_files(case):
+    from deckcheck.reader import read_includes
+    main = TORTURE / case / "main.k"
+    assert _shape(resolve_tree(main, reader=read_includes)) == _shape(resolve_tree(main))
+
+
+def test_read_includes_keeps_only_include_blocks():
+    from deckcheck.reader import read_includes
+    src = read_includes(TORTURE / "include_path" / "main.k")
+    assert src.blocks and all(b.name.startswith("INCLUDE") for b in src.blocks)

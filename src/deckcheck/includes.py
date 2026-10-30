@@ -1,6 +1,7 @@
 """Follow a deck's includes in LS-DYNA's reading order. Every rule here was decided by LS-DYNA on the torture
 cases named beside it (docs/m1b-reader-includes.md), not taken from memory."""
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -19,6 +20,9 @@ CONTINUATION = True           # inc_continuation: accepted
 
 FOLLOWED = ("INCLUDE", "INCLUDE_TRANSFORM")
 PATHS = ("INCLUDE_PATH", "INCLUDE_PATH_RELATIVE")
+
+Source = Callable[[Path], "str | None"]
+Load = Callable[[Path], SourceFile]
 
 
 @dataclass(frozen=True)
@@ -111,7 +115,7 @@ def _offsets(tree: Tree, node: FileNode, block: Block, start: int) -> dict[str, 
 
 
 def _walk(tree: Tree, index: int, chain: list[str], main_dir: Path, paths: list[Path],
-          cache: dict[str, SourceFile]) -> None:
+          cache: dict[str, SourceFile], load: Load) -> None:
     node = tree.files[index]
     for block in node.source.blocks:
         if block.name in PATHS:
@@ -136,28 +140,36 @@ def _walk(tree: Tree, index: int, chain: list[str], main_dir: Path, paths: list[
                     continue
                 offsets = _offsets(tree, node, block, after) if block.name == "INCLUDE_TRANSFORM" else {}
                 if _key(found) not in cache:
-                    cache[_key(found)] = read_file(found)
+                    cache[_key(found)] = load(found)
                 tree.files.append(FileNode(found, cache[_key(found)], index, card.line, offsets))
-                _walk(tree, len(tree.files) - 1, chain + [_key(found)], main_dir, paths, cache)
+                _walk(tree, len(tree.files) - 1, chain + [_key(found)], main_dir, paths, cache, load)
         elif block.name.startswith("INCLUDE"):
             tree.problems.append(Problem("unfollowed", node.path, block.line, (1, 1 + len(block.name)), block.name))
 
 
-def _build(main: Path, paths: list[Path], cache: dict[str, SourceFile]) -> Tree:
+def _build(main: Path, paths: list[Path], cache: dict[str, SourceFile], load: Load) -> Tree:
     if _key(main) not in cache:
-        cache[_key(main)] = read_file(main)
+        cache[_key(main)] = load(main)
     tree = Tree([FileNode(main, cache[_key(main)], None, None, {})], [])
-    _walk(tree, 0, [_key(main)], main.parent, paths, cache)
+    _walk(tree, 0, [_key(main)], main.parent, paths, cache, load)
     return tree
 
 
-def resolve_tree(main: Path) -> Tree:
+def resolve_tree(main: Path, source: Source | None = None, cache: dict[str, SourceFile] | None = None,
+                 reader: Callable[[Path, str | None], SourceFile] = read_file) -> Tree:
+    """source(path): a file's text when it must not come from disk (an editor's unsaved buffer); cache: parsed
+    files kept between calls, keyed by _key(path), the caller dropping an entry when its file changes; reader:
+    read_includes for the light walk that only finds files (M2 spec §4.4)."""
     main = _norm(main)
     if not main.is_file():
         raise FileNotFoundError(main)
-    cache: dict[str, SourceFile] = {}
+    cache = {} if cache is None else cache
+
+    def load(path: Path) -> SourceFile:
+        return reader(path, source(path) if source else None)
+
     paths: list[Path] = []
-    tree = _build(main, paths, cache)
+    tree = _build(main, paths, cache, load)
     if PATH_APPLIES_EARLIER and paths:
-        tree = _build(main, paths, cache)  # second pass: every *INCLUDE_PATH known from the start
+        tree = _build(main, paths, cache, load)  # second pass: every *INCLUDE_PATH known from the start
     return tree
