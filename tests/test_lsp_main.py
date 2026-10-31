@@ -34,5 +34,20 @@ def test_priority_is_below_normal():
     code = ("from deckcheck.lsp.__main__ import lower_priority; lower_priority(); "
             "import psutil; print(psutil.Process().nice())")
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True).stdout.strip()
-    want = psutil.BELOW_NORMAL_PRIORITY_CLASS if sys.platform == "win32" else 10
-    assert int(out) == int(want)
+    if sys.platform == "win32":
+        # Background processing mode reports the class as NORMAL while scheduling the process's threads at
+        # background priority, below BELOW_NORMAL (test_disk_priority_is_background checks the mode is on)
+        assert int(out) in (int(psutil.BELOW_NORMAL_PRIORITY_CLASS), int(psutil.NORMAL_PRIORITY_CLASS))
+    else:
+        assert int(out) == 10
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows background processing mode")
+def test_disk_priority_is_background():
+    """A running check must yield the disk to the editor: opening a 169 MB include during a Yaris check was slowed
+    by deckcheck's own read of the model (M2b harm gate)."""
+    psutil = pytest.importorskip("psutil")
+    code = ("from deckcheck.lsp.__main__ import lower_priority; lower_priority(); "
+            "import psutil; print(int(psutil.Process().ionice()))")
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True).stdout.strip()
+    assert int(out) == int(psutil.IOPRIO_VERYLOW)

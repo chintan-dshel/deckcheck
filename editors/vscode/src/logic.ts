@@ -40,6 +40,15 @@ export function excludeGlobs(deckcheckExclude: string[], filesExclude: Record<st
   return [...deckcheckExclude, ...Object.entries(filesExclude).filter(([, on]) => on).map(([g]) => g)];
 }
 
+export function newlyOpened(seen: Set<string>, open: string[]): string[] {
+  // VS Code fires tab events on every focus change; a large deck is asked for once per opening, because a request
+  // that arrives during its check makes the server discard that check and start over (spec §3).
+  for (const u of [...seen]) if (!open.includes(u)) seen.delete(u);
+  const fresh = open.filter((u) => !seen.has(u));
+  for (const u of fresh) seen.add(u);
+  return fresh;
+}
+
 export class Notifier {
   private seen = new Set<string>();
   private show: (msg: string) => void;

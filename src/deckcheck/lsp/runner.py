@@ -49,6 +49,8 @@ class Runner:
             self._cv.notify()
 
     def _schedule(self, main: Path, reason: str, at: float) -> None:
+        if reason == "close":  # wakes the worker for prepare() (freeing closed models) without starting a check
+            return
         k = self.key(main)
         if reason == "change" and not self.live(main):
             if k not in self.durations:  # first check still running: decide once its speed is known

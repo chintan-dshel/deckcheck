@@ -17,7 +17,16 @@ async function main() {
     [...(process.platform === "win32" ? ["-3"] : []), "-c", "import sys; print(sys.executable)"]).toString().trim();
   fs.mkdirSync(path.join(ws, ".vscode"));
   fs.writeFileSync(path.join(ws, ".vscode", "settings.json"), JSON.stringify({ "deckcheck.interpreter": py }));
+  let workspace = ws;
+  const env: Record<string, string> = { DECKCHECK_WS: ws, DECKCHECK_ONLY: process.env.DECKCHECK_ONLY ?? "" };
+  if (process.env.DECKCHECK_HARM === "1") {
+    // the harm gate opens the CCSA Yaris folder through a workspace file, so nothing is written into the corpus
+    const yaris = path.resolve(root, "../../.corpus/local/ccsa-yaris/2010-toyota-yaris-detailed-v2j");
+    workspace = path.join(ws, "harm.code-workspace");
+    fs.writeFileSync(workspace, JSON.stringify({ folders: [{ path: yaris }], settings: { "deckcheck.interpreter": py } }));
+    Object.assign(env, { DECKCHECK_HARM: "1", DECKCHECK_YARIS: yaris });
+  }
   await runTests({ extensionDevelopmentPath: root, extensionTestsPath: path.join(__dirname, "suite"),
-    launchArgs: [ws, "--disable-extensions"], extensionTestsEnv: { DECKCHECK_WS: ws } });
+    launchArgs: [workspace, "--disable-extensions"], extensionTestsEnv: env });
 }
 main().catch((e) => { console.error(e); process.exit(1); });

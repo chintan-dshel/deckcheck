@@ -2,6 +2,7 @@
 (spec §3). Results are published from the runner's thread through the event loop."""
 import asyncio
 import gc
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -24,6 +25,8 @@ class DeckServer(LanguageServer):
     loop: asyncio.AbstractEventLoop
     results: dict[str, dict[str, list[types.Diagnostic]]]
     names: dict[str, str]
+    checked_at: dict[str, float]
+    edited: set[str]
 
 
 server = DeckServer("deckcheck", __version__)
@@ -39,6 +42,7 @@ class Result:
     """What the protocol thread needs from a check; built in the worker so the report is freed there."""
     diagnostics: dict[str, list[types.Diagnostic]]
     not_checked: list[dict]
+    started: float  # wall-clock time the check began: files not modified since then are what it checked
 
 
 def _status(ls: DeckServer, main: Path, state: str, items: list[dict]) -> None:
@@ -50,10 +54,12 @@ def _publish(ls: DeckServer, main: Path, result: Result | None, error) -> None:
     previous = set(ls.results.get(k, {}))
     if error is not None or result is None:
         ls.results[k] = {u: [] for u in previous}
+        ls.checked_at.pop(k, None)
         state, items = "check failed", []
         ls.window_log_message(types.LogMessageParams(types.MessageType.Error, f"deckcheck: {main}: {error!r}"))
     else:
         ls.results[k] = result.diagnostics
+        ls.checked_at[k] = result.started
         for u in previous - set(ls.results[k]):
             ls.results[k][u] = []
         state, items = ("ok" if ls.runner.live(main) else "checks on save"), result.not_checked
@@ -78,10 +84,12 @@ def _check(ls: DeckServer, main: Path) -> Result:
     reference counting); M1's structures are acyclic. The report's index is emptied a chunk at a time."""
     gc.disable()
     try:
+        started = time.time()
         report = check(main, source=ls.ws.source, cache=ls.ws.cache_for(main))
         report.diagnostics[:] = [d for d in report.diagnostics if d.code not in ls.ws.settings.ignore]
         result = Result(to_lsp(report, ls.ws.synced),
-                        [{"what": n.what, "reasons": list(n.reasons), "count": n.count} for n in report.not_checked])
+                        [{"what": n.what, "reasons": list(n.reasons), "count": n.count} for n in report.not_checked],
+                        started)
         drain_index(report.index)
         return result
     finally:
@@ -92,6 +100,7 @@ def _check(ls: DeckServer, main: Path) -> Result:
 
 def _prepare(ls: DeckServer) -> None:
     ls.ws.apply_drops()
+    ls.ws.release_closed()  # a closed model's parsed files (about 1 GB for the Yaris) are freed, a chunk at a time
     ls.ws.ensure_scanned()
 
 
@@ -106,6 +115,7 @@ def initialize(ls: DeckServer, params: types.InitializeParams) -> None:
     ls.loop = asyncio.get_running_loop()
     ls.ws = Workspace(folders, settings)
     ls.results, ls.names = {}, {}
+    ls.checked_at, ls.edited = {}, set()
     ls.runner = Runner(models=ls.ws.models_for, check=lambda m: _check(ls, m),
                        publish=lambda m, r, e: ls.loop.call_soon_threadsafe(_publish, ls, m, r, e),
                        threshold=settings.live_threshold, prepare=lambda: _prepare(ls),
@@ -123,11 +133,28 @@ def _request(ls: DeckServer, uri: str, reason: str) -> None:
     ls.runner.request(path, reason)
 
 
+def _unchanged_since_checked(ls: DeckServer, path: Path) -> bool:
+    """Every model of this file has a result, and the file was not modified after those checks began: reopening it
+    needs no new check. Closing and reopening the Yaris main deck restarted its one-minute check (M2b harm gate)."""
+    if ls.ws._dirty:  # main decks not known yet: the protocol thread never scans
+        return False
+    times = [ls.checked_at.get(_key(m)) for m in ls.ws.models_for(path)]
+    if not times or None in times:
+        return False
+    try:
+        return path.stat().st_mtime < min(times)
+    except OSError:
+        return False
+
+
 @server.feature(types.TEXT_DOCUMENT_DID_OPEN)
 def did_open(ls: DeckServer, params: types.DidOpenTextDocumentParams) -> None:
     path = _path(params.text_document.uri)
     if path is not None:
         ls.ws.open(path, params.text_document.text)
+        ls.edited.discard(_key(path))
+        if _unchanged_since_checked(ls, path):
+            return
     _request(ls, params.text_document.uri, "open")
 
 
@@ -136,6 +163,7 @@ def did_change(ls: DeckServer, params: types.DidChangeTextDocumentParams) -> Non
     path = _path(params.text_document.uri)
     if path is None:
         return
+    ls.edited.add(_key(path))
     ls.ws.change(path, ls.workspace.get_text_document(params.text_document.uri).source)
     _request(ls, params.text_document.uri, "change")
 
@@ -151,7 +179,11 @@ def did_close(ls: DeckServer, params: types.DidCloseTextDocumentParams) -> None:
     path = _path(params.text_document.uri)
     if path is not None:
         ls.ws.close(path)
-        ls.runner.request(path, "external")  # the disk version applies again
+        if _key(path) in ls.edited:  # unsaved edits discarded: the disk version applies again
+            ls.edited.discard(_key(path))
+            ls.runner.request(path, "external")
+        else:  # no check, but the worker frees the parses of models that no longer have an open file
+            ls.runner.request(path, "close")
 
 
 def _watched_paths(ws: Workspace, changes) -> list[Path]:
@@ -186,4 +218,4 @@ def active(ls: DeckServer, params) -> None:
 
 @server.feature("deckcheck/ping")
 def ping(ls: DeckServer, params) -> dict:
-    return {"ok": True, "active": ls.runner.active}
+    return {"ok": True, "active": ls.runner.active, "caches": len(ls.ws._caches)}

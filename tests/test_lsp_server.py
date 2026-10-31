@@ -211,3 +211,50 @@ async def test_active_notification_sets_the_front_of_the_queue(tmp_path):
         reply = await client.protocol.send_request_async("deckcheck/ping", {})
         active = reply["active"] if isinstance(reply, dict) else reply.active
         assert active and active.endswith("main.k")
+
+
+def _close(client, path):
+    client.text_document_did_close(types.DidCloseTextDocumentParams(types.TextDocumentIdentifier(uri(path))))
+
+
+async def test_reopening_an_unchanged_file_does_not_recheck(tmp_path):
+    """Closing and reopening the Yaris main deck restarted its one-minute check each time (M2b harm gate)."""
+    _model(tmp_path)
+    async with session(tmp_path) as client:
+        open_doc(client, tmp_path / "main.k")
+        await published(client, uri(tmp_path / "main.k"))
+        _close(client, tmp_path / "main.k")
+        open_doc(client, tmp_path / "main.k", version=2)
+        with pytest.raises(asyncio.TimeoutError):
+            await published(client, uri(tmp_path / "main.k"), timeout=1.5)
+
+
+async def test_closing_an_edited_file_rechecks_from_disk(tmp_path):
+    _model(tmp_path)
+    async with session(tmp_path) as client:
+        open_doc(client, tmp_path / "mat.k")
+        await published(client, uri(tmp_path / "main.k"))
+        client.text_document_did_change(types.DidChangeTextDocumentParams(
+            types.VersionedTextDocumentIdentifier(uri=uri(tmp_path / "mat.k"), version=2),
+            [types.TextDocumentContentChangeWholeDocument(text=MAT.replace("         1", "         7", 1))]))
+        assert [d for d in await published(client, uri(tmp_path / "part.k")) if d.code == "DC001"]
+        _close(client, tmp_path / "mat.k")            # unsaved edit discarded: the disk version applies again
+        assert not [d for d in await published(client, uri(tmp_path / "part.k")) if d.code == "DC001"]
+
+
+async def test_closing_the_last_file_releases_the_model(tmp_path):
+    """An unchanged close starts no check, but the model's parsed files (about 1 GB for the Yaris) must not stay
+    resident while nothing of it is open (M2b harm gate)."""
+    _model(tmp_path)
+    async with session(tmp_path) as client:
+        open_doc(client, tmp_path / "main.k")
+        await published(client, uri(tmp_path / "main.k"))
+        _close(client, tmp_path / "main.k")
+        end = time.monotonic() + 5
+        while True:
+            reply = await client.protocol.send_request_async("deckcheck/ping", {})
+            caches = reply["caches"] if isinstance(reply, dict) else reply.caches
+            if caches == 0 or time.monotonic() > end:
+                break
+            await asyncio.sleep(0.1)
+        assert caches == 0

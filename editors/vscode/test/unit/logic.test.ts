@@ -1,6 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { meetsMinimum, syncAllowed, RestartPolicy, statusText, excludeGlobs, Notifier } from "../../src/logic.ts";
+import { meetsMinimum, syncAllowed, RestartPolicy, statusText, excludeGlobs, Notifier, newlyOpened } from "../../src/logic.ts";
+
+test("newlyOpened reports a tab once, again only after it was closed", () => {
+  const seen = new Set<string>();
+  assert.deepEqual(newlyOpened(seen, ["a", "b"]), ["a", "b"]);
+  assert.deepEqual(newlyOpened(seen, ["a", "b"]), []);   // focus changes fire tab events: no new request
+  assert.deepEqual(newlyOpened(seen, ["b"]), []);        // a closed
+  assert.deepEqual(newlyOpened(seen, ["a", "b"]), ["a"]); // reopened
+});
 
 test("meetsMinimum", () => {
   assert.equal(meetsMinimum("3 11"), true);

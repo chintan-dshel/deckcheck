@@ -15,6 +15,9 @@ def lower_priority() -> None:
         k32.GetCurrentProcess.restype = ctypes.c_void_p
         k32.SetPriorityClass.argtypes = [ctypes.c_void_p, ctypes.c_ulong]
         k32.SetPriorityClass(k32.GetCurrentProcess(), 0x4000)  # BELOW_NORMAL_PRIORITY_CLASS
+        # PROCESS_MODE_BACKGROUND_BEGIN: disk and memory priority lowered too, so a check never slows the editor's
+        # own reads (opening a 169 MB include during a Yaris check, M2b harm gate)
+        k32.SetPriorityClass(k32.GetCurrentProcess(), 0x00100000)
     else:
         os.nice(10)
 

@@ -5,18 +5,23 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import { ChildProcess } from "node:child_process";
 import { CloseAction, ErrorAction, LanguageClient, LanguageClientOptions, State } from "vscode-languageclient/node";
-import { Notifier, RestartPolicy, excludeGlobs, statusText, syncAllowed } from "./logic.ts";
+import { Notifier, RestartPolicy, excludeGlobs, newlyOpened, statusText, syncAllowed } from "./logic.ts";
 import { exitCode, killTree, pathCandidates, pythonVersionOk, spawnServer } from "./process.ts";
 
 const DECKS = "**/*.{k,key,dyn,K,KEY,DYN}";
 const DECK_FILE = /\.(k|key|dyn)$/i;
 const PAUSED_KEY = "deckcheck.paused";
+// A large deck's check waits until VS Code has finished opening it: started at 2 s it overlapped the open and made
+// opening the Yaris's 169 MB include ~24 % slower (median 1877 vs 1517 ms); started later, no slower (1378 vs 1568).
+const LARGE_GRACE_MS = 10_000;
+const largeSeen = new Set<string>();
 
 let client: LanguageClient | undefined;
 let child: ChildProcess | undefined;
 let live = 0;
 let status: vscode.StatusBarItem;
 let notChecked: { what: string; reasons: string[]; count: number }[] = [];
+let lastMain = "";
 let ctx: vscode.ExtensionContext;
 let notifier: Notifier;
 let policy = new RestartPolicy();
@@ -72,14 +77,24 @@ async function tooBig(doc: vscode.TextDocument): Promise<boolean> {
 }
 
 function checkLargeTabs(): void {
-  // VS Code may never hand a very large file to extensions; find it among the open tabs and let the server read it.
+  // VS Code may never hand a very large file to extensions; find it among the open tabs and let the server read it,
+  // once per opening, and only after a grace period so the editor finishes loading the file first.
+  const open: vscode.Uri[] = [];
   for (const group of vscode.window.tabGroups.all) for (const tab of group.tabs) {
     const input = tab.input;
     if (input instanceof vscode.TabInputText && input.uri.scheme === "file" && DECK_FILE.test(input.uri.fsPath)) {
-      fs.stat(input.uri.fsPath).then((st) => {
-        if (!syncAllowed(st.size, maxSyncMB())) client?.sendNotification("deckcheck/check", { uri: input.uri.toString() });
-      }, () => undefined);
+      open.push(input.uri);
     }
+  }
+  const fresh = new Set(newlyOpened(largeSeen, open.map((u) => u.toString())));
+  for (const uri of open.filter((u) => fresh.has(u.toString()))) {
+    fs.stat(uri.fsPath).then((st) => {
+      if (!syncAllowed(st.size, maxSyncMB())) {
+        setTimeout(() => {
+          if (largeSeen.has(uri.toString())) void client?.sendNotification("deckcheck/check", { uri: uri.toString() });
+        }, LARGE_GRACE_MS);  // closed before the grace ended: the engineer moved on, nothing to check
+      }
+    }, () => undefined);
   }
 }
 
@@ -132,12 +147,14 @@ async function start(): Promise<void> {
       p.once("exit", () => { live -= 1; });
       return p;
     }, clientOptions);
-    c.onNotification("deckcheck/status", (p: { state: string; notChecked: typeof notChecked }) => {
+    c.onNotification("deckcheck/status", (p: { main: string; state: string; notChecked: typeof notChecked }) => {
       notChecked = p.notChecked ?? [];
+      lastMain = p.main;
       setStatus(p.state);
     });
     client = c;
     await c.start();
+    largeSeen.clear();  // a new server has checked nothing yet
     checkLargeTabs();
     if (vscode.window.activeTextEditor) sendActive(vscode.window.activeTextEditor);
   }
@@ -211,7 +228,7 @@ export function activate(context: vscode.ExtensionContext) {
   void serial(start);  // never awaited: activation returns at once (spec §3)
   const activationMs = performance.now() - t0;
   return { activationMs, client: () => client, status: () => status.text, serverPid: () => child?.pid,
-    serverCount: () => live };
+    serverCount: () => live, lastStatusMain: () => lastMain };
 }
 
 export function deactivate(): Promise<void> {
