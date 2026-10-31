@@ -17,7 +17,7 @@ Status: **open**, **done** (with where), or **pinned** (waiting on Chintan).
 ## Product backlog (larger items)
 | Item | Why | Status |
 |---|---|---|
-| Client status as a per-model state machine (`logic.ts`), status bar follows the active file's model | 19 module-level variables in `extension.ts`; both M2b.1 state bugs and the recurring "status names the last model announced" lived there | open (next) |
+| Client status as a per-model state machine (`logic.ts`), status bar follows the active file's model | both M2b.1 state bugs and the recurring "status names the last model announced" lived in loose module variables | done (branch client-state: `StatusBoard`; fresh review: 3 Important fixed) |
 | M2c: hover, go to definition, find references, outline, field ruler hints | spec stage M2c | open |
 | Notepad++: a tested NppExec recipe for the CLI, in the README | Chintan's trial: many engineers use Notepad++ | open (after M3) |
 | Other LSP editors (Neovim, Sublime, Emacs, Kate, JetBrains) | squiggles work through any LSP client; harm gate is VS Code only | open (on request) |
@@ -107,6 +107,10 @@ Status: **open**, **done** (with where), or **pinned** (waiting on Chintan).
 - open: `_span` uses the 10-wide slot for blank fields in LONG / `+` and free-format cards (squiggle width)
 - open: "Check this model now" prompts about every dirty large tab in the window, not only the model's
 - open: an edit during a big model's own check: "save to check" is overwritten by the result's status
+
+### Client status board (branch client-state)
+- open: `stop(false)` from the language client's close handler runs outside the serial chain; its `forgetModels()` can wipe a newer client's records for a moment
+- open: a check discarded as stale keeps its first start time and estimate until the re-run reports ("longer than estimated")
 
 ## Declined-to-judge rulings still standing (cost if wrong)
 - Excluded files are still checked when opened by hand (an excluded giant file opened by hand is checked).
