@@ -79,7 +79,10 @@ function forgetModels(): void {  // a stopped or restarted server has checked no
 }
 
 function onStatus(p: StatusParams): void {
-  if (p.busy) return;  // the client answers a repeat click itself (checkNow); the server's reply comes too late
+  if (p.busy) {  // a click on a model being checked: the server answers at once, nothing was queued
+    void inform(busyMessage(nameOf(p.main), Date.now() / 1000 - (p.started ?? Date.now() / 1000), p.estimate ?? 0));
+    return;
+  }
   board.update(p);
   if (p.state === "checking" && Date.now() - askedAt < 30_000) {  // clicked: say so where they look, until the result
     askedAt = 0;
@@ -365,7 +368,11 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("deckcheck") || e.affectsConfiguration("files.exclude")) void restart();
     }),
-    vscode.window.onDidChangeActiveTextEditor((e) => e && sendActive(e)),
+    vscode.window.onDidChangeActiveTextEditor((e) => {
+      // no editor: a file VS Code never hands to extensions (over 50 MB), so show the model that spoke last
+      if (e) sendActive(e);
+      else { board.setActive(undefined); render(); }
+    }),
     vscode.window.tabGroups.onDidChangeTabs(() => checkLargeTabs()),
   );
   void serial(start);  // never awaited: activation returns at once (spec §3)

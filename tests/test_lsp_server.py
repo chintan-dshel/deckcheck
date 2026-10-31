@@ -358,3 +358,38 @@ async def test_active_answers_with_the_files_model(tmp_path):
         reply = await client.protocol.send_request_async("deckcheck/active", {"uri": uri(tmp_path / "part.k")})
         main = reply["main"] if isinstance(reply, dict) else reply.main
         assert main == uri(tmp_path / "main.k")
+
+
+class _Fake:
+    """Just enough of a DeckServer for a handler: statuses it sends and requests it queues are recorded."""
+    def __init__(self, main: Path, dirty: bool, checking: bool):
+        from types import SimpleNamespace
+        from deckcheck.includes import _key
+        self.sent, self.queued = [], []
+        self.ws = SimpleNamespace(_dirty=dirty, models_for=lambda p: [main])
+        self.runner = SimpleNamespace(active=None, key=lambda m: _key(m),
+                                      request=lambda p, why: self.queued.append(why))
+        self.protocol = SimpleNamespace(notify=lambda method, params: self.sent.append(params))
+        self.checking = {_key(main): (time.time() - 20, 65.0)} if checking else {}
+
+
+def test_active_answers_from_the_last_scan_while_main_decks_are_redetected(tmp_path):
+    """Review of the status board, I1: during a re-scan (after a save, for a whole big check) the reply was None,
+    and the status bar kept the previous editor's model."""
+    from deckcheck.lsp.server import active
+    ls = _Fake(tmp_path / "main.k", dirty=True, checking=False)
+    reply = active(ls, {"uri": uri(tmp_path / "part.k")})
+    assert reply == {"main": uri(tmp_path / "main.k")}
+    assert ls.runner.active is None    # the queue hint waits for the scan
+
+
+def test_a_click_on_a_model_being_checked_is_answered_at_once(tmp_path):
+    """Review of the status board, I3: the worker reads requests only between checks, so its "already checking"
+    came at the end; the protocol thread answers now, and nothing is queued."""
+    from deckcheck.lsp.server import check_file
+    ls = _Fake(tmp_path / "main.k", dirty=False, checking=True)
+    check_file(ls, {"uri": uri(tmp_path / "part.k")})
+    assert ls.queued == [] and ls.sent and ls.sent[0]["busy"] is True and ls.sent[0]["estimate"] == 65.0
+    ls.sent.clear()
+    check_file(ls, {"uri": uri(tmp_path / "part.k"), "reason": "save"})   # a save changes the files: it queues
+    assert ls.queued == ["save"] and ls.sent == []

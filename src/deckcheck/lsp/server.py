@@ -266,8 +266,17 @@ def _reason(params) -> str:
 
 @server.feature("deckcheck/check")
 def check_file(ls: DeckServer, params) -> None:
-    """The engineer asked ("Check now"), or saved a file the client does not sync: always checks."""
-    _request(ls, params["uri"] if isinstance(params, dict) else params.uri, _reason(params))
+    """The engineer asked ("Check now"), or saved a file the client does not sync: always checks, except a click on
+    a model being checked now, which is answered at once (the worker reads requests only between checks)."""
+    uri = params["uri"] if isinstance(params, dict) else params.uri
+    reason, path = _reason(params), _path(uri)
+    if reason == "check" and path is not None:
+        mains = ls.ws.models_for(path)  # a lookup in the last scan (spec §3)
+        if all(ls.runner.key(m) in ls.checking for m in mains):
+            for m in mains:
+                _on_busy(ls, m)
+            return
+    _request(ls, uri, reason)
 
 
 @server.feature("deckcheck/opened")
@@ -281,10 +290,13 @@ def active(ls: DeckServer, params) -> dict | None:
     """The file in front of the engineer: its model goes first in the queue, and the client shows that model's
     status. None while main decks are not known yet."""
     path = _path(params["uri"] if isinstance(params, dict) else params.uri)
-    if path is None or ls.ws._dirty:  # a lookup only: the protocol thread never scans (spec §3)
+    if path is None:
         return None
+    # a lookup in the last scan, never a scan (spec §3); while main decks are being re-detected (after a save, for
+    # the length of a big check) the last scan's answer beats none, but the queue hint waits for the new one
     main = ls.ws.models_for(path)[0]
-    ls.runner.active = ls.runner.key(main)
+    if not ls.ws._dirty:
+        ls.runner.active = ls.runner.key(main)
     return {"main": from_fs_path(str(main))}
 
 

@@ -182,10 +182,16 @@ const harmTests: [string, () => Promise<void>][] = [
   ["largeFileFromTabIsChecked", async () => {
     await vscode.commands.executeCommand("deckcheck.resume");
     await until(() => ext().exports.client() || undefined);
+    // another model is in front first (review of the status board, I2: a file VS Code never hands to extensions
+    // has no editor, and the status bar kept showing the previous model, hiding the big one's "click to check")
+    const small = await vscode.workspace.openTextDocument(SMALL);
+    await vscode.window.showTextDocument(small);
+    await until(() => ext().exports.activeMain().endsWith("small.k") || undefined, 30_000);
     await openMs(LARGEST);                                   // 169 MB: never synced, found through its tab
     // a big model: opening it asks instead of checking (Chintan, 2026-10-30)
     await until(() => (ext().exports.lastStatusMain().endsWith("combine.key")
       && ext().exports.lastState() === "click to check") || undefined, 60_000);
+    assert.equal(ext().exports.status(), "deckcheck: big model, click to check");
     const t = performance.now();
     await vscode.commands.executeCommand("deckcheck.checkNow");
     await new Promise((r) => setTimeout(r, 5000));
