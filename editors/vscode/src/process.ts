@@ -24,7 +24,7 @@ export function pythonUsable(exe: string, args: string[], libsDir: string): Prom
   // version first, then the bundle imports: a broken bundle is one clear message, not a restart loop with the
   // language client's own error dialogs
   return new Promise((resolve) => {
-    execFile(exe, [...args, "-c", "import sys; print(*sys.version_info[:2]); import deckcheck.lsp.server"],
+    execFile(exe, [...args, "-P", "-c", "import sys; print(*sys.version_info[:2]); import deckcheck.lsp.server"],
       { timeout: 30_000, windowsHide: true, env: withLibs(libsDir) },
       (err, stdout) => {
         if (!meetsMinimum(String(stdout))) return resolve("old");
@@ -35,7 +35,8 @@ export function pythonUsable(exe: string, args: string[], libsDir: string): Prom
 
 export function spawnServer(exe: string, args: string[], libsDir: string): ChildProcess {
   const env = { ...process.env, PYTHONPATH: [libsDir, process.env.PYTHONPATH].filter(Boolean).join(path.delimiter) };
-  return spawn(exe, [...args, "-m", "deckcheck.lsp"], { env, stdio: "pipe", detached: process.platform !== "win32",
+  // -P: the launch folder is not put first on sys.path, so a deckcheck folder there cannot shadow the bundle
+  return spawn(exe, [...args, "-P", "-m", "deckcheck.lsp"], { env, stdio: "pipe", detached: process.platform !== "win32",
     windowsHide: true });
 }
 

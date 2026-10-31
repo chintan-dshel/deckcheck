@@ -69,3 +69,14 @@ test("pythonUsable tells a broken bundle from a usable one", async () => {
   const empty = fs.mkdtempSync(path.join(os.tmpdir(), "deckcheck-empty-libs-"));
   assert.equal(await pythonUsable(EXE, ARGS, empty), "broken");   // the PATH python has no deckcheck of its own
 });
+
+test("a deckcheck folder in the launch directory cannot shadow the bundled one (-P)", async () => {
+  const shadow = fs.mkdtempSync(path.join(os.tmpdir(), "deckcheck-shadow-"));
+  fs.mkdirSync(path.join(shadow, "deckcheck"));
+  fs.writeFileSync(path.join(shadow, "deckcheck", "__init__.py"), "raise ImportError('shadowed')\n");
+  const here = process.cwd();
+  process.chdir(shadow);
+  try {
+    assert.equal(await pythonUsable(EXE, ARGS, LIBS), "ok");
+  } finally { process.chdir(here); }
+});

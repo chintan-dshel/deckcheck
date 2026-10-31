@@ -126,6 +126,8 @@ npm run package
 code --install-extension deckcheck-0.1.0.vsix
 ```
 
+If VS Code was open during the install, reload its window (Command Palette > **Developer: Reload Window**).
+
 Opening an include file checks the whole model it belongs to. Small models are re-checked as you type; a big model
 (a full vehicle) is checked when you save it or click "big model, click to check" in the status bar, never just by
 opening it. The extension's README lists its settings and how it stays out of the editor's way.

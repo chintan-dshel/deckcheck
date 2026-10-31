@@ -29,6 +29,26 @@ const tests: [string, () => Promise<void>][] = [
     await until(() => codes(uri).includes("DC001") || undefined);
     assert.ok(codes(uri).includes("DC002") && codes(uri).includes("DC004"));
   }],
+  ["explicitCheckOfABigModelEndsWithASummary", async () => {
+    // runs before other models are opened: the status names the model last announced (deferred to M2c)
+    // trial finding 6: the click's result was one changed word; it is now a message naming coverage and findings
+    await vscode.workspace.getConfiguration("deckcheck").update("liveThresholdSeconds", 0, vscode.ConfigurationTarget.Workspace);
+    await until(() => ext().exports.client()?.isRunning() || undefined);
+    const uri = await open("seeded_mistakes/main.k");
+    await until(() => (ext().exports.lastState() === "click to check"
+      && ext().exports.lastStatusMain().endsWith("seeded_mistakes/main.k")) || undefined, 30_000)
+      .catch((e) => { console.log(`     waiting for click to check: state "${ext().exports.lastState()}", main "${ext().exports.lastStatusMain()}"`); throw e; });
+    await vscode.commands.executeCommand("deckcheck.checkNow");
+    console.log(`     before click: state "${ext().exports.lastState()}", status "${ext().exports.status()}"`);
+    const msg = await until(() => ext().exports.shown().find((m: string) => m.startsWith("deckcheck checked main.k")), 30_000)
+      .catch((e) => { console.log(`     at timeout: state "${ext().exports.lastState()}", status "${ext().exports.status()}", shown ${JSON.stringify(ext().exports.shown())}`); throw e; });
+    console.log(`     summary: ${msg}`);
+    assert.match(msg, /: 3 errors found\.$/);
+    assert.ok(codes(uri).includes("DC001"));
+    assert.equal(ext().exports.status(), "deckcheck: 3 errors (save to re-check)");
+    await vscode.workspace.getConfiguration("deckcheck").update("liveThresholdSeconds", undefined, vscode.ConfigurationTarget.Workspace);
+    await until(() => ext().exports.client()?.isRunning() || undefined);
+  }],
   ["activationIsFast", async () => {
     assert.ok(ext().exports.activationMs < 100, `activation ${ext().exports.activationMs} ms`);
   }],
@@ -71,6 +91,20 @@ const tests: [string, () => Promise<void>][] = [
     assert.equal(ext().exports.serverCount(), 0, `${ext().exports.serverCount()} server(s) still running`);
     await vscode.commands.executeCommand("deckcheck.resume");
     await until(() => ext().exports.client() || undefined);
+  }],
+  ["resumeSaysStartingAndRestoresSquigglesUnaided", async () => {
+    // trial finding 5: after Resume the squiggles seemed to need a click; the status still read "paused" meanwhile
+    const uri = await open("seeded_mistakes/main.k");
+    await until(() => codes(uri).includes("DC001") || undefined);
+    await vscode.commands.executeCommand("deckcheck.pause");
+    await until(() => ext().exports.status() === "deckcheck: paused" || undefined);
+    const t = Date.now();
+    void vscode.commands.executeCommand("deckcheck.resume");
+    await new Promise((r) => setTimeout(r, 50));
+    const early = ext().exports.status();
+    await until(() => codes(uri).includes("DC001") || undefined, 30_000);
+    console.log(`     resume -> squiggles back after ${Date.now() - t} ms, untouched (status at 50 ms: "${early}")`);
+    assert.notEqual(early, "deckcheck: paused");
   }],
   ["serverKilledIsRestarted", async () => {
     const pid = ext().exports.serverPid();

@@ -5,8 +5,8 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import { ChildProcess } from "node:child_process";
 import { CloseAction, ErrorAction, LanguageClient, LanguageClientOptions, State } from "vscode-languageclient/node";
-import { Notifier, RestartPolicy, SyncSizes, checkTarget, closeDecision, excludeGlobs, newlyOpened, statusText,
-  syncAllowed } from "./logic.ts";
+import { Notifier, RestartPolicy, Summary, SyncSizes, buttonsFor, busyMessage, checkTarget, checkingText, closeDecision,
+  excludeGlobs, newlyOpened, statusText, summaryMessage, syncAllowed, unsavedUnsynced } from "./logic.ts";
 import { exitCode, killTree, pathCandidates, pythonUsable, spawnServer } from "./process.ts";
 
 const DECKS = "**/*.{k,key,dyn,K,KEY,DYN}";
@@ -37,11 +37,90 @@ function serial(work: () => Promise<void>): Promise<void> {
 }
 
 let lastState = "";
+let lastSummary: Summary | undefined;
+let ticker: ReturnType<typeof setInterval> | undefined;
+let progressDone: (() => void) | undefined;
+let asked = "";                   // the model the engineer just asked to check: its progress gets a notification
+const shown: string[] = [];       // messages shown, for the integration tests
 
-function setStatus(state: string): void {
+function inform(message: string, ...buttons: string[]): Thenable<string | undefined> {
+  shown.push(message);
+  return vscode.window.showInformationMessage(message, ...buttons);
+}
+
+function stopProgress(): void {
+  if (ticker) clearInterval(ticker);
+  ticker = undefined;
+  progressDone?.();
+  progressDone = undefined;
+}
+
+function setStatus(state: string, summary?: Summary): void {
+  if (state !== "checking") stopProgress();
   lastState = state;
-  status.text = statusText(state, notChecked.length);
+  lastSummary = summary;
+  status.text = statusText(state, notChecked.length, summary);
   status.show();
+}
+
+function onStatus(p: { main: string; state: string; notChecked: typeof notChecked; summary?: Summary;
+                       estimate?: number; started?: number; busy?: boolean }): void {
+  const name = path.basename(vscode.Uri.parse(p.main).fsPath);
+  if (p.state === "checking") {
+    const started = (p.started ?? Date.now() / 1000) * 1000, estimate = p.estimate ?? 0;
+    if (p.busy) { void inform(busyMessage(name, (Date.now() - started) / 1000, estimate)); return; }
+    lastMain = p.main;
+    lastState = "checking";
+    stopProgress();
+    const tick = () => { status.text = checkingText(name, (Date.now() - started) / 1000, estimate); };
+    tick();
+    status.show();
+    ticker = setInterval(tick, 1000);
+    if (asked === p.main) {  // the engineer clicked: say so where they are looking, until the result arrives
+      void vscode.window.withProgress({ location: vscode.ProgressLocation.Notification,
+        title: `deckcheck: checking ${name} (about ${Math.round(estimate)} s). You can keep working.` },
+      () => new Promise<void>((resolve) => { progressDone = resolve; }));
+    }
+    return;
+  }
+  notChecked = p.notChecked ?? [];
+  lastMain = p.main;
+  setStatus(p.state, p.summary);
+  if (asked === p.main) asked = "";
+  if (p.summary?.explicit) {
+    void inform(summaryMessage(name, p.summary), "Show Problems").then((choice) => {
+      if (choice) void vscode.commands.executeCommand("workbench.actions.view.problems");
+    });
+  }
+}
+
+async function unsavedLargeTabs(): Promise<vscode.Uri[]> {
+  const dirty: vscode.Uri[] = [];
+  for (const group of vscode.window.tabGroups.all) for (const tab of group.tabs) {
+    const input = tab.input;
+    if (tab.isDirty && input instanceof vscode.TabInputText && input.uri.scheme === "file"
+        && DECK_FILE.test(input.uri.fsPath)) dirty.push(input.uri);
+  }
+  const tabs = await Promise.all(dirty.map(async (u) => ({ uri: u, name: path.basename(u.fsPath), dirty: true,
+    bytes: await fs.stat(u.fsPath).then((s) => s.size, () => 0) })));
+  const names = new Set(unsavedUnsynced(tabs, maxSyncMB()));
+  return tabs.filter((t) => names.has(t.name)).map((t) => t.uri);
+}
+
+async function checkNow(): Promise<void> {
+  // the model the status bar names when it asks to be checked, else the deck in front of you, never a non-deck
+  const uri = checkTarget(lastState, lastMain, vscode.window.activeTextEditor?.document.uri.toString());
+  if (!uri || !client) return;
+  const unsaved = await unsavedLargeTabs();
+  if (unsaved.length) {  // read from disk: the check would not see these edits (trial finding 8)
+    const names = unsaved.map((u) => path.basename(u.fsPath)).join(", ");
+    const choice = await vscode.window.showWarningMessage(
+      `Unsaved changes in ${names} aren't seen by deckcheck until you save.`, "Save and check", "Check saved version");
+    if (!choice) return;
+    if (choice === "Save and check") for (const u of unsaved) await vscode.workspace.save(u);
+  }
+  asked = uri;
+  void client.sendNotification("deckcheck/check", { uri });
 }
 
 async function findPython(libs: string): Promise<[string, string[]] | "broken" | undefined> {
@@ -113,6 +192,7 @@ async function start(): Promise<void> {
   {
     const cfg = vscode.workspace.getConfiguration("deckcheck");
     if (!cfg.get("enable", true) || ctx.workspaceState.get(PAUSED_KEY)) { setStatus("paused"); return; }
+    setStatus("starting");  // finding Python and starting the server takes seconds; "paused" must not linger meanwhile
     const libs = ctx.asAbsolutePath(path.join("bundled", "libs"));
     const py = await findPython(libs);
     if (py === "broken") {
@@ -174,11 +254,7 @@ async function start(): Promise<void> {
       p.once("exit", () => { live -= 1; });
       return p;
     }, clientOptions);
-    c.onNotification("deckcheck/status", (p: { main: string; state: string; notChecked: typeof notChecked }) => {
-      notChecked = p.notChecked ?? [];
-      lastMain = p.main;
-      setStatus(p.state);
-    });
+    c.onNotification("deckcheck/status", onStatus);
     try {
       await c.start();
     } catch {  // the server died before it answered: one message, and no half-started client left behind
@@ -190,6 +266,7 @@ async function start(): Promise<void> {
       return;
     }
     client = c;
+    if (lastState === "starting") setStatus("ok");  // running; with no deck open no status would ever replace it
     largeSeen.clear();  // a new server has checked nothing yet
     checkLargeTabs();
     if (vscode.window.activeTextEditor) sendActive(vscode.window.activeTextEditor);
@@ -221,10 +298,11 @@ export function activate(context: vscode.ExtensionContext) {
   const t0 = performance.now();
   ctx = context;
   const out = vscode.window.createOutputChannel("deckcheck", { log: true });
-  notifier = new Notifier((m) => {
-    void vscode.window.showWarningMessage(m, "Select interpreter", "Show output").then((choice) => {
+  notifier = new Notifier((m, cause) => {
+    void vscode.window.showWarningMessage(m, ...buttonsFor(cause)).then((choice) => {
       if (choice === "Select interpreter") void vscode.commands.executeCommand("deckcheck.selectInterpreter");
       if (choice === "Show output") out.show();
+      if (choice === "Raise the limit") void vscode.commands.executeCommand("workbench.action.openSettings", "deckcheck.memoryMB");
     });
   });
   status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0);
@@ -244,11 +322,7 @@ export function activate(context: vscode.ExtensionContext) {
       if (picked?.[0]) await vscode.workspace.getConfiguration("deckcheck").update("interpreter", picked[0].fsPath,
         vscode.ConfigurationTarget.Global);
     }),
-    vscode.commands.registerCommand("deckcheck.checkNow", () => {
-      // the model the status bar names when it asks to be checked, else the deck in front of you, never a non-deck
-      const uri = checkTarget(lastState, lastMain, vscode.window.activeTextEditor?.document.uri.toString());
-      if (uri) void client?.sendNotification("deckcheck/check", { uri });
-    }),
+    vscode.commands.registerCommand("deckcheck.checkNow", checkNow),
     vscode.commands.registerCommand("deckcheck.showStatus", async () => {
       const items = [
         { label: "Check this model now" },
@@ -272,7 +346,8 @@ export function activate(context: vscode.ExtensionContext) {
   void serial(start);  // never awaited: activation returns at once (spec §3)
   const activationMs = performance.now() - t0;
   return { activationMs, client: () => client, status: () => status.text, serverPid: () => child?.pid,
-    serverCount: () => live, lastStatusMain: () => lastMain, lastState: () => lastState };
+    serverCount: () => live, lastStatusMain: () => lastMain, lastState: () => lastState,
+    lastSummary: () => lastSummary, shown: () => [...shown] };
 }
 
 export function deactivate(): Promise<void> {

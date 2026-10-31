@@ -119,7 +119,7 @@
     "compile": "tsc -p .",
     "test": "node --test \"test/unit/*.test.ts\"",
     "bundle": "python scripts/bundle_libs.py",
-    "test:vscode": "npm run compile && node out/test/integration/run.js",
+    "test:vscode": "npm run bundle && npm run compile && node out/test/integration/run.js",
     "test:clean": "npm run package && node out/test/integration/clean.js",
     "package": "npm run bundle && npm run compile && vsce package --allow-missing-repository"
   },
