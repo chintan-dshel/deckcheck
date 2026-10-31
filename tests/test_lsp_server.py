@@ -200,3 +200,14 @@ def test_watcher_events_for_synced_files_are_ignored(tmp_path):
     ws.open(tmp_path / "open.k", "*KEYWORD\n")
     changes = [types.FileEvent(uri(tmp_path / n), types.FileChangeType.Changed) for n in ("open.k", "closed.k")]
     assert [p.name for p in _watched_paths(ws, changes)] == ["closed.k"]
+
+
+async def test_active_notification_sets_the_front_of_the_queue(tmp_path):
+    _model(tmp_path)
+    async with session(tmp_path) as client:
+        open_doc(client, tmp_path / "part.k")
+        await published(client, uri(tmp_path / "main.k"))  # the first check ran the include scan
+        client.protocol.notify("deckcheck/active", {"uri": uri(tmp_path / "part.k")})
+        reply = await client.protocol.send_request_async("deckcheck/ping", {})
+        active = reply["active"] if isinstance(reply, dict) else reply.active
+        assert active and active.endswith("main.k")

@@ -177,6 +177,13 @@ def check_file(ls: DeckServer, params) -> None:
     _request(ls, params["uri"] if isinstance(params, dict) else params.uri, "save")
 
 
+@server.feature("deckcheck/active")
+def active(ls: DeckServer, params) -> None:
+    path = _path(params["uri"] if isinstance(params, dict) else params.uri)
+    if path is not None and not ls.ws._dirty:  # a lookup only: the protocol thread never scans (spec §3)
+        ls.runner.active = ls.runner.key(ls.ws.models_for(path)[0])
+
+
 @server.feature("deckcheck/ping")
 def ping(ls: DeckServer, params) -> dict:
-    return {"ok": True}
+    return {"ok": True, "active": ls.runner.active}
