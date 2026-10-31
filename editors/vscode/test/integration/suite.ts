@@ -82,14 +82,35 @@ async function openMs(file: string): Promise<number> {
 
 const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
 
+const SMALL = process.env.DECKCHECK_SMALL ?? "";
+
 const harmTests: [string, () => Promise<void>][] = [
+  ["smallFileIdleInterleaved", async () => {
+    // isolates the client's own cost per open: a standalone 1 KB deck, so no full-vehicle check is involved
+    const on: number[] = [], off: number[] = [];
+    await openMs(SMALL);
+    for (let i = 0; i < 9; i++) {
+      await vscode.commands.executeCommand("deckcheck.pause");
+      off.push(await openMs(SMALL));
+      await vscode.commands.executeCommand("deckcheck.resume");
+      await until(() => ext().exports.client()?.isRunning() || undefined);
+      await new Promise((r) => setTimeout(r, 2000));
+      on.push(await openMs(SMALL));
+    }
+    console.log(`     open small.k interleaved: on ${median(on).toFixed(0)} ms, off ${median(off).toFixed(0)} ms` +
+      ` (on ${on.map((x) => x.toFixed(0)).join(" ")}; off ${off.map((x) => x.toFixed(0)).join(" ")})`);
+  }],
   ["largeFileFromTabIsChecked", async () => {
     await vscode.commands.executeCommand("deckcheck.resume");
     await until(() => ext().exports.client() || undefined);
-    const t = performance.now();
     await openMs(LARGEST);                                   // 169 MB: never synced, found through its tab
-    await until(() => ext().exports.lastStatusMain().endsWith("combine.key") || undefined, 300_000);
-    console.log(`     large include -> model combine.key checked after ${((performance.now() - t) / 1000).toFixed(1)} s`);
+    // a big model: opening it asks instead of checking (Chintan, 2026-10-30)
+    await until(() => (ext().exports.lastStatusMain().endsWith("combine.key")
+      && ext().exports.lastState() === "click to check") || undefined, 60_000);
+    const t = performance.now();
+    await vscode.commands.executeCommand("deckcheck.checkNow");
+    await until(() => ext().exports.lastState() === "checks on save" || undefined, 300_000);
+    console.log(`     large include -> click to check -> model checked after ${((performance.now() - t) / 1000).toFixed(1)} s`);
   }],
   ["commandRoundTripDuringYarisCheck", async () => {
     await ext().exports.client()!.sendNotification("deckcheck/check", { uri: vscode.Uri.file(MAIN).toString() });
@@ -138,12 +159,21 @@ const harmTests: [string, () => Promise<void>][] = [
     await vscode.commands.executeCommand("deckcheck.pause");
     for (let i = 0; i < 9; i++) off[MAIN].push(await openMs(MAIN));
     await resumeIdle();
-    for (const file of [MAIN, LARGEST]) judge(`open ${path.basename(file)}, deckcheck idle`, idle[file], off[file]);
+    judge(`open ${path.basename(MAIN)}, deckcheck idle`, idle[MAIN], off[MAIN]);
+    // interleaved pairs: judged on the median of the pair differences, not on two group medians (single opens of
+    // the 169 MB file range 0.9-2.1 s either way; group medians swing by more than 10 % between identical runs)
+    const diffs = idle[LARGEST].map((x, i) => x - off[LARGEST][i]);
+    const d = median(diffs), base = median(off[LARGEST]);
+    console.log(`     open ${path.basename(LARGEST)}, deckcheck idle, paired: median difference ${d.toFixed(0)} ms` +
+      ` on ${base.toFixed(0)} ms (differences ${diffs.map((x) => x.toFixed(0)).join(" ")}; on ${idle[LARGEST].map((x) => x.toFixed(0)).join(" ")}; off ${off[LARGEST].map((x) => x.toFixed(0)).join(" ")})`);
+    if (d > base * 0.10 && d >= 20) slower.push(`${path.basename(LARGEST)} idle: paired median +${d.toFixed(0)} ms`);
     await ext().exports.client()!.sendNotification("deckcheck/check", { uri: vscode.Uri.file(MAIN).toString() });
     await new Promise((r) => setTimeout(r, 5000));          // the Yaris check is reading and building
     const busy: number[] = [];
     for (let i = 0; i < 9; i++) busy.push(await openMs(LARGEST));
-    judge(`open ${path.basename(LARGEST)} during a Yaris check`, busy, off[LARGEST]);
+    // reported, not gated: a big model's check now runs only when the engineer asks for it (Chintan, 2026-10-30)
+    console.log(`     open ${path.basename(LARGEST)} during a Yaris check (opt-in): on ${median(busy).toFixed(0)} ms,` +
+      ` off ${median(off[LARGEST]).toFixed(0)} ms (on ${busy.map((x) => x.toFixed(0)).join(" ")})`);
     assert.deepEqual(slower, []);
   }],
 ];

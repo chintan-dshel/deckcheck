@@ -161,3 +161,29 @@ def test_worker_survives_a_failing_prepare():
     r.request(Path("a.k"), "open")
     r.step()
     assert published
+
+
+def test_open_on_a_big_model_waits_for_demand():
+    demanded, ran = [], []
+    r = Runner(models=lambda f: [f], check=lambda m: ran.append(m) or "r", publish=lambda *a: None, threshold=2.0,
+               big=lambda m: True, on_demand=demanded.append)
+    r.request(Path("big.k"), "open")
+    assert not r.step() and [m.name for m in demanded] == ["big.k"] and ran == []
+    r.request(Path("big.k"), "check")          # the engineer asked: it runs
+    assert r.step() and ran == [Path("big.k")]
+
+
+def test_measured_duration_overrides_the_size_estimate():
+    ran = []
+    clock = Clock()
+
+    def check(m):
+        ran.append(m)
+        clock.t += 0.01                          # it turned out fast
+        return "r"
+    r = Runner(models=lambda f: [f], check=check, publish=lambda *a: None, threshold=2.0, clock=clock,
+               big=lambda m: True, on_demand=lambda m: None)
+    r.request(Path("a.k"), "check")
+    r.step()
+    r.request(Path("a.k"), "open")               # measured at 0.01 s: no longer big
+    assert r.step() and len(ran) == 2

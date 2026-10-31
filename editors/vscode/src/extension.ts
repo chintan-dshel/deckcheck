@@ -34,7 +34,10 @@ function serial(work: () => Promise<void>): Promise<void> {
   return chain;
 }
 
+let lastState = "";
+
 function setStatus(state: string): void {
+  lastState = state;
   status.text = statusText(state, notChecked.length);
   status.show();
 }
@@ -90,9 +93,9 @@ function checkLargeTabs(): void {
   for (const uri of open.filter((u) => fresh.has(u.toString()))) {
     fs.stat(uri.fsPath).then((st) => {
       if (!syncAllowed(st.size, maxSyncMB())) {
-        setTimeout(() => {
-          if (largeSeen.has(uri.toString())) void client?.sendNotification("deckcheck/check", { uri: uri.toString() });
-        }, LARGE_GRACE_MS);  // closed before the grace ended: the engineer moved on, nothing to check
+        setTimeout(() => {  // an opening: a big model answers "click to check" rather than starting a check
+          if (largeSeen.has(uri.toString())) void client?.sendNotification("deckcheck/opened", { uri: uri.toString() });
+        }, LARGE_GRACE_MS);  // closed before the grace ended: the engineer moved on, nothing to report
       }
     }, () => undefined);
   }
@@ -207,13 +210,20 @@ export function activate(context: vscode.ExtensionContext) {
       if (picked?.[0]) await vscode.workspace.getConfiguration("deckcheck").update("interpreter", picked[0].fsPath,
         vscode.ConfigurationTarget.Global);
     }),
+    vscode.commands.registerCommand("deckcheck.checkNow", () => {
+      // big models are checked on demand: the active deck's models, or the model the status bar names
+      const uri = vscode.window.activeTextEditor?.document.uri.toString() ?? lastMain;
+      if (uri) void client?.sendNotification("deckcheck/check", { uri });
+    }),
     vscode.commands.registerCommand("deckcheck.showStatus", async () => {
       const items = [
+        { label: "Check this model now" },
         ...notChecked.map((n) => ({ label: `Not checked: ${n.what}`, detail: n.reasons.join("; ") })),
         { label: ctx.workspaceState.get(PAUSED_KEY) ? "Resume deckcheck" : "Pause deckcheck for this workspace" },
         { label: "Select Python interpreter" }, { label: "Show output" },
       ];
       const pick = await vscode.window.showQuickPick(items, { title: status.text });
+      if (pick?.label === "Check this model now") void vscode.commands.executeCommand("deckcheck.checkNow");
       if (pick?.label.startsWith("Pause")) void vscode.commands.executeCommand("deckcheck.pause");
       if (pick?.label.startsWith("Resume")) void vscode.commands.executeCommand("deckcheck.resume");
       if (pick?.label.startsWith("Select")) void vscode.commands.executeCommand("deckcheck.selectInterpreter");
@@ -228,7 +238,7 @@ export function activate(context: vscode.ExtensionContext) {
   void serial(start);  // never awaited: activation returns at once (spec §3)
   const activationMs = performance.now() - t0;
   return { activationMs, client: () => client, status: () => status.text, serverPid: () => child?.pid,
-    serverCount: () => live, lastStatusMain: () => lastMain };
+    serverCount: () => live, lastStatusMain: () => lastMain, lastState: () => lastState };
 }
 
 export function deactivate(): Promise<void> {

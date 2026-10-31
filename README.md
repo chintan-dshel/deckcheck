@@ -113,6 +113,23 @@ and says so in the "Not checked" footer. For example:
 
 An empty footer, apart from the DC005 scope line, means every check ran on the whole deck.
 
+## In VS Code
+
+`editors/vscode/` holds a VS Code extension that shows the same findings as squiggles while you edit. It needs only
+Python 3.11 or newer: deckcheck and its language server ship inside it. Until it is published, build and install it
+locally:
+
+```
+cd editors/vscode
+npm install
+npm run package
+code --install-extension deckcheck-0.1.0.vsix
+```
+
+Opening an include file checks the whole model it belongs to. Small models are re-checked as you type; a big model
+(a full vehicle) is checked when you save it or click "big model, click to check" in the status bar, never just by
+opening it. The extension's README lists its settings and how it stays out of the editor's way.
+
 ## Known limits
 
 - No physics checks: units, time step, contact settings and material sanity are out of scope for now.

@@ -16,8 +16,9 @@ the `deckcheck.interpreter` setting if set, otherwise the Python extension's int
 ## It stays out of your way
 
 - It never takes part in drawing the file, and its work runs in a separate, low-priority process.
-- Small models are re-checked as you type; models whose full check takes longer than 2 seconds are checked when you
-  open and save them (the status bar says "checks on save").
+- Small models are re-checked as you type. A big model, one whose full check takes longer than 2 seconds such as a
+  full vehicle, is never checked just because you opened it: the status bar says "big model, click to check", and a
+  click or a save runs the check. While it runs, it uses background priority.
 - Files larger than 20 MB are read from disk instead of being copied out of the editor.
 - If a model needs more memory than its budget (2 GB), deckcheck pauses itself and says so in the status bar.
 - The status bar item shows what was not checked and why. Click it to pause deckcheck for the workspace.

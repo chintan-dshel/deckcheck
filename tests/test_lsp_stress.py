@@ -40,6 +40,7 @@ async def test_real_include_opened_without_false_errors(name, include, up):
     async with session(main.parents[up]) as client:
         t = time.monotonic()
         open_doc(client, target)
+        client.protocol.notify("deckcheck/check", {"uri": uri(target)})  # big models wait for "Check now"
         await published(client, uri(main), timeout=600)
         print(f"{name}: first diagnostics after {time.monotonic() - t:.1f} s")
         assert not [d for u in client.diagnostics for d in client.diagnostics[u] if d.code == "DC001"]
@@ -87,6 +88,7 @@ async def test_four_occupants_check_or_pause():
         async with session(viva.parent, mainDecks=[main.name]) as client:
             t = time.monotonic()
             open_doc(client, main)
+            client.protocol.notify("deckcheck/check", {"uri": uri(main)})  # big: "Check now"
             outcome = await _ends_well(client, main)
             print(f"four occupants: {outcome} after {time.monotonic() - t:.1f} s")
             if outcome == "checked":
@@ -133,6 +135,7 @@ async def test_include_deleted_and_locked_during_a_check(tmp_path):
     (tmp_path / "main.k").write_text("*KEYWORD\n*INCLUDE\nmesh.k\n*END\n", encoding="latin-1")
     async with session(tmp_path) as client:
         open_doc(client, tmp_path / "main.k")
+        client.protocol.notify("deckcheck/check", {"uri": uri(tmp_path / "main.k")})  # 17 MB mesh: big
         await asyncio.sleep(0.2)
         big.unlink()
         await published(client, uri(tmp_path / "main.k"), timeout=120)

@@ -23,8 +23,12 @@ async function main() {
     // the harm gate opens the CCSA Yaris folder through a workspace file, so nothing is written into the corpus
     const yaris = path.resolve(root, "../../.corpus/local/ccsa-yaris/2010-toyota-yaris-detailed-v2j");
     workspace = path.join(ws, "harm.code-workspace");
-    fs.writeFileSync(workspace, JSON.stringify({ folders: [{ path: yaris }], settings: { "deckcheck.interpreter": py } }));
-    Object.assign(env, { DECKCHECK_HARM: "1", DECKCHECK_YARIS: yaris });
+    const small = path.join(ws, "small");                       // a standalone deck: its whole check takes ms
+    fs.mkdirSync(small);
+    fs.copyFileSync(path.join(torture, "m1d_base", "main.k"), path.join(small, "small.k"));
+    fs.writeFileSync(workspace, JSON.stringify({ folders: [{ path: yaris }, { path: small }],
+      settings: { "deckcheck.interpreter": py } }));
+    Object.assign(env, { DECKCHECK_HARM: "1", DECKCHECK_YARIS: yaris, DECKCHECK_SMALL: path.join(small, "small.k") });
   }
   await runTests({ extensionDevelopmentPath: root, extensionTestsPath: path.join(__dirname, "suite"),
     launchArgs: [workspace, "--disable-extensions"], extensionTestsEnv: env });

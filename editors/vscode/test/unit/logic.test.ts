@@ -38,6 +38,7 @@ test("statusText", () => {
   assert.equal(statusText("ok", 2), "deckcheck: 2 not checked");
   assert.equal(statusText("checks on save", 0), "deckcheck: checks on save");
   assert.equal(statusText("paused", 0), "deckcheck: paused");
+  assert.equal(statusText("click to check", 0), "deckcheck: big model, click to check");
 });
 
 test("excludeGlobs merges files.exclude entries that are on", () => {

@@ -22,9 +22,11 @@ class Runner:
     def __init__(self, models: Callable[[Path], list[Path]], check: Callable, publish: Callable,
                  threshold: float, clock: Callable[[], float] = time.monotonic, debounce: float = 0.3,
                  prepare: Callable[[], None] = lambda: None,
-                 report_error: Callable[[BaseException], None] = lambda e: None):
+                 report_error: Callable[[BaseException], None] = lambda e: None,
+                 big: Callable[[Path], bool] = lambda m: False, on_demand: Callable[[Path], None] = lambda m: None):
         self.models, self.check, self.publish, self.prepare = models, check, publish, prepare
         self.report_error = report_error
+        self.big_by_size, self.on_demand = big, on_demand
         self._typed_unknown: dict[str, float] = {}  # typed while the model's speed was unknown (its first check)
         self.threshold, self.clock, self.debounce = threshold, clock, debounce
         self.durations: dict[str, float] = {}
@@ -43,6 +45,12 @@ class Runner:
         took = self.durations.get(self.key(main))
         return took is not None and took < self.threshold
 
+    def big(self, main: Path) -> bool:
+        """Checked on demand and on save only (Chintan, 2026-10-30): a full-vehicle check made opening another
+        huge file ~33 % slower for the minute it ran. Measured duration decides; before any check, the size."""
+        took = self.durations.get(self.key(main))
+        return took >= self.threshold if took is not None else self.big_by_size(main)
+
     def request(self, file: Path, reason: str) -> None:
         with self._cv:
             self._incoming.append((file, reason, self.clock()))
@@ -50,6 +58,9 @@ class Runner:
 
     def _schedule(self, main: Path, reason: str, at: float) -> None:
         if reason == "close":  # wakes the worker for prepare() (freeing closed models) without starting a check
+            return
+        if reason in ("open", "external") and self.big(main):
+            self.on_demand(main)
             return
         k = self.key(main)
         if reason == "change" and not self.live(main):

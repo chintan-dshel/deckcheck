@@ -174,6 +174,18 @@ class Workspace:
             self._mains = mains
             self._dirty = False
 
+    def model_mb(self, main: Path) -> float:
+        """Total size of every file the model reaches, from the include scan (a lone deck: its own size)."""
+        k = _key(_norm(main))
+        paths = [self._light[f].path for f in self._reach.get(k, ()) if f in self._light] or [_norm(main)]
+        total = 0
+        for p in paths:
+            try:
+                total += p.stat().st_size
+            except OSError:
+                pass
+        return total / 2**20
+
     def is_orphan(self, main_key: str) -> bool:
         """A deck checked as its own model that another main deck now includes: its old findings must go."""
         return main_key not in self._mains and any(main_key in r for r in self._reach.values())

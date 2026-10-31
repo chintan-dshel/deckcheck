@@ -30,6 +30,9 @@ class DeckServer(LanguageServer):
 
 
 server = DeckServer("deckcheck", __version__)
+# Check time per MB of model, measured: bumper 18 MB in 6 s, CCSA Yaris 161 MB in 63 s. Before a model has been
+# checked, its size estimates whether it is big (checked on demand and on save, not on open).
+SECONDS_PER_MB = 0.4
 
 
 def _path(uri: str) -> Path | None:
@@ -121,7 +124,9 @@ def initialize(ls: DeckServer, params: types.InitializeParams) -> None:
                        threshold=settings.live_threshold, prepare=lambda: _prepare(ls),
                        report_error=lambda e: ls.loop.call_soon_threadsafe(
                            ls.window_log_message, types.LogMessageParams(types.MessageType.Error,
-                                                                         f"deckcheck: worker error: {e!r}")))
+                                                                         f"deckcheck: worker error: {e!r}")),
+                       big=lambda m: ls.ws.model_mb(m) * SECONDS_PER_MB >= settings.live_threshold,
+                       on_demand=lambda m: ls.loop.call_soon_threadsafe(_status, ls, m, "click to check", []))
     ls.runner.start()
 
 
@@ -205,8 +210,15 @@ def watched(ls: DeckServer, params: types.DidChangeWatchedFilesParams) -> None:
 
 @server.feature("deckcheck/check")
 def check_file(ls: DeckServer, params) -> None:
+    """The engineer asked ("Check now"), or saved a file the client does not sync: always checks."""
     # a custom method's params arrive as pygls' generic object, or a dict in some versions
-    _request(ls, params["uri"] if isinstance(params, dict) else params.uri, "save")
+    _request(ls, params["uri"] if isinstance(params, dict) else params.uri, "check")
+
+
+@server.feature("deckcheck/opened")
+def opened_file(ls: DeckServer, params) -> None:
+    """A file the client does not sync was opened (its large-tab route): an opening, so a big model waits."""
+    _request(ls, params["uri"] if isinstance(params, dict) else params.uri, "open")
 
 
 @server.feature("deckcheck/active")

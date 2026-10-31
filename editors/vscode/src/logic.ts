@@ -33,6 +33,7 @@ export class RestartPolicy {
 
 export function statusText(state: string, notChecked: number): string {
   if (state === "ok") return notChecked ? `deckcheck: ${notChecked} not checked` : "deckcheck";
+  if (state === "click to check") return "deckcheck: big model, click to check";
   return `deckcheck: ${state}`;
 }
 

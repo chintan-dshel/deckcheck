@@ -110,9 +110,13 @@ async def test_big_model_waits_for_save(tmp_path):
     deck = tmp_path / "main.k"
     deck.write_bytes((TORTURE / "m1d_base" / "main.k").read_bytes())
     async with session(tmp_path, liveThresholdSeconds=0) as client:
-        open_doc(client, deck)
+        open_doc(client, deck)                     # big: no check on open, the engineer is asked instead
+        assert await last_status(client, 0) == "click to check"
+        with pytest.raises(asyncio.TimeoutError):
+            await published(client, uri(deck), timeout=1.5)
+        client.protocol.notify("deckcheck/check", {"uri": uri(deck)})   # "Check now"
         await published(client, uri(deck))
-        assert await last_status(client, 0) == "checks on save"
+        assert await last_status(client, 1) == "checks on save"
         client.text_document_did_change(types.DidChangeTextDocumentParams(
             types.VersionedTextDocumentIdentifier(uri=uri(deck), version=2),
             [types.TextDocumentContentChangeWholeDocument(text=editor_text(deck) + "$ edit\n")]))
@@ -258,3 +262,12 @@ async def test_closing_the_last_file_releases_the_model(tmp_path):
                 break
             await asyncio.sleep(0.1)
         assert caches == 0
+
+
+async def test_opened_notification_is_an_open_not_a_demand(tmp_path):
+    """The client's large-tab route reports an opening, which a big model answers with "click to check"."""
+    deck = tmp_path / "main.k"
+    deck.write_bytes((TORTURE / "m1d_base" / "main.k").read_bytes())
+    async with session(tmp_path, liveThresholdSeconds=0) as client:
+        client.protocol.notify("deckcheck/opened", {"uri": uri(deck)})
+        assert await last_status(client, 0) == "click to check"

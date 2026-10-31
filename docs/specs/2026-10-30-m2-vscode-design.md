@@ -1,6 +1,7 @@
 # deckcheck M2: VS Code extension — design
 
-Status: approved 2026-10-30; M2a done 2026-10-30 (`docs/m2a-server-squiggles.md`). Binds M2a, M2b and M2c. Parent spec:
+Status: approved 2026-10-30; M2a done 2026-10-30 (`docs/m2a-server-squiggles.md`); M2b done 2026-10-31
+(`docs/m2b-extension.md`). Binds M2a, M2b and M2c. Parent spec:
 `docs/specs/2026-10-27-deckcheck-design.md` (§8 front doors, §12 edge-case register).
 
 ## 1. Goal and bracketing
@@ -24,7 +25,7 @@ models; M2 adapts instead (§6).
 | Decision | Choice | Why |
 |---|---|---|
 | Which deck is checked when an include file is open | Auto-detect the main deck(s) that include it; `deckcheck.mainDecks` overrides | Checking an include alone gives false DC001 errors |
-| When checks run | Adaptive: as you type when the model's last check took under 2 s, otherwise on open and save | Small decks feel live; big ones don't burn a core per keystroke |
+| When checks run | Adaptive: as you type when the model's last check took under 2 s, otherwise on open and save; revised in M2b to on demand and on save for big models | Small decks feel live; big ones don't burn a core per keystroke; a background full-vehicle check slowed other opens (§6) |
 | Python | deckcheck and pygls bundled inside the extension, run by any Python 3.11+ | No pip install for the analyst; works before any PyPI release |
 | Hover content | Structure and resolved references only; no descriptions | pydyna's help text traces back to the keyword manual (parent spec: never copy it) |
 | Features | Squiggles, hover, definition, plus find references, outline, field hints | Each is a query on the index M1 already builds |
@@ -149,7 +150,13 @@ code action, "Insert field ruler", writes a `$#` comment line naming the fields 
 - One worker thread for the whole workspace; a queue keyed by model; the active editor's model first. A newer
   request for a model replaces its queued one; a result older than the newest edit is discarded.
 - Adaptive: a model whose last full check took under `deckcheck.liveThresholdSeconds` (2) is re-checked 300 ms
-  after typing pauses; otherwise on open and save only, and the status bar says `checks on save`.
+  after typing pauses. A bigger model is checked on demand and on save only (revised in M2b, Chintan
+  2026-10-30): opening it shows `big model, click to check`; a click, `deckcheck.checkNow` or a save runs it. Before
+  its first check, a model is big when its size × 0.4 s/MB reaches the threshold (measured: bumper 18 MB in 6 s,
+  Yaris 161 MB in 63 s). Why: a background full-vehicle check made opening another huge file ~33 % slower while
+  it ran.
+- Reopening a file not modified since its models were checked, and closing a file never edited, start no check;
+  closing a model's last file frees its parsed files (M2b harm gate).
 - The last index is kept per model while any of its files is open, dropped when the last closes.
 - A whole-check failure clears that model's diagnostics (never stale squiggles at wrong lines), sets
   `check failed`, and writes the traceback to the "deckcheck" output channel.

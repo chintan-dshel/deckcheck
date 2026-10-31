@@ -148,3 +148,10 @@ def test_former_main_now_included_is_an_orphan(tmp_path):
     ws.apply_drops()
     ws.scan()
     assert ws.is_orphan(part)
+
+
+def test_model_size_sums_every_file_it_reaches(tmp_path):
+    _write(tmp_path, {"main.k": "*KEYWORD\n*INCLUDE\nmat.k\n*END\n", "mat.k": MAT})
+    ws = _ws(tmp_path)
+    want = sum((tmp_path / n).stat().st_size for n in ("main.k", "mat.k")) / 2**20
+    assert abs(ws.model_mb(_norm(tmp_path / "main.k")) - want) < 1e-9

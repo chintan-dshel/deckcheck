@@ -5,31 +5,114 @@
   "version": "0.1.0",
   "publisher": "deckcheck",
   "license": "Apache-2.0",
-  "engines": { "vscode": "^1.91.0" },
-  "categories": ["Linters"],
+  "engines": {
+    "vscode": "^1.91.0"
+  },
+  "categories": [
+    "Linters"
+  ],
   "main": "./out/src/extension.js",
-  "activationEvents": ["onLanguage:keyword-deck"],
+  "activationEvents": [
+    "onLanguage:keyword-deck"
+  ],
   "contributes": {
-    "languages": [{ "id": "keyword-deck", "aliases": ["Keyword deck (LS-DYNA)"], "extensions": [".k", ".key", ".dyn"] }],
+    "languages": [
+      {
+        "id": "keyword-deck",
+        "aliases": [
+          "Keyword deck (LS-DYNA)"
+        ],
+        "extensions": [
+          ".k",
+          ".key",
+          ".dyn"
+        ]
+      }
+    ],
     "configuration": {
       "title": "deckcheck",
       "properties": {
-        "deckcheck.enable": { "type": "boolean", "default": true, "scope": "resource", "description": "Run deckcheck in this workspace or folder." },
-        "deckcheck.exclude": { "type": "array", "items": { "type": "string" }, "default": [], "scope": "resource", "description": "Globs never checked or scanned (e.g. a giant mesh include)." },
-        "deckcheck.mainDecks": { "type": "array", "items": { "type": "string" }, "default": [], "scope": "resource", "description": "Main decks, relative to the folder. Overrides detection." },
-        "deckcheck.interpreter": { "type": "string", "default": "", "scope": "machine-overridable", "description": "Python 3.11+ that runs deckcheck. Empty: the Python extension's interpreter, then py/python3 on PATH." },
-        "deckcheck.liveThresholdSeconds": { "type": "number", "default": 2, "description": "Models whose full check takes less than this are re-checked as you type; others on save." },
-        "deckcheck.maxSyncMB": { "type": "number", "default": 20, "description": "Larger files are not sent to deckcheck; it reads them from disk and checks them on open and save." },
-        "deckcheck.memoryMB": { "type": "number", "default": 2048, "description": "deckcheck pauses itself above this memory use." },
-        "deckcheck.ignore": { "type": "array", "items": { "type": "string" }, "default": [], "description": "Codes left out, as the command line's --ignore." }
+        "deckcheck.enable": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource",
+          "description": "Run deckcheck in this workspace or folder."
+        },
+        "deckcheck.exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "scope": "resource",
+          "description": "Globs never checked or scanned (e.g. a giant mesh include)."
+        },
+        "deckcheck.mainDecks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "scope": "resource",
+          "description": "Main decks, relative to the folder. Overrides detection."
+        },
+        "deckcheck.interpreter": {
+          "type": "string",
+          "default": "",
+          "scope": "machine-overridable",
+          "description": "Python 3.11+ that runs deckcheck. Empty: the Python extension's interpreter, then py/python3 on PATH."
+        },
+        "deckcheck.liveThresholdSeconds": {
+          "type": "number",
+          "default": 2,
+          "description": "Models whose full check takes less than this are re-checked as you type. Bigger ones are checked when you save or click the status bar, never just by opening them."
+        },
+        "deckcheck.maxSyncMB": {
+          "type": "number",
+          "default": 20,
+          "description": "Larger files are not sent to deckcheck; it reads them from disk."
+        },
+        "deckcheck.memoryMB": {
+          "type": "number",
+          "default": 2048,
+          "description": "deckcheck pauses itself above this memory use."
+        },
+        "deckcheck.ignore": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Codes left out, as the command line's --ignore."
+        }
       }
     },
-    "configurationDefaults": { "[keyword-deck]": { "editor.inlayHints.enabled": "offUnlessPressed" } },
+    "configurationDefaults": {
+      "[keyword-deck]": {
+        "editor.inlayHints.enabled": "offUnlessPressed"
+      }
+    },
     "commands": [
-      { "command": "deckcheck.showStatus", "title": "deckcheck: Show status" },
-      { "command": "deckcheck.pause", "title": "deckcheck: Pause for this workspace" },
-      { "command": "deckcheck.resume", "title": "deckcheck: Resume" },
-      { "command": "deckcheck.selectInterpreter", "title": "deckcheck: Select Python interpreter" }
+      {
+        "command": "deckcheck.showStatus",
+        "title": "deckcheck: Show status"
+      },
+      {
+        "command": "deckcheck.checkNow",
+        "title": "deckcheck: Check this model now"
+      },
+      {
+        "command": "deckcheck.pause",
+        "title": "deckcheck: Pause for this workspace"
+      },
+      {
+        "command": "deckcheck.resume",
+        "title": "deckcheck: Resume"
+      },
+      {
+        "command": "deckcheck.selectInterpreter",
+        "title": "deckcheck: Select Python interpreter"
+      }
     ]
   },
   "scripts": {
@@ -40,6 +123,15 @@
     "test:clean": "npm run package && node out/test/integration/clean.js",
     "package": "npm run bundle && npm run compile && vsce package --allow-missing-repository"
   },
-  "dependencies": { "vscode-languageclient": "10.1.2", "@vscode/python-extension": "1.0.6" },
-  "devDependencies": { "@types/vscode": "1.91.0", "@types/node": "24.19.2", "typescript": "6.0.3", "@vscode/test-electron": "3.1.0", "@vscode/vsce": "4.0.0" }
+  "dependencies": {
+    "vscode-languageclient": "10.1.2",
+    "@vscode/python-extension": "1.0.6"
+  },
+  "devDependencies": {
+    "@types/vscode": "1.91.0",
+    "@types/node": "24.19.2",
+    "typescript": "6.0.3",
+    "@vscode/test-electron": "3.1.0",
+    "@vscode/vsce": "4.0.0"
+  }
 }
