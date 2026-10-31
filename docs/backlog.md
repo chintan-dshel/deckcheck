@@ -12,7 +12,7 @@ Status: **open**, **done** (with where), or **pinned** (waiting on Chintan).
 |---|---|
 | Release: PyPI (CLI) and Open VSX / Marketplace (extension) | pinned: Chintan sleeping on it (2026-10-31). Needs his explicit yes and his trial first |
 | Re-trial of M2b.1 (TRIAL.md steps 2-5, ~10 min) | pinned: next time at the laptop |
-| Private GitHub remote | pinned: the auto-mode permission check blocked `gh repo create` (2026-10-31); Chintan creates it or allows it |
+| Private GitHub remote | done 2026-10-31: github.com/chintan-dshel/deckcheck (private), main pushed |
 
 ## Product backlog (larger items)
 | Item | Why | Status |
