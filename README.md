@@ -130,6 +130,24 @@ Opening an include file checks the whole model it belongs to. Small models are r
 (a full vehicle) is checked when you save it or click "big model, click to check" in the status bar, never just by
 opening it. The extension's README lists its settings and how it stays out of the editor's way.
 
+### Do no harm, measured
+
+The extension must never make opening, scrolling or editing a deck worse. Each release has to pass these measured
+gates on the CCSA Toyota Yaris (a 1 GB full-vehicle model, 169 MB largest include):
+
+| Gate | Pass rule | Measured (v0.1.0) |
+|---|---|---|
+| Opening a file, deckcheck on vs off | at most 10 % slower **or** at most 20 ms slower, whichever allows more | small deck 42 vs 41 ms; main deck 47 vs 41 ms; 169 MB include −12 ms (median paired difference on 1620 ms) |
+| Extension activation | under 100 ms | 1.1 ms |
+| An editor command while a full Yaris check runs | under 100 ms | 1.5 ms worst |
+
+Why "10 % or 20 ms": a 40 ms open varies by about 5 ms between identical runs, so 10 % alone (4 ms) would fail by
+chance, and 20 ms is far below what a person notices. On large files, 10 % is the binding limit. Opens of the
+169 MB file vary from 0.9 to 2.1 s by themselves, so on and off opens are taken in alternating pairs and judged on
+the median of the pair differences, not on two separate medians, which moved by more than 10 % between identical
+runs. Accepted cost: a slowdown under about 10 % on huge files would pass. Opening a huge file *while a check you
+started* is running is reported but not gated: about 1.7 s against 1.6 s.
+
 ## Known limits
 
 - No physics checks: units, time step, contact settings and material sanity are out of scope for now.

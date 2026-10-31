@@ -204,7 +204,9 @@ code action, "Insert field ruler", writes a `$#` comment line naming the fields 
 - Client: one `@vscode/test-electron` test: activation, bundled server start, squiggles on `seeded_mistakes`.
 
 ### 10.1 Harm gate (measured; a stage fails if any line fails)
-- Opening the Yaris main file and its largest include: time to visible text with deckcheck on is within 10 % of off.
+- Opening the Yaris main file and its largest include: time to visible text with deckcheck on is within 10 % of off,
+  or under 20 ms slower (revised in M2b after seeing data; confirmed by Chintan 2026-10-31). Interleaved on/off
+  pairs are judged on the median pair difference. Opening during an opted-in check is reported, not gated.
 - Extension activation under 100 ms.
 - During a Yaris check, a trivial editor command returns in under 100 ms.
 - Stress decks, generated locally, never committed, each run under the 2 GB lab cap; each must end with the file
