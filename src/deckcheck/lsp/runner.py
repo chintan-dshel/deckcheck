@@ -59,10 +59,12 @@ class Runner:
     def _schedule(self, main: Path, reason: str, at: float) -> None:
         if reason == "close":  # wakes the worker for prepare() (freeing closed models) without starting a check
             return
+        k = self.key(main)
         if reason in ("open", "external") and self.big(main):
+            if reason == "external":  # the files changed: a check running now reads older text (spec §6)
+                self._gen[k] = self._gen.get(k, 0) + 1
             self.on_demand(main)
             return
-        k = self.key(main)
         if reason == "change" and not self.live(main):
             if k not in self.durations:  # first check still running: decide once its speed is known
                 self._typed_unknown[k] = at

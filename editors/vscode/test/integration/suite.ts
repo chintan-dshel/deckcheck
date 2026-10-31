@@ -61,6 +61,17 @@ const tests: [string, () => Promise<void>][] = [
     await new Promise((r) => setTimeout(r, 2000));
     assert.equal(ext().exports.serverCount(), 1);
   }],
+  ["pauseDuringCrashRestartLeavesNoServer", async () => {
+    // the library restarts a crashed server on its own; a pause in that window must still leave nothing running
+    await until(() => (ext().exports.client() && ext().exports.serverPid()) || undefined);
+    process.kill(ext().exports.serverPid());
+    await new Promise((r) => setTimeout(r, 300));
+    await vscode.commands.executeCommand("deckcheck.pause");
+    await new Promise((r) => setTimeout(r, 6000));
+    assert.equal(ext().exports.serverCount(), 0, `${ext().exports.serverCount()} server(s) still running`);
+    await vscode.commands.executeCommand("deckcheck.resume");
+    await until(() => ext().exports.client() || undefined);
+  }],
   ["serverKilledIsRestarted", async () => {
     const pid = ext().exports.serverPid();
     process.kill(pid);

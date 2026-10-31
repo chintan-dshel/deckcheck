@@ -101,6 +101,13 @@ def _check(ls: DeckServer, main: Path) -> Result:
         gc.enable()
 
 
+def _on_demand(ls: DeckServer, main: Path) -> None:
+    """A big model waits for the engineer. Its last result may no longer match the files (an outside change), so
+    reopening must not count it as current."""
+    ls.checked_at.pop(_key(main), None)
+    _status(ls, main, "click to check", [])
+
+
 def _prepare(ls: DeckServer) -> None:
     ls.ws.apply_drops()
     ls.ws.release_closed()  # a closed model's parsed files (about 1 GB for the Yaris) are freed, a chunk at a time
@@ -126,7 +133,7 @@ def initialize(ls: DeckServer, params: types.InitializeParams) -> None:
                            ls.window_log_message, types.LogMessageParams(types.MessageType.Error,
                                                                          f"deckcheck: worker error: {e!r}")),
                        big=lambda m: ls.ws.model_mb(m) * SECONDS_PER_MB >= settings.live_threshold,
-                       on_demand=lambda m: ls.loop.call_soon_threadsafe(_status, ls, m, "click to check", []))
+                       on_demand=lambda m: ls.loop.call_soon_threadsafe(_on_demand, ls, m))
     ls.runner.start()
 
 

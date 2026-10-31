@@ -187,3 +187,17 @@ def test_measured_duration_overrides_the_size_estimate():
     r.step()
     r.request(Path("a.k"), "open")               # measured at 0.01 s: no longer big
     assert r.step() and len(ran) == 2
+
+
+def test_outside_change_during_an_opted_in_check_makes_it_stale():
+    pub, demanded = [], []
+    r = Runner(models=lambda f: [f], check=None, publish=lambda *a: pub.append(a), threshold=2.0,
+               big=lambda m: True, on_demand=demanded.append)
+
+    def check_then_regenerate(main):
+        r.request(Path("big.k"), "external")   # a script rewrites an include while the check runs
+        return "result of the old text"
+    r.check = check_then_regenerate
+    r.request(Path("big.k"), "check")
+    r.step()
+    assert pub == [] and [m.name for m in demanded] == ["big.k"]

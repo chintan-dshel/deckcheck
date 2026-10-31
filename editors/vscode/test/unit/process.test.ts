@@ -59,3 +59,13 @@ test("exit code 75 is read when the budget is exceeded", async () => {
     params: { processId: null, rootUri: null, capabilities: {}, initializationOptions: { memoryMB: 1 } } }));
   assert.equal(await exitCode(child, 30_000), 75);
 });
+
+import { pythonUsable } from "../../src/process.ts";
+import os from "node:os";
+import fs from "node:fs";
+
+test("pythonUsable tells a broken bundle from a usable one", async () => {
+  assert.equal(await pythonUsable(EXE, ARGS, LIBS), "ok");
+  const empty = fs.mkdtempSync(path.join(os.tmpdir(), "deckcheck-empty-libs-"));
+  assert.equal(await pythonUsable(EXE, ARGS, empty), "broken");   // the PATH python has no deckcheck of its own
+});

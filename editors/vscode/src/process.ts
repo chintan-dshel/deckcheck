@@ -16,6 +16,23 @@ export function pythonVersionOk(exe: string, args: string[]): Promise<boolean> {
   });
 }
 
+function withLibs(libsDir: string): NodeJS.ProcessEnv {
+  return { ...process.env, PYTHONPATH: [libsDir, process.env.PYTHONPATH].filter(Boolean).join(path.delimiter) };
+}
+
+export function pythonUsable(exe: string, args: string[], libsDir: string): Promise<"ok" | "old" | "broken"> {
+  // version first, then the bundle imports: a broken bundle is one clear message, not a restart loop with the
+  // language client's own error dialogs
+  return new Promise((resolve) => {
+    execFile(exe, [...args, "-c", "import sys; print(*sys.version_info[:2]); import deckcheck.lsp.server"],
+      { timeout: 30_000, windowsHide: true, env: withLibs(libsDir) },
+      (err, stdout) => {
+        if (!meetsMinimum(String(stdout))) return resolve("old");
+        resolve(err ? "broken" : "ok");
+      });
+  });
+}
+
 export function spawnServer(exe: string, args: string[], libsDir: string): ChildProcess {
   const env = { ...process.env, PYTHONPATH: [libsDir, process.env.PYTHONPATH].filter(Boolean).join(path.delimiter) };
   return spawn(exe, [...args, "-m", "deckcheck.lsp"], { env, stdio: "pipe", detached: process.platform !== "win32",

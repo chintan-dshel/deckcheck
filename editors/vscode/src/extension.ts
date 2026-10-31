@@ -5,8 +5,9 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import { ChildProcess } from "node:child_process";
 import { CloseAction, ErrorAction, LanguageClient, LanguageClientOptions, State } from "vscode-languageclient/node";
-import { Notifier, RestartPolicy, excludeGlobs, newlyOpened, statusText, syncAllowed } from "./logic.ts";
-import { exitCode, killTree, pathCandidates, pythonVersionOk, spawnServer } from "./process.ts";
+import { Notifier, RestartPolicy, SyncSizes, checkTarget, closeDecision, excludeGlobs, newlyOpened, statusText,
+  syncAllowed } from "./logic.ts";
+import { exitCode, killTree, pathCandidates, pythonUsable, spawnServer } from "./process.ts";
 
 const DECKS = "**/*.{k,key,dyn,K,KEY,DYN}";
 const DECK_FILE = /\.(k|key|dyn)$/i;
@@ -15,6 +16,7 @@ const PAUSED_KEY = "deckcheck.paused";
 // opening the Yaris's 169 MB include ~24 % slower (median 1877 vs 1517 ms); started later, no slower (1378 vs 1568).
 const LARGE_GRACE_MS = 10_000;
 const largeSeen = new Set<string>();
+const sizes = new SyncSizes();
 
 let client: LanguageClient | undefined;
 let child: ChildProcess | undefined;
@@ -42,7 +44,7 @@ function setStatus(state: string): void {
   status.show();
 }
 
-async function findPython(): Promise<[string, string[]] | undefined> {
+async function findPython(libs: string): Promise<[string, string[]] | "broken" | undefined> {
   const configured = vscode.workspace.getConfiguration("deckcheck").get<string>("interpreter", "");
   const candidates: [string, string[]][] = [];
   if (configured) candidates.push([configured, []]);
@@ -58,8 +60,13 @@ async function findPython(): Promise<[string, string[]] | undefined> {
     }
     candidates.push(...pathCandidates(process.platform));
   }
-  for (const [exe, args] of candidates) if (await pythonVersionOk(exe, args)) return [exe, args];
-  return undefined;
+  let broken = false;
+  for (const [exe, args] of candidates) {
+    const usable = await pythonUsable(exe, args, libs);
+    if (usable === "ok") return [exe, args];
+    broken ||= usable === "broken";
+  }
+  return broken ? "broken" : undefined;
 }
 
 function options(): object {
@@ -106,29 +113,46 @@ async function start(): Promise<void> {
   {
     const cfg = vscode.workspace.getConfiguration("deckcheck");
     if (!cfg.get("enable", true) || ctx.workspaceState.get(PAUSED_KEY)) { setStatus("paused"); return; }
-    const py = await findPython();
+    const libs = ctx.asAbsolutePath(path.join("bundled", "libs"));
+    const py = await findPython(libs);
+    if (py === "broken") {
+      setStatus("stopped");
+      notifier.once("broken", "deckcheck could not load its bundled files; reinstalling the extension should fix it.");
+      return;
+    }
     if (!py) {
       setStatus("no Python");
       notifier.once("no-python", "deckcheck needs Python 3.11 or newer.");
       return;
     }
-    const libs = ctx.asAbsolutePath(path.join("bundled", "libs"));
     const clientOptions: LanguageClientOptions = {
       documentSelector: [{ scheme: "file", language: "keyword-deck" }, { scheme: "file", pattern: DECKS }],
       initializationOptions: options(),
       synchronize: { fileEvents: vscode.workspace.createFileSystemWatcher(DECKS) },
       middleware: {
-        didOpen: async (doc, next) => (await tooBig(doc)) ? undefined : next(doc),
-        didChange: async (e, next) => (await tooBig(e.document)) ? undefined : next(e),
-        didClose: async (doc, next) => (await tooBig(doc)) ? undefined : next(doc),
-        didSave: async (doc, next) => (await tooBig(doc))
+        // one stat per document, at open; every later event awaits that same decision, so events keep their order
+        didOpen: async (doc, next) => {
+          const key = doc.uri.toString();
+          sizes.set(key, tooBig(doc));
+          return (await sizes.decision(key)) ? undefined : next(doc);
+        },
+        didChange: async (e, next) => (await sizes.decision(e.document.uri.toString())) ? undefined : next(e),
+        didClose: async (doc, next) => {
+          const key = doc.uri.toString();
+          const big = await sizes.decision(key);
+          sizes.forget(key);
+          return big ? undefined : next(doc);
+        },
+        didSave: async (doc, next) => (await sizes.decision(doc.uri.toString()))
           ? client?.sendNotification("deckcheck/check", { uri: doc.uri.toString() }) : next(doc),
       },
       errorHandler: {
         error: () => ({ action: ErrorAction.Continue }),
         closed: async () => {
+          const ours = child === undefined;  // stop() clears it first: a pause, restart or deactivation
           const code = child ? await exitCode(child) : null;
-          const decision = policy.decide(code, Date.now());
+          const decision = closeDecision(ours, code, policy, Date.now());
+          if (decision === "ours") return { action: CloseAction.DoNotRestart, handled: true };
           if (decision === "restart") return { action: CloseAction.Restart, handled: true };
           void stop(false);
           if (decision === "pause-memory") {
@@ -155,8 +179,17 @@ async function start(): Promise<void> {
       lastMain = p.main;
       setStatus(p.state);
     });
+    try {
+      await c.start();
+    } catch {  // the server died before it answered: one message, and no half-started client left behind
+      const p = child;
+      child = undefined;
+      if (p) await killTree(p);
+      setStatus("stopped");
+      notifier.once("start-failed", "deckcheck's server did not start; see the deckcheck output.");
+      return;
+    }
     client = c;
-    await c.start();
     largeSeen.clear();  // a new server has checked nothing yet
     checkLargeTabs();
     if (vscode.window.activeTextEditor) sendActive(vscode.window.activeTextEditor);
@@ -167,7 +200,8 @@ async function stop(alsoClient = true): Promise<void> {
   const c = client, p = child;
   client = undefined;
   child = undefined;
-  if (alsoClient && c && c.state === State.Running) await c.stop(2000).catch(() => undefined);
+  // any client not already stopped, including one the library is restarting after a crash (state Starting)
+  if (alsoClient && c && c.state !== State.Stopped) await c.stop(2000).catch(() => undefined);
   if (p) await killTree(p);
 }
 
@@ -211,8 +245,8 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.ConfigurationTarget.Global);
     }),
     vscode.commands.registerCommand("deckcheck.checkNow", () => {
-      // big models are checked on demand: the active deck's models, or the model the status bar names
-      const uri = vscode.window.activeTextEditor?.document.uri.toString() ?? lastMain;
+      // the model the status bar names when it asks to be checked, else the deck in front of you, never a non-deck
+      const uri = checkTarget(lastState, lastMain, vscode.window.activeTextEditor?.document.uri.toString());
       if (uri) void client?.sendNotification("deckcheck/check", { uri });
     }),
     vscode.commands.registerCommand("deckcheck.showStatus", async () => {

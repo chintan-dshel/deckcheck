@@ -37,7 +37,9 @@ def rss_bytes() -> int:
         pmc = PMC()
         pmc.cb = ctypes.sizeof(pmc)
         psapi.GetProcessMemoryInfo(k32.GetCurrentProcess(), ctypes.byref(pmc), pmc.cb)
-        return pmc.WorkingSetSize
+        # committed private memory, not the working set: background mode lets Windows trim the working set first
+        # under pressure, which would hide the use exactly when the budget matters
+        return pmc.PagefileUsage
     if sys.platform.startswith("linux"):
         with open("/proc/self/statm") as f:
             return int(f.read().split()[1]) * os.sysconf("SC_PAGE_SIZE")

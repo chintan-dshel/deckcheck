@@ -51,3 +51,18 @@ def test_disk_priority_is_background():
             "import psutil; print(int(psutil.Process().ionice()))")
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True).stdout.strip()
     assert int(out) == int(psutil.IOPRIO_VERYLOW)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows working-set trimming")
+def test_memory_reading_survives_working_set_trimming():
+    """Background mode lowers memory priority, so Windows trims the server's working set first under pressure: the
+    budget must be measured on committed (private) memory, which trimming does not reduce."""
+    import ctypes
+    from deckcheck.lsp.__main__ import rss_bytes
+    block = bytearray(300 * 2**20)
+    k32, psapi = ctypes.WinDLL("kernel32"), ctypes.WinDLL("psapi")
+    k32.GetCurrentProcess.restype = ctypes.c_void_p
+    psapi.EmptyWorkingSet.argtypes = [ctypes.c_void_p]
+    psapi.EmptyWorkingSet(k32.GetCurrentProcess())   # what memory pressure does to a background process
+    assert rss_bytes() >= 300 * 2**20
+    del block
