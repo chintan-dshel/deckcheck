@@ -66,6 +66,23 @@ const tests: [string, () => Promise<void>][] = [
     await vscode.workspace.getConfiguration("deckcheck").update("liveThresholdSeconds", undefined, vscode.ConfigurationTarget.Workspace);
     await until(() => ext().exports.client()?.isRunning() || undefined);
   }],
+  ["statusFollowsTheActiveFilesModel", async () => {
+    // backlog: the status bar named whichever model spoke last, not the one in front of the engineer
+    const seeded = await open("seeded_mistakes/main.k");
+    await until(() => codes(seeded).includes("DC001") || undefined);
+    const part = await open("part.k");                         // an include of the workspace's root main.k
+    const isRoot = (m: string) => m.endsWith("/main.k") && !m.includes("seeded");
+    await until(() => (isRoot(ext().exports.activeMain()) && ext().exports.status() !== "deckcheck: starting") || undefined, 30_000)
+      .catch((e) => { console.log(`     active "${ext().exports.activeMain()}", status "${ext().exports.status()}"`); throw e; });
+    const partStatus = ext().exports.status();
+    await vscode.window.showTextDocument(seeded);
+    await until(() => ext().exports.activeMain().includes("seeded") || undefined, 10_000);
+    const seededStatus = ext().exports.status();
+    console.log(`     part.k: "${partStatus}"; seeded main.k: "${seededStatus}"`);
+    assert.equal(seededStatus, "deckcheck: 4 not checked");   // its missing include hides what it might define
+    await vscode.window.showTextDocument(part);
+    await until(() => ext().exports.status() === partStatus || undefined, 10_000);
+  }],
   ["activationIsFast", async () => {
     assert.ok(ext().exports.activationMs < 100, `activation ${ext().exports.activationMs} ms`);
   }],

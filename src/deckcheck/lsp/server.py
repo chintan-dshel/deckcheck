@@ -277,10 +277,15 @@ def opened_file(ls: DeckServer, params) -> None:
 
 
 @server.feature("deckcheck/active")
-def active(ls: DeckServer, params) -> None:
+def active(ls: DeckServer, params) -> dict | None:
+    """The file in front of the engineer: its model goes first in the queue, and the client shows that model's
+    status. None while main decks are not known yet."""
     path = _path(params["uri"] if isinstance(params, dict) else params.uri)
-    if path is not None and not ls.ws._dirty:  # a lookup only: the protocol thread never scans (spec §3)
-        ls.runner.active = ls.runner.key(ls.ws.models_for(path)[0])
+    if path is None or ls.ws._dirty:  # a lookup only: the protocol thread never scans (spec §3)
+        return None
+    main = ls.ws.models_for(path)[0]
+    ls.runner.active = ls.runner.key(main)
+    return {"main": from_fs_path(str(main))}
 
 
 @server.feature("deckcheck/ping")

@@ -100,6 +100,63 @@ export function sameFile(a: string, b: string, platform: string = process.platfo
   return norm(a) === norm(b);
 }
 
+export interface NotChecked { what: string; reasons: string[]; count: number }
+export interface StatusParams { main: string; state: string; notChecked?: NotChecked[]; summary?: Summary;
+  estimate?: number; started?: number; busy?: boolean }
+export interface ModelStatus { main: string; state: string; notChecked: NotChecked[]; summary?: Summary;
+  since?: number; estimate?: number }  // since: ms since epoch, while checking
+
+export class StatusBoard {
+  // One record per model, keyed so VS Code's and the server's spellings of a URI agree. The status bar shows the
+  // model of the file in front of the engineer, else the model the server spoke about last.
+  private models = new Map<string, ModelStatus>();
+  private last = "";
+  private active = "";
+  private platform: string;
+
+  constructor(platform: string = process.platform) {
+    this.platform = platform;
+  }
+
+  private key(uri: string): string {
+    return this.platform === "win32" ? decodeURIComponent(uri).toLowerCase() : decodeURIComponent(uri);
+  }
+
+  update(p: StatusParams): void {
+    if (p.busy) return;
+    const checking = p.state === "checking";
+    this.models.set(this.key(p.main), { main: p.main, state: p.state, notChecked: p.notChecked ?? [],
+      summary: p.summary, since: checking ? (p.started ?? 0) * 1000 : undefined,
+      estimate: checking ? p.estimate ?? 0 : undefined });
+    this.last = this.key(p.main);
+  }
+
+  setActive(main: string | undefined): void {
+    this.active = main ? this.key(main) : "";
+  }
+
+  get(main: string): ModelStatus | undefined {
+    return this.models.get(this.key(main));
+  }
+
+  lastAnnounced(): ModelStatus | undefined {
+    return this.models.get(this.last);
+  }
+
+  current(): ModelStatus | undefined {
+    return this.models.get(this.active) ?? this.models.get(this.last);
+  }
+
+  anyChecking(): boolean {
+    return [...this.models.values()].some((m) => m.state === "checking");
+  }
+
+  clear(): void {
+    this.models.clear();
+    this.last = this.active = "";
+  }
+}
+
 export function alreadyChecking(state: string, lastMain: string, target: string): boolean {
   // the server reads requests between checks, so its own "already checking" would come at the end: answer here
   return state === "checking" && sameFile(target, lastMain);

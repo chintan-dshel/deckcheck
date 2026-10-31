@@ -5,8 +5,9 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import { ChildProcess } from "node:child_process";
 import { CloseAction, ErrorAction, LanguageClient, LanguageClientOptions, State } from "vscode-languageclient/node";
-import { Notifier, RestartPolicy, Summary, SyncSizes, alreadyChecking, buttonsFor, busyMessage, checkTarget, checkingText, closeDecision,
-  excludeGlobs, newlyOpened, statusText, summaryMessage, syncAllowed, unsavedUnsynced } from "./logic.ts";
+import { Notifier, RestartPolicy, StatusBoard, StatusParams, SyncSizes, alreadyChecking, buttonsFor, busyMessage,
+  checkTarget, checkingText, closeDecision, excludeGlobs, newlyOpened, sameFile, statusText, summaryMessage,
+  syncAllowed, unsavedUnsynced } from "./logic.ts";
 import { exitCode, killTree, pathCandidates, pythonUsable, spawnServer } from "./process.ts";
 
 const DECKS = "**/*.{k,key,dyn,K,KEY,DYN}";
@@ -22,8 +23,6 @@ let client: LanguageClient | undefined;
 let child: ChildProcess | undefined;
 let live = 0;
 let status: vscode.StatusBarItem;
-let notChecked: { what: string; reasons: string[]; count: number }[] = [];
-let lastMain = "";
 let ctx: vscode.ExtensionContext;
 let notifier: Notifier;
 let policy = new RestartPolicy();
@@ -36,64 +35,63 @@ function serial(work: () => Promise<void>): Promise<void> {
   return chain;
 }
 
-let lastState = "";
-let lastSummary: Summary | undefined;
+// What the status bar shows: the client's own state while it has one (paused, starting, stopped, no Python), else
+// the record of the active file's model on the board (backlog: the status used to name the last model announced).
+const board = new StatusBoard();
+let local: string | undefined = "starting";
 let ticker: ReturnType<typeof setInterval> | undefined;
-let progressDone: (() => void) | undefined;
+const progress = new Map<string, () => void>();  // a clicked model's progress notification, closed by its result
 let askedAt = 0;                  // when the engineer last clicked: the check that starts next gets a notification
-let checkingSince = 0, checkingEstimate = 0;  // of the check running now, in ms since epoch and seconds
 const shown: string[] = [];       // messages shown, for the integration tests
 let progressShown = 0;            // progress notifications shown, for the integration tests
+
+const nameOf = (uri: string) => path.basename(vscode.Uri.parse(uri).fsPath);
 
 function inform(message: string, ...buttons: string[]): Thenable<string | undefined> {
   shown.push(message);
   return vscode.window.showInformationMessage(message, ...buttons);
 }
 
-function stopProgress(): void {
-  if (ticker) clearInterval(ticker);
-  ticker = undefined;
-  progressDone?.();
-  progressDone = undefined;
-}
-
-function setStatus(state: string, summary?: Summary): void {
-  if (state !== "checking") stopProgress();
-  lastState = state;
-  lastSummary = summary;
-  status.text = statusText(state, notChecked.length, summary);
+function render(): void {
+  const m = board.current();
+  if (local !== undefined) status.text = statusText(local, 0);
+  else if (!m) status.text = "deckcheck";
+  else if (m.state === "checking") status.text = checkingText(nameOf(m.main), (Date.now() - (m.since ?? 0)) / 1000, m.estimate ?? 0);
+  else status.text = statusText(m.state, m.notChecked.length, m.summary);
   status.show();
+  if (board.anyChecking() && !ticker) ticker = setInterval(render, 1000);
+  if (!board.anyChecking() && ticker) { clearInterval(ticker); ticker = undefined; }
 }
 
-function onStatus(p: { main: string; state: string; notChecked: typeof notChecked; summary?: Summary;
-                       estimate?: number; started?: number; busy?: boolean }): void {
-  const name = path.basename(vscode.Uri.parse(p.main).fsPath);
-  if (p.state === "checking") {
-    const started = (p.started ?? Date.now() / 1000) * 1000, estimate = p.estimate ?? 0;
-    if (p.busy) { void inform(busyMessage(name, (Date.now() - started) / 1000, estimate)); return; }
-    lastMain = p.main;
-    lastState = "checking";
-    checkingSince = started;
-    checkingEstimate = estimate;
-    stopProgress();
-    const tick = () => { status.text = checkingText(name, (Date.now() - started) / 1000, estimate); };
-    tick();
-    status.show();
-    ticker = setInterval(tick, 1000);
-    if (Date.now() - askedAt < 30_000) {  // the engineer clicked: say so where they look, until the result arrives
-      askedAt = 0;
-      progressShown += 1;
-      void vscode.window.withProgress({ location: vscode.ProgressLocation.Notification,
-        title: `deckcheck: checking ${name} (about ${Math.round(estimate)} s). You can keep working.` },
-      () => new Promise<void>((resolve) => { progressDone = resolve; }));
-    }
-    return;
+function closeProgress(main?: string): void {
+  for (const [k, done] of [...progress]) if (main === undefined || sameFile(k, main)) { done(); progress.delete(k); }
+}
+
+function setLocal(state: string | undefined): void {
+  local = state;
+  render();
+}
+
+function forgetModels(): void {  // a stopped or restarted server has checked nothing: no record outlives it
+  board.clear();
+  closeProgress();
+  render();
+}
+
+function onStatus(p: StatusParams): void {
+  if (p.busy) return;  // the client answers a repeat click itself (checkNow); the server's reply comes too late
+  board.update(p);
+  if (p.state === "checking" && Date.now() - askedAt < 30_000) {  // clicked: say so where they look, until the result
+    askedAt = 0;
+    progressShown += 1;
+    void vscode.window.withProgress({ location: vscode.ProgressLocation.Notification,
+      title: `deckcheck: checking ${nameOf(p.main)} (about ${Math.round(p.estimate ?? 0)} s). You can keep working.` },
+    () => new Promise<void>((resolve) => { progress.set(p.main, resolve); }));
   }
-  notChecked = p.notChecked ?? [];
-  lastMain = p.main;
-  setStatus(p.state, p.summary);
+  if (p.state !== "checking") closeProgress(p.main);
+  render();
   if (p.summary?.explicit) {
-    void inform(summaryMessage(name, p.summary), "Show Problems").then((choice) => {
+    void inform(summaryMessage(nameOf(p.main), p.summary), "Show Problems").then((choice) => {
       if (choice) void vscode.commands.executeCommand("workbench.actions.view.problems");
     });
   }
@@ -114,11 +112,11 @@ async function unsavedLargeTabs(): Promise<vscode.Uri[]> {
 
 async function checkNow(): Promise<void> {
   // the model the status bar names when it asks to be checked, else the deck in front of you, never a non-deck
-  const uri = checkTarget(lastState, lastMain, vscode.window.activeTextEditor?.document.uri.toString());
+  const m = board.current();
+  const uri = checkTarget(m?.state ?? "", m?.main ?? "", vscode.window.activeTextEditor?.document.uri.toString());
   if (!uri || !client) return;
-  if (alreadyChecking(lastState, lastMain, uri)) {
-    void inform(busyMessage(path.basename(vscode.Uri.parse(uri).fsPath), (Date.now() - checkingSince) / 1000,
-      checkingEstimate));
+  if (m && alreadyChecking(m.state, m.main, uri)) {
+    void inform(busyMessage(nameOf(uri), (Date.now() - (m.since ?? 0)) / 1000, m.estimate ?? 0));
     return;
   }
   const unsaved = await unsavedLargeTabs();
@@ -201,17 +199,17 @@ async function start(): Promise<void> {
   if (client) return;
   {
     const cfg = vscode.workspace.getConfiguration("deckcheck");
-    if (!cfg.get("enable", true) || ctx.workspaceState.get(PAUSED_KEY)) { setStatus("paused"); return; }
-    setStatus("starting");  // finding Python and starting the server takes seconds; "paused" must not linger meanwhile
+    if (!cfg.get("enable", true) || ctx.workspaceState.get(PAUSED_KEY)) { setLocal("paused"); return; }
+    setLocal("starting");  // finding Python and starting the server takes seconds; "paused" must not linger meanwhile
     const libs = ctx.asAbsolutePath(path.join("bundled", "libs"));
     const py = await findPython(libs);
     if (py === "broken") {
-      setStatus("stopped");
+      setLocal("stopped");
       notifier.once("broken", "deckcheck could not load its bundled files; reinstalling the extension should fix it.");
       return;
     }
     if (!py) {
-      setStatus("no Python");
+      setLocal("no Python");
       notifier.once("no-python", "deckcheck needs Python 3.11 or newer.");
       return;
     }
@@ -244,17 +242,18 @@ async function start(): Promise<void> {
           const decision = closeDecision(ours, code, policy, Date.now());
           if (decision === "ours") return { action: CloseAction.DoNotRestart, handled: true };
           if (decision === "restart") {  // a check that was running died with the server: no spinner left behind
-            setStatus("starting");
+            forgetModels();
+            setLocal("starting");
             largeSeen.clear();
             return { action: CloseAction.Restart, handled: true };
           }
           void stop(false);
           if (decision === "pause-memory") {
             const mb = vscode.workspace.getConfiguration("deckcheck").get("memoryMB");
-            setStatus(`paused (needs more than ${mb} MB)`);
+            setLocal(`paused (needs more than ${mb} MB)`);
             notifier.once("memory", `deckcheck paused: this model needs more than ${mb} MB. Raise deckcheck.memoryMB to check it.`);
           } else {
-            setStatus("stopped");
+            setLocal("stopped");
             notifier.once("crash", "deckcheck stopped after repeated crashes; see the deckcheck output.");
           }
           return { action: CloseAction.DoNotRestart, handled: true };
@@ -271,7 +270,7 @@ async function start(): Promise<void> {
     c.onNotification("deckcheck/status", onStatus);
     c.onDidChangeState((e) => {  // the library restarted a crashed server: it has checked nothing yet
       if (e.newState !== State.Running || client !== c) return;
-      if (lastState === "starting") setStatus("ok");
+      if (local === "starting") setLocal(undefined);
       checkLargeTabs();
       if (vscode.window.activeTextEditor) sendActive(vscode.window.activeTextEditor);
     });
@@ -281,12 +280,12 @@ async function start(): Promise<void> {
       const p = child;
       child = undefined;
       if (p) await killTree(p);
-      setStatus("stopped");
+      setLocal("stopped");
       notifier.once("start-failed", "deckcheck's server did not start; see the deckcheck output.");
       return;
     }
     client = c;
-    if (lastState === "starting") setStatus("ok");  // running; with no deck open no status would ever replace it
+    if (local === "starting") setLocal(undefined);  // running; with no deck open no status would ever replace it
     largeSeen.clear();  // a new server has checked nothing yet
     checkLargeTabs();
     if (vscode.window.activeTextEditor) sendActive(vscode.window.activeTextEditor);
@@ -300,10 +299,16 @@ async function stop(alsoClient = true): Promise<void> {
   // any client not already stopped, including one the library is restarting after a crash (state Starting)
   if (alsoClient && c && c.state !== State.Stopped) await c.stop(2000).catch(() => undefined);
   if (p) await killTree(p);
+  forgetModels();
 }
 
 function sendActive(editor: vscode.TextEditor): void {
-  void client?.sendNotification("deckcheck/active", { uri: editor.document.uri.toString() });
+  // the active file's model goes first in the server's queue, and its record is what the status bar shows
+  const uri = editor.document.uri.toString();
+  if (!DECK_FILE.test(editor.document.uri.fsPath) || !client) return;
+  client.sendRequest<{ main: string } | null>("deckcheck/active", { uri }).then((reply) => {
+    if (reply?.main) { board.setActive(reply.main); render(); }
+  }, () => undefined);
 }
 
 function restart(): Promise<void> {
@@ -331,7 +336,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("deckcheck.pause", async () => {
       await context.workspaceState.update(PAUSED_KEY, true);
       await serial(() => stop());
-      setStatus("paused");
+      setLocal("paused");
     }),
     vscode.commands.registerCommand("deckcheck.resume", async () => {
       await context.workspaceState.update(PAUSED_KEY, false);
@@ -346,7 +351,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("deckcheck.showStatus", async () => {
       const items = [
         { label: "Check this model now" },
-        ...notChecked.map((n) => ({ label: `Not checked: ${n.what}`, detail: n.reasons.join("; ") })),
+        ...(board.current()?.notChecked ?? []).map((n) => ({ label: `Not checked: ${n.what}`, detail: n.reasons.join("; ") })),
         { label: ctx.workspaceState.get(PAUSED_KEY) ? "Resume deckcheck" : "Pause deckcheck for this workspace" },
         { label: "Select Python interpreter" }, { label: "Show output" },
       ];
@@ -366,8 +371,9 @@ export function activate(context: vscode.ExtensionContext) {
   void serial(start);  // never awaited: activation returns at once (spec §3)
   const activationMs = performance.now() - t0;
   return { activationMs, client: () => client, status: () => status.text, serverPid: () => child?.pid,
-    serverCount: () => live, lastStatusMain: () => lastMain, lastState: () => lastState,
-    lastSummary: () => lastSummary, shown: () => [...shown], progressShown: () => progressShown };
+    serverCount: () => live, lastStatusMain: () => board.lastAnnounced()?.main ?? "",
+    lastState: () => local ?? board.lastAnnounced()?.state ?? "ok", lastSummary: () => board.lastAnnounced()?.summary,
+    activeMain: () => board.current()?.main ?? "", shown: () => [...shown], progressShown: () => progressShown };
 }
 
 export function deactivate(): Promise<void> {

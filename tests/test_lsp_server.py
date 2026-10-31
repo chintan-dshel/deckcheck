@@ -347,3 +347,14 @@ def test_a_click_always_reports_and_a_save_only_when_the_check_took_long():
     assert _explicit("save", seconds=6.0, live=False) is False
     assert _explicit("save", seconds=0.1, live=True) is False
     assert _explicit("open", seconds=70.0, live=False) is False
+
+
+async def test_active_answers_with_the_files_model(tmp_path):
+    """The status bar shows the model of the file in front of the engineer: the client asks which one that is."""
+    _model(tmp_path)
+    async with session(tmp_path) as client:
+        open_doc(client, tmp_path / "part.k")
+        await published(client, uri(tmp_path / "part.k"))
+        reply = await client.protocol.send_request_async("deckcheck/active", {"uri": uri(tmp_path / "part.k")})
+        main = reply["main"] if isinstance(reply, dict) else reply.main
+        assert main == uri(tmp_path / "main.k")
