@@ -2,7 +2,7 @@
 // and say when a save is needed.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buttonsFor, busyMessage, checkingText, statusText, summaryMessage, unsavedUnsynced } from "../../src/logic.ts";
+import { alreadyChecking, buttonsFor, busyMessage, checkTarget, checkingText, statusText, summaryMessage, unsavedUnsynced } from "../../src/logic.ts";
 
 const clean = { files: 4, mb: 169.4, seconds: 71.2, errors: 0, warnings: 0, explicit: true };
 
@@ -41,4 +41,11 @@ test("unsavedUnsynced lists edited files deckcheck reads from disk", () => {
 test("buttonsFor: a memory pause offers to raise the limit or stay paused (spec §3)", () => {
   assert.deepEqual(buttonsFor("memory"), ["Raise the limit", "Keep paused"]);
   assert.deepEqual(buttonsFor("no-python"), ["Select interpreter", "Show output"]);
+});
+
+test("checkTarget: while a model is being checked, a click is about that model", () => {
+  const big = "file:///y/combine.key", deck = "file:///w/small.k";
+  assert.equal(checkTarget("checking", big, deck), big);
+  assert.equal(alreadyChecking("checking", big, big), true);    // answered at once, by the client
+  assert.equal(alreadyChecking("save to check", big, big), false); // edited since: a click checks again
 });

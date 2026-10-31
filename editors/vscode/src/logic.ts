@@ -89,9 +89,14 @@ const DECK = /\.(k|key|dyn)$/i;
 
 export function checkTarget(state: string, lastMain: string, activeUri: string | undefined): string | undefined {
   // "click to check" names a model: check that one; otherwise the deck in front of the engineer, never a non-deck
-  if (state === "click to check" && lastMain) return lastMain;
+  if ((state === "click to check" || state === "checking") && lastMain) return lastMain;
   if (activeUri && DECK.test(activeUri)) return activeUri;
   return lastMain || undefined;
+}
+
+export function alreadyChecking(state: string, lastMain: string, target: string): boolean {
+  // the server reads requests between checks, so its own "already checking" would come at the end: answer here
+  return state === "checking" && target === lastMain;
 }
 
 const SYNCED: Promise<boolean> = Promise.resolve(false);

@@ -154,8 +154,17 @@ const harmTests: [string, () => Promise<void>][] = [
       && ext().exports.lastState() === "click to check") || undefined, 60_000);
     const t = performance.now();
     await vscode.commands.executeCommand("deckcheck.checkNow");
+    await new Promise((r) => setTimeout(r, 5000));
+    const progress = ext().exports.status();
+    await vscode.commands.executeCommand("deckcheck.checkNow");   // the impatient second click (trial finding 6)
     await until(() => ext().exports.lastState() === "checks on save" || undefined, 300_000);
-    console.log(`     large include -> click to check -> model checked after ${((performance.now() - t) / 1000).toFixed(1)} s`);
+    const s = (performance.now() - t) / 1000;
+    const busy = ext().exports.shown().find((m: string) => m.startsWith("deckcheck is already checking"));
+    const summary = ext().exports.shown().find((m: string) => m.startsWith("deckcheck checked combine.key"));
+    console.log(`     large include -> click to check -> model checked after ${s.toFixed(1)} s, a second click included`);
+    console.log(`     at 5 s: "${progress}"; second click: "${busy}"; result: "${summary}"`);
+    assert.ok(progress.includes("checking combine.key") && busy && summary, "progress, busy answer and summary");
+    assert.ok(s < 110, `the second click restarted the check: ${s.toFixed(0)} s`);
   }],
   ["commandRoundTripDuringYarisCheck", async () => {
     await ext().exports.client()!.sendNotification("deckcheck/check", { uri: vscode.Uri.file(MAIN).toString() });

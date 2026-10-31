@@ -5,7 +5,7 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import { ChildProcess } from "node:child_process";
 import { CloseAction, ErrorAction, LanguageClient, LanguageClientOptions, State } from "vscode-languageclient/node";
-import { Notifier, RestartPolicy, Summary, SyncSizes, buttonsFor, busyMessage, checkTarget, checkingText, closeDecision,
+import { Notifier, RestartPolicy, Summary, SyncSizes, alreadyChecking, buttonsFor, busyMessage, checkTarget, checkingText, closeDecision,
   excludeGlobs, newlyOpened, statusText, summaryMessage, syncAllowed, unsavedUnsynced } from "./logic.ts";
 import { exitCode, killTree, pathCandidates, pythonUsable, spawnServer } from "./process.ts";
 
@@ -41,6 +41,7 @@ let lastSummary: Summary | undefined;
 let ticker: ReturnType<typeof setInterval> | undefined;
 let progressDone: (() => void) | undefined;
 let asked = "";                   // the model the engineer just asked to check: its progress gets a notification
+let checkingSince = 0, checkingEstimate = 0;  // of the check running now, in ms since epoch and seconds
 const shown: string[] = [];       // messages shown, for the integration tests
 
 function inform(message: string, ...buttons: string[]): Thenable<string | undefined> {
@@ -71,6 +72,8 @@ function onStatus(p: { main: string; state: string; notChecked: typeof notChecke
     if (p.busy) { void inform(busyMessage(name, (Date.now() - started) / 1000, estimate)); return; }
     lastMain = p.main;
     lastState = "checking";
+    checkingSince = started;
+    checkingEstimate = estimate;
     stopProgress();
     const tick = () => { status.text = checkingText(name, (Date.now() - started) / 1000, estimate); };
     tick();
@@ -111,6 +114,11 @@ async function checkNow(): Promise<void> {
   // the model the status bar names when it asks to be checked, else the deck in front of you, never a non-deck
   const uri = checkTarget(lastState, lastMain, vscode.window.activeTextEditor?.document.uri.toString());
   if (!uri || !client) return;
+  if (alreadyChecking(lastState, lastMain, uri)) {
+    void inform(busyMessage(path.basename(vscode.Uri.parse(uri).fsPath), (Date.now() - checkingSince) / 1000,
+      checkingEstimate));
+    return;
+  }
   const unsaved = await unsavedLargeTabs();
   if (unsaved.length) {  // read from disk: the check would not see these edits (trial finding 8)
     const names = unsaved.map((u) => path.basename(u.fsPath)).join(", ");
