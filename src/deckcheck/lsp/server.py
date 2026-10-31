@@ -27,6 +27,7 @@ class DeckServer(LanguageServer):
     names: dict[str, str]
     checked_at: dict[str, float]
     edited: set[str]
+    checking: dict[str, tuple[float, float]]  # model key -> (wall-clock start, estimated seconds)
 
 
 server = DeckServer("deckcheck", __version__)
@@ -46,13 +47,32 @@ class Result:
     diagnostics: dict[str, list[types.Diagnostic]]
     not_checked: list[dict]
     started: float  # wall-clock time the check began: files not modified since then are what it checked
+    summary: dict   # what was covered and found, shown when the engineer asked (trial finding 6)
 
 
-def _status(ls: DeckServer, main: Path, state: str, items: list[dict]) -> None:
-    ls.protocol.notify("deckcheck/status", {"main": from_fs_path(str(main)), "state": state, "notChecked": items})
+def _status(ls: DeckServer, main: Path, state: str, items: list[dict], **extra) -> None:
+    ls.protocol.notify("deckcheck/status", {"main": from_fs_path(str(main)), "state": state, "notChecked": items,
+                                            **extra})
 
 
-def _publish(ls: DeckServer, main: Path, result: Result | None, error) -> None:
+def _estimate(ls: DeckServer, main: Path, measured: float | None) -> float:
+    return measured if measured is not None else ls.ws.model_mb(main) * SECONDS_PER_MB
+
+
+def _on_start(ls: DeckServer, main: Path, measured: float | None) -> None:
+    ls.checking[_key(main)] = (time.time(), _estimate(ls, main, measured))
+    started, estimate = ls.checking[_key(main)]
+    _status(ls, main, "checking", [], estimate=estimate, started=started)
+
+
+def _on_busy(ls: DeckServer, main: Path) -> None:
+    """Asked again while it runs: say so, rather than start over (each click restarted a 70 s check)."""
+    started, estimate = ls.checking.get(_key(main), (time.time(), 0.0))
+    _status(ls, main, "checking", [], estimate=estimate, started=started, busy=True)
+
+
+def _publish(ls: DeckServer, main: Path, result: Result | None, error, reason: str = "check") -> None:
+    ls.checking.pop(_key(main), None)
     k = _key(main)
     previous = set(ls.results.get(k, {}))
     if error is not None or result is None:
@@ -77,7 +97,12 @@ def _publish(ls: DeckServer, main: Path, result: Result | None, error) -> None:
         ls.text_document_publish_diagnostics(types.PublishDiagnosticsParams(uri=u, diagnostics=merged.get(u, [])))
     for u in sorted(ls.results[k], key=lambda u: u == main_uri):  # included files first, the main deck last
         ls.text_document_publish_diagnostics(types.PublishDiagnosticsParams(uri=u, diagnostics=merged.get(u, [])))
-    _status(ls, main, state, items)
+    if result is None:
+        _status(ls, main, state, items)
+        return
+    # a check the engineer asked for, or saved for, on a model too big to check live: report it in words
+    explicit = reason in ("check", "save") and not ls.runner.live(main)
+    _status(ls, main, state, items, summary={**result.summary, "explicit": explicit})
 
 
 def _check(ls: DeckServer, main: Path) -> Result:
@@ -90,9 +115,12 @@ def _check(ls: DeckServer, main: Path) -> Result:
         started = time.time()
         report = check(main, source=ls.ws.source, cache=ls.ws.cache_for(main))
         report.diagnostics[:] = [d for d in report.diagnostics if d.code not in ls.ws.settings.ignore]
+        summary = {"files": len(report.tree.files), "mb": ls.ws.model_mb(main), "seconds": time.time() - started,
+                   "errors": sum(d.severity == "error" for d in report.diagnostics),
+                   "warnings": sum(d.severity == "warning" for d in report.diagnostics)}
         result = Result(to_lsp(report, ls.ws.synced),
                         [{"what": n.what, "reasons": list(n.reasons), "count": n.count} for n in report.not_checked],
-                        started)
+                        started, summary)
         drain_index(report.index)
         return result
     finally:
@@ -125,15 +153,19 @@ def initialize(ls: DeckServer, params: types.InitializeParams) -> None:
     ls.loop = asyncio.get_running_loop()
     ls.ws = Workspace(folders, settings)
     ls.results, ls.names = {}, {}
-    ls.checked_at, ls.edited = {}, set()
+    ls.checked_at, ls.edited, ls.checking = {}, set(), {}
+    on_loop = ls.loop.call_soon_threadsafe
     ls.runner = Runner(models=ls.ws.models_for, check=lambda m: _check(ls, m),
-                       publish=lambda m, r, e: ls.loop.call_soon_threadsafe(_publish, ls, m, r, e),
+                       publish=lambda m, r, e, why: on_loop(_publish, ls, m, r, e, why),
                        threshold=settings.live_threshold, prepare=lambda: _prepare(ls),
                        report_error=lambda e: ls.loop.call_soon_threadsafe(
                            ls.window_log_message, types.LogMessageParams(types.MessageType.Error,
                                                                          f"deckcheck: worker error: {e!r}")),
                        big=lambda m: ls.ws.model_mb(m) * SECONDS_PER_MB >= settings.live_threshold,
-                       on_demand=lambda m: ls.loop.call_soon_threadsafe(_on_demand, ls, m))
+                       on_demand=lambda m: on_loop(_on_demand, ls, m),
+                       on_busy=lambda m: on_loop(_on_busy, ls, m),
+                       on_start=lambda m, measured: on_loop(_on_start, ls, m, measured),
+                       on_edit=lambda m: on_loop(_status, ls, m, "save to check", []))
     ls.runner.start()
 
 

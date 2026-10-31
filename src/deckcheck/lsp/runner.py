@@ -16,6 +16,7 @@ class _Job:
     main: Path
     due: float
     order: int
+    reason: str
 
 
 class Runner:
@@ -23,10 +24,14 @@ class Runner:
                  threshold: float, clock: Callable[[], float] = time.monotonic, debounce: float = 0.3,
                  prepare: Callable[[], None] = lambda: None,
                  report_error: Callable[[BaseException], None] = lambda e: None,
-                 big: Callable[[Path], bool] = lambda m: False, on_demand: Callable[[Path], None] = lambda m: None):
+                 big: Callable[[Path], bool] = lambda m: False, on_demand: Callable[[Path], None] = lambda m: None,
+                 on_busy: Callable[[Path], None] = lambda m: None,
+                 on_start: Callable[[Path, float | None], None] = lambda m, est: None,
+                 on_edit: Callable[[Path], None] = lambda m: None):
         self.models, self.check, self.publish, self.prepare = models, check, publish, prepare
         self.report_error = report_error
         self.big_by_size, self.on_demand = big, on_demand
+        self.on_busy, self.on_start, self.on_edit = on_busy, on_start, on_edit
         self._typed_unknown: dict[str, float] = {}  # typed while the model's speed was unknown (its first check)
         self.threshold, self.clock, self.debounce = threshold, clock, debounce
         self.durations: dict[str, float] = {}
@@ -35,6 +40,8 @@ class Runner:
         self._pending: dict[str, _Job] = {}
         self._gen: dict[str, int] = {}
         self._order = itertools.count()
+        self._running: str | None = None
+        self._changed = False  # the running model's files changed since its check began
         self._cv = threading.Condition()
 
     @staticmethod
@@ -60,6 +67,12 @@ class Runner:
         if reason == "close":  # wakes the worker for prepare() (freeing closed models) without starting a check
             return
         k = self.key(main)
+        if k == self._running:
+            if reason == "check" and not self._changed:  # asked again while it runs: the running check answers it
+                self.on_busy(main)
+                return
+            if reason in ("change", "save", "external"):
+                self._changed = True
         if reason in ("open", "external") and self.big(main):
             if reason == "external":  # the files changed: a check running now reads older text (spec §6)
                 self._gen[k] = self._gen.get(k, 0) + 1
@@ -68,10 +81,12 @@ class Runner:
         if reason == "change" and not self.live(main):
             if k not in self.durations:  # first check still running: decide once its speed is known
                 self._typed_unknown[k] = at
+            else:  # a big model: the edit is checked when saved, and the engineer is told so
+                self.on_edit(main)
             return
         self._gen[k] = self._gen.get(k, 0) + 1
         due = at + (self.debounce if reason == "change" else 0.0)
-        self._pending[k] = _Job(main, due, next(self._order))
+        self._pending[k] = _Job(main, due, next(self._order), reason)
 
     def _next(self) -> _Job | None:
         now = self.clock()
@@ -110,6 +125,9 @@ class Runner:
                 return False
             k = self.key(job.main)
             gen = self._gen[k]
+            self._running, self._changed = k, False
+        if self.big(job.main):  # a check long enough to need showing: the estimate is the last measured time
+            self.on_start(job.main, self.durations.get(k))
         start = self.clock()
         try:
             report, error = self.check(job.main), None
@@ -118,6 +136,7 @@ class Runner:
         took = self.clock() - start
         self._drain()
         with self._cv:
+            self._running = None
             if error is None:
                 self.durations[k] = took
             typed = self._typed_unknown.pop(k, None)
@@ -125,7 +144,7 @@ class Runner:
                 self._schedule(job.main, "change", typed)
             stale = self._gen[k] != gen
         if not stale:
-            self.publish(job.main, report, error)
+            self.publish(job.main, report, error, job.reason)
         return True
 
     def _wait(self) -> None:

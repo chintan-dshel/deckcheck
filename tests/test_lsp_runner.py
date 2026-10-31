@@ -20,7 +20,7 @@ def _runner(durations=None, models=None):
         return f"report {main.name} #{len(ran)}"
 
     r = Runner(models=models or (lambda f: [f]), check=check,
-               publish=lambda main, rep, err: published.append((main.name, rep, err)),
+               publish=lambda main, rep, err, why: published.append((main.name, rep, err)),
                threshold=2.0, clock=clock)
     return r, clock, ran, published
 
@@ -201,3 +201,64 @@ def test_outside_change_during_an_opted_in_check_makes_it_stale():
     r.request(Path("big.k"), "check")
     r.step()
     assert pub == [] and [m.name for m in demanded] == ["big.k"]
+
+
+def _big_runner(on_check):
+    events = {"busy": [], "start": [], "edit": [], "pub": []}
+    r = Runner(models=lambda f: [f], check=None, publish=lambda *a: events["pub"].append(a), threshold=2.0,
+               big=lambda m: True, on_demand=lambda m: None, on_busy=events["busy"].append,
+               on_start=lambda m, est: events["start"].append((m.name, est)), on_edit=events["edit"].append)
+
+    def check(main):
+        on_check(r)
+        return "result"
+    r.check = check
+    return r, events
+
+
+def test_a_repeat_click_during_a_check_is_answered_not_restarted():
+    # trial finding 6: each extra "Check this model now" threw the running 70 s check away and started over
+    r, ev = _big_runner(lambda r: r.request(Path("big.k"), "check"))
+    r.request(Path("big.k"), "check")
+    r.step()
+    assert len(ev["pub"]) == 1 and [m.name for m in ev["busy"]] == ["big.k"]
+    assert not r.step()                        # nothing queued behind it
+
+
+def test_a_click_after_an_edit_during_the_check_does_check_again():
+    def edit_then_click(r):
+        r.request(Path("big.k"), "save")
+        r.request(Path("big.k"), "check")
+    r, ev = _big_runner(edit_then_click)
+    r.request(Path("big.k"), "check")
+    r.step()
+    assert ev["pub"] == [] and ev["busy"] == []  # the running result is stale; the new request runs next
+    r.check = lambda m: "second"
+    assert r.step() and len(ev["pub"]) == 1
+
+
+def test_a_big_check_reports_its_start_with_an_estimate():
+    r, ev = _big_runner(lambda r: None)
+    r.request(Path("big.k"), "check")
+    r.step()
+    assert ev["start"] == [("big.k", None)]   # never measured yet: the server estimates from the size
+    r.durations[r.key(Path("big.k"))] = 63.0
+    r.request(Path("big.k"), "check")
+    r.step()
+    assert ev["start"][-1] == ("big.k", 63.0)
+
+
+def test_publish_says_why_the_check_ran():
+    r, ev = _big_runner(lambda r: None)
+    r.request(Path("big.k"), "check")
+    r.step()
+    assert ev["pub"][0][3] == "check"
+
+
+def test_an_edit_to_a_big_model_says_save_to_check():
+    r, ev = _big_runner(lambda r: None)
+    r.request(Path("big.k"), "check")
+    r.step()
+    r.durations[r.key(Path("big.k"))] = 63.0
+    r.request(Path("big.k"), "change")
+    assert not r.step() and [m.name for m in ev["edit"]] == ["big.k"]

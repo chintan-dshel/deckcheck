@@ -116,7 +116,7 @@ async def test_big_model_waits_for_save(tmp_path):
             await published(client, uri(deck), timeout=1.5)
         client.protocol.notify("deckcheck/check", {"uri": uri(deck)})   # "Check now"
         await published(client, uri(deck))
-        assert await last_status(client, 1) == "checks on save"
+        assert (await summarized(client))["state"] == "checks on save"
         client.text_document_did_change(types.DidChangeTextDocumentParams(
             types.VersionedTextDocumentIdentifier(uri=uri(deck), version=2),
             [types.TextDocumentContentChangeWholeDocument(text=editor_text(deck) + "$ edit\n")]))
@@ -271,3 +271,61 @@ async def test_opened_notification_is_an_open_not_a_demand(tmp_path):
     async with session(tmp_path, liveThresholdSeconds=0) as client:
         client.protocol.notify("deckcheck/opened", {"uri": uri(deck)})
         assert await last_status(client, 0) == "click to check"
+
+
+def _state(s):
+    """A custom notification's params: a dict, or pygls' generic named tuple in some versions."""
+    return s if isinstance(s, dict) else s._asdict()
+
+
+async def summarized(client, timeout: float = 30.0) -> dict:
+    """The first status that carries a check's summary (a "checking" status may come before it)."""
+    deadline = time.monotonic() + timeout
+    while not [s for s in client.statuses if _state(s).get("summary")]:
+        await asyncio.wait_for(client.wait_for_notification("deckcheck/status"), max(0.01, deadline - time.monotonic()))
+    return [_state(s) for s in client.statuses if _state(s).get("summary")][0]
+
+
+async def test_an_explicit_big_check_shows_progress_and_a_summary(tmp_path):
+    """Trial finding 6: a click ran a silent 70 s check that ended by changing one word. The client now hears that a
+    check began (with an estimate) and, at the end, what was covered and what was found."""
+    deck = tmp_path / "main.k"
+    deck.write_bytes((TORTURE / "seeded_mistakes" / "main.k").read_bytes())
+    async with session(tmp_path, liveThresholdSeconds=0) as client:
+        open_doc(client, deck)
+        await last_status(client, 0)
+        client.protocol.notify("deckcheck/check", {"uri": uri(deck)})
+        await published(client, uri(deck))
+        final = await summarized(client)
+        checking = [_state(s) for s in client.statuses if _state(s)["state"] == "checking"]
+        assert checking and checking[0]["estimate"] > 0
+        summary = _state(final["summary"])
+        assert summary["explicit"] is True and summary["files"] == 1 and summary["errors"] == 3
+        assert summary["warnings"] == 0 and summary["seconds"] >= 0 and summary["mb"] > 0
+
+
+async def test_a_live_check_sends_no_progress_and_no_explicit_summary(tmp_path):
+    deck = tmp_path / "main.k"
+    deck.write_bytes((TORTURE / "m1d_base" / "main.k").read_bytes())
+    async with session(tmp_path) as client:
+        open_doc(client, deck)
+        await published(client, uri(deck))
+        final = await summarized(client)
+        assert not [s for s in client.statuses if _state(s)["state"] == "checking"]
+        assert _state(final["summary"])["explicit"] is False
+
+
+async def test_an_edit_to_a_checked_big_model_says_save_to_check(tmp_path):
+    deck = tmp_path / "main.k"
+    deck.write_bytes((TORTURE / "m1d_base" / "main.k").read_bytes())
+    async with session(tmp_path, liveThresholdSeconds=0) as client:
+        open_doc(client, deck)
+        await last_status(client, 0)
+        client.protocol.notify("deckcheck/check", {"uri": uri(deck)})
+        await published(client, uri(deck))
+        await summarized(client)
+        n = len(client.statuses)
+        client.text_document_did_change(types.DidChangeTextDocumentParams(
+            types.VersionedTextDocumentIdentifier(uri=uri(deck), version=2),
+            [types.TextDocumentContentChangeWholeDocument(text=editor_text(deck) + "$ edit\n")]))
+        assert await last_status(client, n) == "save to check"
