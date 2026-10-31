@@ -282,3 +282,15 @@ def test_long_deck_reads_the_parsed_line_not_the_disk(tmp_path):
     tree = resolve_tree(deck)
     deck.write_text("*KEYWORD\n*END\n", encoding="latin-1")
     assert _long_deck(tree) is True
+
+
+def test_no_blank_id_warning_on_a_card_the_reader_marks_unread(tmp_path):
+    """Review Important 4: a card past a keyword's layout starting with 0.0 reads as a second instance with id 0, but
+    the reader already marks that block unread; warning about it would be a false alarm."""
+    from deckcheck.rules import check
+    card = "".join(f"{v:>10}" for v in (1, "7.85E-9", "210000.0", 0.3, 250.0, 0.0, 0.0, 0.0))
+    deck = tmp_path / "main.k"
+    deck.write_text("*KEYWORD\n*MAT_PIECEWISE_LINEAR_PLASTICITY\n" + card + "\n" + "0.0".rjust(10) * 5 + "\n"
+                    + "0.0".rjust(10) * 8 + "\n" + "0.0".rjust(10) * 8 + "\n" + "0.0".rjust(10) * 8 + "\n*END\n")
+    assert "MAT" in build(resolve_tree(deck)).uncertain_defs
+    assert not [d for d in check(deck).diagnostics if d.code == "DC003" and "defines a" in d.message]

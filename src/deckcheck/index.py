@@ -312,7 +312,7 @@ def build(tree: Tree) -> Index:
             problems: list[FieldProblem] = []
             try:
                 fields = read_fields(block, params, long_deck, _wanted(key), problems)
-                texts = None
+                texts, blanks = None, []
                 for _, group in itertools.groupby(fields, key=attrgetter("group")):
                     row = list(group)
                     by = {f.name: f for f in row}
@@ -323,7 +323,7 @@ def build(tree: Tree) -> Index:
                                 if kind in BLANK_ID_KINDS and f.value in (None, 0):
                                     texts = texts or {c.line: c.text for c in block.cards}
                                     if texts.get(f.line, "").strip():  # a blank card defines nothing
-                                        ix.blank_defs.append((kind, key, pack(fi, f.line, *_span(f)), f.value == 0))
+                                        blanks.append((kind, key, pack(fi, f.line, *_span(f)), f.value == 0))
                         ix._reference(f, by, fi, offs, key)
                         if (key, f.name) in REQUIRED:
                             ix._required_blank(f, by.get(kinds[0][1]) if kinds else None, fi, offs, key, long_deck)
@@ -341,4 +341,6 @@ def build(tree: Tree) -> Index:
                         ix._uncertain(ix.uncertain_defs, kind, f"{node.path.name}:{p.line} unread")
                     for kind in _link_kinds(key):
                         ix._uncertain(ix.uncertain_uses, kind, f"{node.path.name}:{p.line} unread")
+            if not any(p.kind == "unread" for p in problems):  # a layout that doesn't fit: its "ids" may be data
+                ix.blank_defs.extend(blanks)
     return ix

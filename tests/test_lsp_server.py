@@ -329,3 +329,21 @@ async def test_an_edit_to_a_checked_big_model_says_save_to_check(tmp_path):
             types.VersionedTextDocumentIdentifier(uri=uri(deck), version=2),
             [types.TextDocumentContentChangeWholeDocument(text=editor_text(deck) + "$ edit\n")]))
         assert await last_status(client, n) == "save to check"
+
+
+def test_a_save_routed_through_check_counts_as_a_save():
+    """Review Critical 1: the client reports saving a file it doesn't sync through deckcheck/check; as a plain check
+    it was answered "already checking" during that model's check, and the save was lost."""
+    from deckcheck.lsp.server import _reason
+    assert _reason({"uri": "file:///x.k", "reason": "save"}) == "save"
+    assert _reason({"uri": "file:///x.k"}) == "check"
+
+
+def test_a_click_always_reports_and_a_save_only_when_the_check_took_long():
+    """Review Important 5: a popup per save of a 6 s model is spam; a 70 s one ends while the engineer is elsewhere."""
+    from deckcheck.lsp.server import _explicit
+    assert _explicit("check", seconds=1.0, live=True) is True       # a click on a mid-size model (review Minor 12)
+    assert _explicit("save", seconds=70.0, live=False) is True
+    assert _explicit("save", seconds=6.0, live=False) is False
+    assert _explicit("save", seconds=0.1, live=True) is False
+    assert _explicit("open", seconds=70.0, live=False) is False

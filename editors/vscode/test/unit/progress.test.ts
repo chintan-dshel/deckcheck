@@ -2,7 +2,7 @@
 // and say when a save is needed.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { alreadyChecking, buttonsFor, busyMessage, checkTarget, checkingText, statusText, summaryMessage, unsavedUnsynced } from "../../src/logic.ts";
+import { alreadyChecking, buttonsFor, sameFile, busyMessage, checkTarget, checkingText, statusText, summaryMessage, unsavedUnsynced } from "../../src/logic.ts";
 
 const clean = { files: 4, mb: 169.4, seconds: 71.2, errors: 0, warnings: 0, explicit: true };
 
@@ -48,4 +48,10 @@ test("checkTarget: while a model is being checked, a click is about that model",
   assert.equal(checkTarget("checking", big, deck), big);
   assert.equal(alreadyChecking("checking", big, big), true);    // answered at once, by the client
   assert.equal(alreadyChecking("save to check", big, big), false); // edited since: a click checks again
+});
+
+test("sameFile: VS Code and the server spell a Windows file URI differently (review Important 3)", () => {
+  assert.equal(sameFile("file:///d%3A/AI/Combine.key", "file:///d:/AI/combine.key", "win32"), true);
+  assert.equal(sameFile("file:///d%3A/AI/a.k", "file:///d:/AI/b.k", "win32"), false);
+  assert.equal(sameFile("file:///home/a/A.k", "file:///home/a/a.k", "linux"), false);
 });

@@ -40,9 +40,10 @@ let lastState = "";
 let lastSummary: Summary | undefined;
 let ticker: ReturnType<typeof setInterval> | undefined;
 let progressDone: (() => void) | undefined;
-let asked = "";                   // the model the engineer just asked to check: its progress gets a notification
+let askedAt = 0;                  // when the engineer last clicked: the check that starts next gets a notification
 let checkingSince = 0, checkingEstimate = 0;  // of the check running now, in ms since epoch and seconds
 const shown: string[] = [];       // messages shown, for the integration tests
+let progressShown = 0;            // progress notifications shown, for the integration tests
 
 function inform(message: string, ...buttons: string[]): Thenable<string | undefined> {
   shown.push(message);
@@ -79,7 +80,9 @@ function onStatus(p: { main: string; state: string; notChecked: typeof notChecke
     tick();
     status.show();
     ticker = setInterval(tick, 1000);
-    if (asked === p.main) {  // the engineer clicked: say so where they are looking, until the result arrives
+    if (Date.now() - askedAt < 30_000) {  // the engineer clicked: say so where they look, until the result arrives
+      askedAt = 0;
+      progressShown += 1;
       void vscode.window.withProgress({ location: vscode.ProgressLocation.Notification,
         title: `deckcheck: checking ${name} (about ${Math.round(estimate)} s). You can keep working.` },
       () => new Promise<void>((resolve) => { progressDone = resolve; }));
@@ -89,7 +92,6 @@ function onStatus(p: { main: string; state: string; notChecked: typeof notChecke
   notChecked = p.notChecked ?? [];
   lastMain = p.main;
   setStatus(p.state, p.summary);
-  if (asked === p.main) asked = "";
   if (p.summary?.explicit) {
     void inform(summaryMessage(name, p.summary), "Show Problems").then((choice) => {
       if (choice) void vscode.commands.executeCommand("workbench.actions.view.problems");
@@ -127,7 +129,7 @@ async function checkNow(): Promise<void> {
     if (!choice) return;
     if (choice === "Save and check") for (const u of unsaved) await vscode.workspace.save(u);
   }
-  asked = uri;
+  askedAt = Date.now();  // the clicked file may be an include; the status names its main deck
   void client.sendNotification("deckcheck/check", { uri });
 }
 
@@ -232,7 +234,7 @@ async function start(): Promise<void> {
           return big ? undefined : next(doc);
         },
         didSave: async (doc, next) => (await sizes.decision(doc.uri.toString()))
-          ? client?.sendNotification("deckcheck/check", { uri: doc.uri.toString() }) : next(doc),
+          ? client?.sendNotification("deckcheck/check", { uri: doc.uri.toString(), reason: "save" }) : next(doc),
       },
       errorHandler: {
         error: () => ({ action: ErrorAction.Continue }),
@@ -241,7 +243,11 @@ async function start(): Promise<void> {
           const code = child ? await exitCode(child) : null;
           const decision = closeDecision(ours, code, policy, Date.now());
           if (decision === "ours") return { action: CloseAction.DoNotRestart, handled: true };
-          if (decision === "restart") return { action: CloseAction.Restart, handled: true };
+          if (decision === "restart") {  // a check that was running died with the server: no spinner left behind
+            setStatus("starting");
+            largeSeen.clear();
+            return { action: CloseAction.Restart, handled: true };
+          }
           void stop(false);
           if (decision === "pause-memory") {
             const mb = vscode.workspace.getConfiguration("deckcheck").get("memoryMB");
@@ -263,6 +269,12 @@ async function start(): Promise<void> {
       return p;
     }, clientOptions);
     c.onNotification("deckcheck/status", onStatus);
+    c.onDidChangeState((e) => {  // the library restarted a crashed server: it has checked nothing yet
+      if (e.newState !== State.Running || client !== c) return;
+      if (lastState === "starting") setStatus("ok");
+      checkLargeTabs();
+      if (vscode.window.activeTextEditor) sendActive(vscode.window.activeTextEditor);
+    });
     try {
       await c.start();
     } catch {  // the server died before it answered: one message, and no half-started client left behind
@@ -355,7 +367,7 @@ export function activate(context: vscode.ExtensionContext) {
   const activationMs = performance.now() - t0;
   return { activationMs, client: () => client, status: () => status.text, serverPid: () => child?.pid,
     serverCount: () => live, lastStatusMain: () => lastMain, lastState: () => lastState,
-    lastSummary: () => lastSummary, shown: () => [...shown] };
+    lastSummary: () => lastSummary, shown: () => [...shown], progressShown: () => progressShown };
 }
 
 export function deactivate(): Promise<void> {

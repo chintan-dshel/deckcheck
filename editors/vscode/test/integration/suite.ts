@@ -49,6 +49,23 @@ const tests: [string, () => Promise<void>][] = [
     await vscode.workspace.getConfiguration("deckcheck").update("liveThresholdSeconds", undefined, vscode.ConfigurationTarget.Workspace);
     await until(() => ext().exports.client()?.isRunning() || undefined);
   }],
+  ["aClickFromAnIncludeShowsProgress", async () => {
+    // review Important 3: VS Code's file URI (d%3A) never matched the server's (d:), so a click made while an include
+    // was in front of the engineer got no progress notification
+    await vscode.workspace.getConfiguration("deckcheck").update("liveThresholdSeconds", 0, vscode.ConfigurationTarget.Workspace);
+    await until(() => ext().exports.client()?.isRunning() || undefined);
+    await open("part.k");
+    await until(() => (ext().exports.lastState() === "click to check"
+      && ext().exports.lastStatusMain().endsWith("/main.k")) || undefined, 30_000);
+    await vscode.commands.executeCommand("deckcheck.checkNow");               // the status names the model
+    await until(() => ext().exports.lastState() === "checks on save" || undefined, 30_000);
+    const before = ext().exports.progressShown();
+    await vscode.commands.executeCommand("deckcheck.checkNow");               // now the include in front decides
+    await until(() => ext().exports.progressShown() > before || undefined, 15_000);
+    await until(() => ext().exports.lastState() === "checks on save" || undefined, 30_000);
+    await vscode.workspace.getConfiguration("deckcheck").update("liveThresholdSeconds", undefined, vscode.ConfigurationTarget.Workspace);
+    await until(() => ext().exports.client()?.isRunning() || undefined);
+  }],
   ["activationIsFast", async () => {
     assert.ok(ext().exports.activationMs < 100, `activation ${ext().exports.activationMs} ms`);
   }],
@@ -165,6 +182,18 @@ const harmTests: [string, () => Promise<void>][] = [
     console.log(`     at 5 s: "${progress}"; second click: "${busy}"; result: "${summary}"`);
     assert.ok(progress.includes("checking combine.key") && busy && summary, "progress, busy answer and summary");
     assert.ok(s < 110, `the second click restarted the check: ${s.toFixed(0)} s`);
+  }],
+  ["aServerCrashDuringACheckLeavesNoSpinner", async () => {
+    // review Important 2: the library restarts a crashed server itself; the spinner, the progress notification and
+    // the "already checking" answer stayed behind for a check that no longer existed
+    await vscode.commands.executeCommand("deckcheck.checkNow");
+    await until(() => ext().exports.lastState() === "checking" || undefined, 60_000);
+    await new Promise((r) => setTimeout(r, 3000));
+    process.kill(ext().exports.serverPid());
+    await new Promise((r) => setTimeout(r, 15_000));
+    console.log(`     15 s after the crash: state "${ext().exports.lastState()}", status "${ext().exports.status()}"`);
+    assert.notEqual(ext().exports.lastState(), "checking");
+    assert.ok(!ext().exports.status().includes("sync~spin"));
   }],
   ["commandRoundTripDuringYarisCheck", async () => {
     await ext().exports.client()!.sendNotification("deckcheck/check", { uri: vscode.Uri.file(MAIN).toString() });

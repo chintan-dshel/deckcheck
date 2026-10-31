@@ -100,9 +100,18 @@ def _publish(ls: DeckServer, main: Path, result: Result | None, error, reason: s
     if result is None:
         _status(ls, main, state, items)
         return
-    # a check the engineer asked for, or saved for, on a model too big to check live: report it in words
-    explicit = reason in ("check", "save") and not ls.runner.live(main)
+    explicit = _explicit(reason, result.summary["seconds"], ls.runner.live(main))
     _status(ls, main, state, items, summary={**result.summary, "explicit": explicit})
+
+
+# a save's result is told in words once its check took this long: the engineer has likely moved on by then
+SAVE_REPORT_SECONDS = 10.0
+
+
+def _explicit(reason: str, seconds: float, live: bool) -> bool:
+    """Report a result in words: always after a click; after a save only when the check took long (a popup per save
+    of a 6 s model is noise, and the status bar shows the counts)."""
+    return reason == "check" or (reason == "save" and not live and seconds >= SAVE_REPORT_SECONDS)
 
 
 def _check(ls: DeckServer, main: Path) -> Result:
@@ -247,11 +256,18 @@ def watched(ls: DeckServer, params: types.DidChangeWatchedFilesParams) -> None:
         ls.runner.request(path, "external")
 
 
+def _reason(params) -> str:
+    """The client reports a save of a file it does not sync through deckcheck/check: that is a save (its model's
+    files changed), not a repeat click, which a running check would answer as "already checking"."""
+    # a custom method's params arrive as pygls' generic object, or a dict in some versions
+    reason = params.get("reason") if isinstance(params, dict) else getattr(params, "reason", None)
+    return "save" if reason == "save" else "check"
+
+
 @server.feature("deckcheck/check")
 def check_file(ls: DeckServer, params) -> None:
     """The engineer asked ("Check now"), or saved a file the client does not sync: always checks."""
-    # a custom method's params arrive as pygls' generic object, or a dict in some versions
-    _request(ls, params["uri"] if isinstance(params, dict) else params.uri, "check")
+    _request(ls, params["uri"] if isinstance(params, dict) else params.uri, _reason(params))
 
 
 @server.feature("deckcheck/opened")

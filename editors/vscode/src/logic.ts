@@ -94,9 +94,15 @@ export function checkTarget(state: string, lastMain: string, activeUri: string |
   return lastMain || undefined;
 }
 
+export function sameFile(a: string, b: string, platform: string = process.platform): boolean {
+  // VS Code writes file:///d%3A/..., the server file:///d:/...; Windows paths also ignore case
+  const norm = (u: string) => (platform === "win32" ? decodeURIComponent(u).toLowerCase() : decodeURIComponent(u));
+  return norm(a) === norm(b);
+}
+
 export function alreadyChecking(state: string, lastMain: string, target: string): boolean {
   // the server reads requests between checks, so its own "already checking" would come at the end: answer here
-  return state === "checking" && target === lastMain;
+  return state === "checking" && sameFile(target, lastMain);
 }
 
 const SYNCED: Promise<boolean> = Promise.resolve(false);
