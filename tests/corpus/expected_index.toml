@@ -6,3 +6,27 @@ name = "lsdyna-doc-tutorial-2.tensile_test-tensile_test"
 dangling_counts = [{kind = "PART", id = 1, file = "tensile_test.k", count = 632}]
 duplicates = []
 evidence = "tensile_test.k is the tutorial's mesh: *ELEMENT_SHELL and *NODE only, every shell names part 1, no *PART. LS-DYNA R16.1 Student 2026-10-29 on the file alone: rejected, 'Error 20388 thin shell element 1 has an invalid material 1 that exceeds the number of materials defined, 0'."
+
+[[deck]]
+name = "lsdyna-doc-tutorial-4.eigenvalue-tire"
+dangling = [{kind = "MAT", id = 0, file = "tire.k", line = 25}, {kind = "MAT", id = 0, file = "tire.k", line = 36},
+            {kind = "MAT", id = 0, file = "tire.k", line = 47}]
+duplicates = []
+evidence = "a tutorial starter file: its three *PART cards have mid 0 for the student to fill in. LS-DYNA R16.1 Student 2026-10-31 on the file alone: rejected, three times 'Error 10304 MATERIAL ID 0 does not exist' (M2b.1 required references)."
+
+[[deck]]
+name = "lsdyna-doc-tutorial-5.hardening_and_failure-hardening"
+dangling = [{kind = "MAT", id = 0, file = "hardening.k", line = 76}, {kind = "MAT", id = 0, file = "hardening.k", line = 84}]
+duplicates = []
+evidence = "a tutorial starter file: two *PART cards have mid 0. LS-DYNA R16.1 Student 2026-10-31 on the file alone: rejected, 'Error 10304 MATERIAL ID 0 does not exist' (M2b.1 required references)."
+
+[[deck]]
+name = "lsdyna-doc-tutorial-6.prestress-prestress_geometry"
+dangling = [{kind = "SECTION", id = 0, file = "prestress_geometry.k", line = 8},
+            {kind = "MAT", id = 0, file = "prestress_geometry.k", line = 8},
+            {kind = "SECTION", id = 0, file = "prestress_geometry.k", line = 13},
+            {kind = "MAT", id = 0, file = "prestress_geometry.k", line = 13},
+            {kind = "SECTION", id = 0, file = "prestress_geometry.k", line = 18},
+            {kind = "MAT", id = 0, file = "prestress_geometry.k", line = 18}]
+duplicates = []
+evidence = "the tutorial's geometry file: three *PART cards with secid 0 and mid 0, completed in prestress_results.k. LS-DYNA R16.1 Student 2026-10-31 on the file alone: rejected, 'Error 10125 SECTION ID 0 does not exist' (M2b.1 required references)."

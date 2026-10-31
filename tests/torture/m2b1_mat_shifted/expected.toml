@@ -1,0 +1,10 @@
+lsdyna_valid = true
+findings = []
+note = "accepted, no warning: the shifted card's mid field is blank, so the material is id 0"
+
+[[diagnostics]]
+code = "DC003"
+severity = "warning"
+file = "main.k"
+line = 29
+columns = [0, 10]

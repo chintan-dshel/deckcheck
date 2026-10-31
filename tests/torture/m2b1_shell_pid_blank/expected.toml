@@ -1,0 +1,6 @@
+lsdyna_valid = false
+findings = []
+note = "Error 20389 and Error 20230 for the shell element"
+
+[index]
+dangling = [{kind = "PART", id = 0, file = "main.k", line = 20, columns = [8, 16]}]

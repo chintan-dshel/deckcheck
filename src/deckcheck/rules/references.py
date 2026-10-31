@@ -6,6 +6,8 @@ from deckcheck.index import Index, Ref
 
 def _what(r: Ref) -> str:
     key, field = r.field.split(".", 1)
+    if r.id == 0:  # a required reference left blank or 0 (index.REQUIRED)
+        return f"*{key} {field} is blank or 0, but LS-DYNA requires a {r.kind} here ({r.kind} 0 does not exist)"
     return f"*{key} {field} refers to {r.kind} {r.id}, which is not defined"
 
 

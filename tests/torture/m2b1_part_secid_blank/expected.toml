@@ -1,0 +1,13 @@
+lsdyna_valid = false
+findings = []
+note = "Error 10125, keyword input phase failed"
+
+[index]
+dangling = [{kind = "SECTION", id = 0, file = "main.k", line = 8, columns = [10, 20]}]
+
+[[diagnostics]]
+code = "DC005"
+severity = "warning"
+file = "main.k"
+line = 10
+columns = [9, 10]

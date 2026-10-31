@@ -155,7 +155,10 @@ started* is running is reported but not gated: about 1.7 s against 1.6 s.
 - No physics checks: units, time step, contact settings and material sanity are out of scope for now.
 - Long-format decks (`*KEYWORD LONG=Y`) are only partly read; the affected blocks are listed as not checked.
 - DC005 covers materials, sections and hourglass controls only.
-- DC003 checks values only in keywords that define or refer to ids.
+- DC003 checks values only in keywords that define or refer to ids. A definition with a blank or 0 id (often a
+  card pasted a few columns to the right) is reported for MAT, SECTION, PART, HOURGLASS, DEFINE_CURVE and SET_NODE.
+- A required reference left blank or 0 is reported (DC001) for `*PART` mid and secid and `*ELEMENT_SHELL` pid, the
+  cases LS-DYNA was asked about; other required fields are not yet known.
 - A value that spills over into the next fixed-width field is caught only when the spill makes a value of the
   wrong type.
 - The rules were checked with LS-DYNA Student, which can't run very large models. On those, results are checked

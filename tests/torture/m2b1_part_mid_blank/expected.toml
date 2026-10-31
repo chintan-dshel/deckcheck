@@ -1,0 +1,13 @@
+lsdyna_valid = false
+findings = []
+note = "Error 10304: MATERIAL ID 0 does not exist (CHECKING MATERIAL INPUT Part ID= 1)"
+
+[index]
+dangling = [{kind = "MAT", id = 0, file = "main.k", line = 8, columns = [20, 30]}]
+
+[[diagnostics]]
+code = "DC005"
+severity = "warning"
+file = "main.k"
+line = 13
+columns = [9, 10]

@@ -34,6 +34,13 @@ OFFSET_FIELD: dict[str, str] = {
 LOOKUP = {"DEFINE_CURVE": ("DEFINE_CURVE", "DEFINE_TABLE"), "DEFINE_CURVE_OR_TABLE": ("DEFINE_CURVE", "DEFINE_TABLE"),
           "SET_PART": ("SET_PART", "PART"), "ICFD_PART": ("ICFD_PART", "ICFD_PART_VOL")}
 ID_MAX = 2**63 - 1  # array('q')
+# a reference LS-DYNA requires: blank or 0 is rejected (torture m2b1_part_mid_blank / _zero, Error 10304
+# "MATERIAL ID 0 does not exist"; m2b1_part_secid_blank, Error 10125; m2b1_shell_pid_blank, Error 20389), so it is
+# recorded as a reference to id 0, which nothing defines. Elsewhere blank and 0 mean "none".
+REQUIRED = frozenset({("PART", "mid"), ("PART", "secid"), ("ELEMENT_SHELL", "pid")})
+# kinds whose definition with a blank or 0 id LS-DYNA accepts without a warning (torture m2b1_mat_shifted and its
+# siblings): nothing can refer to it, which is how a card pasted a few columns to the right reads
+BLANK_ID_KINDS = frozenset({"MAT", "SECTION", "PART", "HOURGLASS", "DEFINE_CURVE", "SET_NODE"})
 STRUCTURAL = frozenset({"KEYWORD", "KEYWORD_ID", "KEYWORD_JOBID", "TITLE", "END"})  # m1d_keyword_id_long
 
 
@@ -133,6 +140,7 @@ class Index:
     problems: list[tuple[int, FieldProblem]] = field(default_factory=list)
     unchecked: list[tuple[str, int, int, str]] = field(default_factory=list)  # kind, id, packed loc, "KEY.field"
     failures: list[tuple[int, int, str]] = field(default_factory=list)        # file index, block line, what failed
+    blank_defs: list[tuple[str, str, int, bool]] = field(default_factory=list)  # kind, keyword, packed loc, is 0
     names: list[str] = field(default_factory=list)
     _name_ids: dict[str, int] = field(default_factory=dict)
 
@@ -247,16 +255,32 @@ class Index:
         elif v < 0:  # a sign LS-DYNA gives a meaning deckcheck doesn't know: counts as a use, is never checked
             self.possible.setdefault(kind, set()).add(-v + shift)
             return
-        name = f"{key}.{f.name}"
+        self._record(kind, v + shift, fi, f.start, f.end, f.line, f"{key}.{f.name}")
+
+    def _record(self, kind: str, id_: int, fi: int, start: int, end: int, line: int, name: str) -> None:
         if name not in self._name_ids:
             self._name_ids[name] = len(self.names)
             self.names.append(name)
         # the file index lives in its own array: pack() puts it above bit 64, past what array("q") holds
         ids, files, locs, names = self.refs.setdefault(kind, (array("q"), array("H"), array("q"), array("H")))
-        ids.append(v + shift)
+        ids.append(id_)
         files.append(fi)
-        locs.append(pack(0, f.line, f.start, f.end))
+        locs.append(pack(0, line, start, end))
         names.append(self._name_ids[name])
+
+    def _required_blank(self, f: Field, owner: Field | None, fi: int, offs, key: str, long_deck: bool) -> None:
+        """A required reference left blank or 0, on a card that defines something (a blank card after the last
+        one is no part or element). Not under transform offsets or LONG=Y: not refereed."""
+        if f.value not in (None, 0) or owner is None or not isinstance(owner.value, int) or owner.value <= 0:
+            return
+        if long_deck or _shift(f.spec["link"], offs) != 0:
+            return
+        self._record(f.spec["link"], 0, fi, *_span(f), f.line, f"{key}.{f.name}")
+
+
+def _span(f: Field) -> tuple[int, int]:
+    """A field's columns; a blank one is reported over its whole fixed-width slot."""
+    return (f.start, f.start + f.spec["width"]) if f.start == f.end and "width" in f.spec else (f.start, f.end)
 
 
 def build(tree: Tree) -> Index:
@@ -288,6 +312,7 @@ def build(tree: Tree) -> Index:
             problems: list[FieldProblem] = []
             try:
                 fields = read_fields(block, params, long_deck, _wanted(key), problems)
+                texts = None
                 for _, group in itertools.groupby(fields, key=attrgetter("group")):
                     row = list(group)
                     by = {f.name: f for f in row}
@@ -295,7 +320,13 @@ def build(tree: Tree) -> Index:
                         for kind, idf in kinds:
                             if f.name == idf:
                                 ix._define(kind, f, fi, offs)
+                                if kind in BLANK_ID_KINDS and f.value in (None, 0):
+                                    texts = texts or {c.line: c.text for c in block.cards}
+                                    if texts.get(f.line, "").strip():  # a blank card defines nothing
+                                        ix.blank_defs.append((kind, key, pack(fi, f.line, *_span(f)), f.value == 0))
                         ix._reference(f, by, fi, offs, key)
+                        if (key, f.name) in REQUIRED:
+                            ix._required_blank(f, by.get(kinds[0][1]) if kinds else None, fi, offs, key, long_deck)
             except Exception as e:  # a reader bug must not stop the run (spec §6): record it, don't trust the block
                 ix.failures.append((fi, block.line, f"*{name}: {type(e).__name__}: {e}"))
                 for kind, _ in kinds:

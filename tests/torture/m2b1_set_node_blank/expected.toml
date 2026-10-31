@@ -1,0 +1,10 @@
+lsdyna_valid = true
+findings = []
+note = "accepted, no warning"
+
+[[diagnostics]]
+code = "DC003"
+severity = "warning"
+file = "main.k"
+line = 29
+columns = [0, 10]

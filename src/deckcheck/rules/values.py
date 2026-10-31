@@ -43,4 +43,9 @@ def dc003(tree: Tree, ix: Index) -> list[Diagnostic]:
                                   f"{p.detail}; LS-DYNA may misread this card"))
         elif p.kind == "extra":
             out.append(Diagnostic(tree.files[fi].path, p.line, p.start, p.end, "warning", "DC003", p.detail))
+    for kind, key, loc, zero in ix.blank_defs:
+        path, line, start, end = ix.where(loc)
+        out.append(Diagnostic(path, line, start, end, "warning", "DC003",
+                              f"*{key} defines a {kind} with {'id 0' if zero else 'a blank id'}, so nothing can refer to "
+                              "it (LS-DYNA accepts it without a warning); if this card was pasted, check its columns"))
     return out
