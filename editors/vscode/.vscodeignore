@@ -5,3 +5,6 @@ scripts/**
 tsconfig.json
 **/*.map
 **/__pycache__/**
+.gitignore
+out/test/**
+bundled/libs/bin/**
