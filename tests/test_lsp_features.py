@@ -4,6 +4,7 @@ import os
 from lsprotocol import types
 
 from tests.test_lsp_server import open_doc, published, session, uri
+from deckcheck.navigate import MAX_OUTLINE
 from tests.test_navigate import MAIN, MAT, i10, model
 
 HOOKS = {**os.environ, "DECKCHECK_TEST_HOOKS": "1"}
@@ -122,3 +123,30 @@ async def test_references_from_a_file_in_two_models(tmp_path):
         await asyncio.sleep(2)                                     # both models checked
         got = spans(await references(client, tmp_path / "mat.k", 3, 9))
         assert got == sorted({(uri(tmp_path / "main.k"), 6, 29, 30), (uri(tmp_path / "other.k"), 6, 29, 30)})
+
+
+async def symbols(client, path):
+    return await client.text_document_document_symbol_async(types.DocumentSymbolParams(
+        types.TextDocumentIdentifier(uri(path))))
+
+
+async def test_outline_follows_unsaved_text_of_a_small_file(tmp_path):
+    main = model(tmp_path)
+    async with session(tmp_path) as client:
+        open_doc(client, main)
+        await published(client, uri(main))
+        assert (await symbols(client, main))[2].name == "*PART 1 plate"
+        client.text_document_did_change(types.DidChangeTextDocumentParams(
+            types.VersionedTextDocumentIdentifier(version=2, uri=uri(main)),
+            [types.TextDocumentContentChangeWholeDocument(MAIN.replace("plate", "door"))]))
+        assert (await symbols(client, main))[2].name == "*PART 1 door"          # before the re-check (D1)
+
+
+async def test_outline_off_says_why(tmp_path):
+    body = "*KEYWORD\n" + ("*DEFINE_CURVE\n" + i10(1) + "\n") * (MAX_OUTLINE + 1) + "*END\n"
+    (tmp_path / "main.k").write_text(body)
+    async with session(tmp_path) as client:
+        open_doc(client, tmp_path / "main.k")
+        await published(client, uri(tmp_path / "main.k"))
+        got = await symbols(client, tmp_path / "main.k")
+        assert len(got) == 1 and got[0].name.startswith("Outline off: 10,002 keywords")

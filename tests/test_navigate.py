@@ -6,7 +6,7 @@ from deckcheck.conditions import UNKNOWN
 from deckcheck.fields import Field
 from deckcheck.includes import resolve_tree
 from deckcheck.index import Target, build, target
-from deckcheck.navigate import (READ_LIMIT, Table, block_at, explain, explain_keyword, fields_between, hit,
+from deckcheck.navigate import (MAX_OUTLINE, READ_LIMIT, Table, outline, block_at, explain, explain_keyword, fields_between, hit,
                                  subject)
 from deckcheck.reader import read_file
 
@@ -236,3 +236,26 @@ def test_hover_on_a_keyword_line(tmp_path):
     assert explain_keyword(block_at(nav.tree.files[0].source, 4)).startswith("*PART")
     src = read_file(tmp_path / "x.k", "*KEYWORD\n*NOT_A_KEYWORD\n1\n")
     assert "not in deckcheck's keyword data; passed through" in explain_keyword(block_at(src, 2))
+
+
+def test_outline_names_keyword_id_and_title(tmp_path):
+    mat = MAT.replace("*MAT_ELASTIC\n", "*MAT_ELASTIC_TITLE\nsteel\n")
+    main = model(tmp_path, files={"mat.k": mat})
+    nav = nav_of(main)
+    names = [e.name for e in outline(nav.tree.files[0].source, nav.params, nav.long_deck)]
+    assert names[:6] == ["*KEYWORD", "*INCLUDE", "*PART 1 plate", "*SECTION_SHELL 1", "*NODE", "*ELEMENT_SHELL 1"]
+    assert [e.name for e in outline(nav.tree.files[1].source, {}, False)][1:] == ["*MAT_ELASTIC_TITLE 1 steel"]
+
+
+def test_outline_of_a_block_defining_many_says_how_many_cards(tmp_path):
+    nav = nav_of(model(tmp_path))
+    node = outline(nav.tree.files[0].source, nav.params, nav.long_deck)[4]
+    assert node.name == "*NODE" and node.detail == "4 cards" and (node.line, node.end_line) == (10, 14)
+
+
+def test_outline_over_the_cap_returns_the_count(tmp_path):
+    body = "*KEYWORD\n" + ("*DEFINE_CURVE\n" + i10(1) + "\n") * (MAX_OUTLINE + 1) + "*END\n"
+    src = read_file(tmp_path / "big.k", body)
+    assert outline(src, {}, False) == MAX_OUTLINE + 2      # *KEYWORD is a block too; *END ends the reading
+    at_cap = "*KEYWORD\n" + ("*DEFINE_CURVE\n" + i10(1) + "\n") * (MAX_OUTLINE - 1) + "*END\n"
+    assert len(outline(read_file(tmp_path / "ok.k", at_cap), {}, False)) == MAX_OUTLINE

@@ -295,3 +295,44 @@ def explain_keyword(block: Block) -> str:
     r = block.resolved
     opts = f", options {', '.join(r.options)}" if r.options else ""
     return f"*{block.name}: keyword {r.name}{opts}" + (f", format {r.format}" if r.format else "")
+
+
+MAX_OUTLINE = 10_000  # spec §5.5: above this, no outline, so the panel can't stall
+TITLE_FIELDS = ("title", "heading")
+
+
+class Entry(NamedTuple):
+    name: str
+    detail: str
+    line: int
+    end_line: int
+
+
+def _label(block: Block, params: dict, long_deck: bool) -> tuple[str, str]:
+    name, detail = f"*{block.name}", ""
+    if block.resolved is None:
+        return name, "not in deckcheck's keyword data"
+    idf = next((f for _, f in definers().get(block.resolved.name, ())), None)
+    ids, title = [], None
+    for f in read_fields(block, params, long_deck, frozenset({idf, *TITLE_FIELDS} - {None})):
+        if f.name == idf:
+            ids.append(f.value)
+            if len(ids) > 1:
+                break
+        elif title is None and isinstance(f.value, str):
+            title = f.value
+    if len(ids) == 1 and ids[0] is not None:
+        name += f" {ids[0]}" + (f" {title}" if title else "")
+    elif len(ids) > 1 or not idf:
+        detail = _plural(len(block.cards), "card")
+    return name, detail
+
+
+def outline(src: SourceFile, params: dict, long_deck: bool) -> list[Entry] | int:
+    if len(src.blocks) > MAX_OUTLINE:
+        return len(src.blocks)
+    out = []
+    for b in src.blocks:
+        name, detail = _label(b, params, long_deck)
+        out.append(Entry(name, detail, b.line, b.cards[-1].line if b.cards else b.line))
+    return out

@@ -8,9 +8,12 @@ from pygls.uris import from_fs_path
 
 from deckcheck.includes import _key
 from deckcheck.lsp.convert import m1_column, utf16_column
-from deckcheck.navigate import (NavIndex, block_at, card_at, explain, explain_keyword, fields_between, hit,
-                                line_text, subject)
-from deckcheck.reader import SourceFile
+from deckcheck.navigate import (MAX_OUTLINE, NavIndex, block_at, card_at, explain, explain_keyword, fields_between,
+                                hit, line_text, subject)
+from deckcheck.navigate import outline as outline_entries
+from deckcheck.reader import SourceFile, read_file
+
+OUTLINE_REPARSE_MB = 2  # a synced file this small is re-read from the editor's text for the outline (D1)
 
 
 @dataclass
@@ -123,3 +126,37 @@ def references(ls, path: Path, position: types.Position, include_declaration: bo
                 found += [location(ls, v.nav, l) for l in v.nav.definitions(target, id_)]
         return _unique(found) or None
     return guarded(ls, run)
+
+
+def outline(ls, path: Path) -> list[types.DocumentSymbol]:
+    def run():
+        vs = views(ls, path)
+        if vs:
+            cached = ls.outlines.get(_key(path))
+            if cached is not None and cached[0] is vs[0].src:  # a kept parse is labelled once
+                return cached[1]
+            src, nav, disk = vs[0].src, vs[0].nav, vs[0].disk
+        else:
+            text = ls.ws.source(path)
+            if text is None or len(text) > OUTLINE_REPARSE_MB * 2**20:
+                return []
+            navs = [ls.nav[_key(m)] for m in ls.ws.models_for(path) if _key(m) in ls.nav]
+            nav = navs[0] if navs else None
+            src, disk = read_file(path, text), False
+        got = outline_entries(src, nav.params if nav else {}, nav.long_deck if nav else False)
+        if isinstance(got, int):
+            r = types.Range(types.Position(0, 0), types.Position(0, 0))
+            out = [types.DocumentSymbol(f"Outline off: {got:,} keywords in this file (more than {MAX_OUTLINE:,})",
+                                        types.SymbolKind.Null, r, r)]
+        else:
+            out = []
+            for e in got:
+                end_text = line_text(src, e.end_line) or ""
+                r = types.Range(types.Position(e.line - 1, 0),
+                                types.Position(e.end_line - 1, utf16_column(end_text, len(end_text), disk)))
+                sel = types.Range(types.Position(e.line - 1, 0), types.Position(e.line - 1, 0))
+                out.append(types.DocumentSymbol(e.name, types.SymbolKind.Struct, r, sel, detail=e.detail or None))
+        if vs:
+            ls.outlines[_key(path)] = (vs[0].src, out)
+        return out
+    return guarded(ls, run) or []

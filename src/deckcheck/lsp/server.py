@@ -33,6 +33,7 @@ class DeckServer(LanguageServer):
     edited: set[str]
     checking: dict[str, tuple[float, float]]  # model key -> (wall-clock start, estimated seconds)
     nav: dict[str, NavIndex]  # model key -> the last check's navigation index (M2c)
+    outlines: dict[str, tuple]  # file key -> (the parse it was made from, its outline)
 
 
 server = DeckServer("deckcheck", __version__)
@@ -156,7 +157,9 @@ def _on_demand(ls: DeckServer, main: Path) -> None:
 
 def _forget(ls: DeckServer, released: list[str]) -> None:
     for k in released:
-        ls.nav.pop(k, None)
+        nav = ls.nav.pop(k, None)
+        for f in nav.tree.files if nav else ():
+            ls.outlines.pop(_key(f.path), None)
 
 
 def _release(ls: DeckServer) -> None:
@@ -184,7 +187,7 @@ def initialize(ls: DeckServer, params: types.InitializeParams) -> None:
     ls.loop = asyncio.get_running_loop()
     ls.ws = Workspace(folders, settings)
     ls.results, ls.names = {}, {}
-    ls.checked_at, ls.edited, ls.checking, ls.nav = {}, set(), {}, {}
+    ls.checked_at, ls.edited, ls.checking, ls.nav, ls.outlines = {}, set(), {}, {}, {}
     on_loop = ls.loop.call_soon_threadsafe
     ls.runner = Runner(models=ls.ws.models_for, check=lambda m: _check(ls, m),
                        publish=lambda m, r, e, why: on_loop(_publish, ls, m, r, e, why),
@@ -357,3 +360,9 @@ def definition(ls: DeckServer, params: types.DefinitionParams) -> list[types.Loc
 def references(ls: DeckServer, params: types.ReferenceParams) -> list[types.Location] | None:
     path = _path(params.text_document.uri)
     return features.references(ls, path, params.position, params.context.include_declaration) if path else None
+
+
+@server.feature(types.TEXT_DOCUMENT_DOCUMENT_SYMBOL)
+def document_symbol(ls: DeckServer, params: types.DocumentSymbolParams) -> list[types.DocumentSymbol]:
+    path = _path(params.text_document.uri)
+    return features.outline(ls, path) if path else []
