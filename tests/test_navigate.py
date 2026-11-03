@@ -6,7 +6,7 @@ from deckcheck.conditions import UNKNOWN
 from deckcheck.fields import Field
 from deckcheck.includes import resolve_tree
 from deckcheck.index import Target, build, target
-from deckcheck.navigate import (MAX_OUTLINE, READ_LIMIT, Table, outline, block_at, explain, explain_keyword, fields_between, hit,
+from deckcheck.navigate import (MAX_HINTS, MAX_OUTLINE, READ_LIMIT, Table, hints, outline, ruler, block_at, explain, explain_keyword, fields_between, hit,
                                  subject)
 from deckcheck.reader import read_file
 
@@ -259,3 +259,29 @@ def test_outline_over_the_cap_returns_the_count(tmp_path):
     assert outline(src, {}, False) == MAX_OUTLINE + 2      # *KEYWORD is a block too; *END ends the reading
     at_cap = "*KEYWORD\n" + ("*DEFINE_CURVE\n" + i10(1) + "\n") * (MAX_OUTLINE - 1) + "*END\n"
     assert len(outline(read_file(tmp_path / "ok.k", at_cap), {}, False)) == MAX_OUTLINE
+
+
+def test_hints_name_each_field_in_the_range(tmp_path):
+    nav = nav_of(model(tmp_path))
+    got = hints(nav.tree.files[0].source, 6, 6, nav.params, nav.long_deck)
+    assert got[:3] == [(6, 9, "pid"), (6, 19, "secid"), (6, 29, "mid")]
+
+
+def test_hints_are_capped(tmp_path):
+    nodes = "".join(i8(n) + f"{0.0:>16}" * 3 + "\n" for n in range(1, 2001))
+    nav = nav_of(model(tmp_path, "*KEYWORD\n*NODE\n" + nodes + "*END\n", files={}))
+    assert len(hints(nav.tree.files[0].source, 1, 3000, nav.params, nav.long_deck)) == MAX_HINTS
+
+
+def test_ruler_of_a_part_card(tmp_path):
+    main = model(tmp_path)
+    nav = nav_of(main)
+    block = block_at(nav.tree.files[0].source, 6)
+    assert ruler(fields_between(block, 6, 6, {}, False)) == (
+        "$#     pid     secid       mid     eosid      hgid      grav    adpopt      tmid")
+
+
+def test_ruler_names_are_cut_to_leave_a_space():
+    f = Field("averylongname", 1, 0, 0, None, 1, {"name": "averylongname", "offset": 0, "width": 8})
+    g = Field("anotherlongname", 1, 8, 8, None, 1, {"name": "anotherlongname", "offset": 8, "width": 8})
+    assert ruler([f, g]) == "$# avery another"

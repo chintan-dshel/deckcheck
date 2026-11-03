@@ -78,6 +78,11 @@ def _on_busy(ls: DeckServer, main: Path) -> None:
     _status(ls, main, "checking", [], estimate=estimate, started=started, busy=True)
 
 
+def _refreshes_hints(ls: DeckServer) -> bool:
+    ws = ls.client_capabilities.workspace
+    return bool(ws and ws.inlay_hint and ws.inlay_hint.refresh_support)
+
+
 def _publish(ls: DeckServer, main: Path, result: Result | None, error, reason: str = "check") -> None:
     ls.checking.pop(_key(main), None)
     k = _key(main)
@@ -92,6 +97,8 @@ def _publish(ls: DeckServer, main: Path, result: Result | None, error, reason: s
         ls.results[k] = result.diagnostics
         ls.checked_at[k] = result.started
         ls.nav[k] = result.nav
+        if _refreshes_hints(ls):  # hints asked for before this check are redrawn
+            ls.workspace_inlay_hint_refresh(None)
         for u in previous - set(ls.results[k]):
             ls.results[k][u] = []
         state, items = ("ok" if ls.runner.live(main) else "checks on save"), result.not_checked
@@ -366,3 +373,16 @@ def references(ls: DeckServer, params: types.ReferenceParams) -> list[types.Loca
 def document_symbol(ls: DeckServer, params: types.DocumentSymbolParams) -> list[types.DocumentSymbol]:
     path = _path(params.text_document.uri)
     return features.outline(ls, path) if path else []
+
+
+@server.feature(types.TEXT_DOCUMENT_INLAY_HINT)
+def inlay_hint(ls: DeckServer, params: types.InlayHintParams) -> list[types.InlayHint] | None:
+    path = _path(params.text_document.uri)
+    return features.inlay_hints(ls, path, params.range) if path else None
+
+
+@server.feature(types.TEXT_DOCUMENT_CODE_ACTION,
+                types.CodeActionOptions(code_action_kinds=[types.CodeActionKind.RefactorRewrite]))
+def code_action(ls: DeckServer, params: types.CodeActionParams) -> list[types.CodeAction]:
+    path = _path(params.text_document.uri)
+    return features.ruler_action(ls, path, params.range, params.text_document.uri) if path else []

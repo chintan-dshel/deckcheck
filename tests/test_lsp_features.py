@@ -150,3 +150,38 @@ async def test_outline_off_says_why(tmp_path):
         await published(client, uri(tmp_path / "main.k"))
         got = await symbols(client, tmp_path / "main.k")
         assert len(got) == 1 and got[0].name.startswith("Outline off: 10,002 keywords")
+
+
+async def test_inlay_hints_for_the_visible_range(tmp_path):
+    main = model(tmp_path)
+    async with session(tmp_path) as client:
+        open_doc(client, main)
+        await published(client, uri(main))
+        got = await client.text_document_inlay_hint_async(types.InlayHintParams(
+            types.TextDocumentIdentifier(uri(main)), types.Range(pos(16, 0), pos(16, 80))))
+        assert [h.label for h in got][:3] == ["eid", "pid", "n1"]
+
+
+async def code_actions(client, path, line, character):
+    return await client.text_document_code_action_async(types.CodeActionParams(
+        types.TextDocumentIdentifier(uri(path)), types.Range(pos(line, character), pos(line, character)),
+        types.CodeActionContext([])))
+
+
+async def test_insert_field_ruler_above_a_card(tmp_path):
+    main = model(tmp_path)
+    async with session(tmp_path) as client:
+        open_doc(client, main)
+        await published(client, uri(main))
+        acts = await code_actions(client, main, 6, 3)
+        assert [a.title for a in acts] == ["Insert field ruler"]
+        edit = acts[0].edit.changes[uri(main)][0]
+        assert edit.range.start == pos(6, 0) and edit.new_text.startswith("$#     pid     secid       mid")
+
+
+async def test_no_ruler_on_a_comma_separated_card(tmp_path):
+    main = model(tmp_path, MAIN.replace(i10(1, 1, 1), "1,1,1"))
+    async with session(tmp_path) as client:
+        open_doc(client, main)
+        await published(client, uri(main))
+        assert not await code_actions(client, main, 6, 0)

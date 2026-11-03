@@ -6,10 +6,11 @@ from pathlib import Path
 from lsprotocol import types
 from pygls.uris import from_fs_path
 
+from deckcheck.fields import is_long
 from deckcheck.includes import _key
 from deckcheck.lsp.convert import m1_column, utf16_column
 from deckcheck.navigate import (MAX_OUTLINE, NavIndex, block_at, card_at, explain, explain_keyword, fields_between,
-                                hit, line_text, subject)
+                                hints, hit, line_text, ruler, subject)
 from deckcheck.navigate import outline as outline_entries
 from deckcheck.reader import SourceFile, read_file
 
@@ -159,4 +160,39 @@ def outline(ls, path: Path) -> list[types.DocumentSymbol]:
         if vs:
             ls.outlines[_key(path)] = (vs[0].src, out)
         return out
+    return guarded(ls, run) or []
+
+
+def inlay_hints(ls, path: Path, rng: types.Range) -> list[types.InlayHint] | None:
+    def run():
+        vs = views(ls, path)
+        if not vs:
+            return None
+        v = vs[0]
+        out = []
+        for line, col, name in hints(v.src, rng.start.line + 1, rng.end.line + 1, v.nav.params, v.nav.long_deck):
+            text = line_text(v.src, line) or ""
+            out.append(types.InlayHint(types.Position(line - 1, utf16_column(text, col, v.disk)), name,
+                                       padding_right=True))
+        return out
+    return guarded(ls, run)
+
+
+def ruler_action(ls, path: Path, rng: types.Range, uri: str) -> list[types.CodeAction]:
+    def run():
+        vs = views(ls, path)
+        if not vs or vs[0].disk:  # an unsynced file: its line endings aren't known (D8)
+            return []
+        v, line = vs[0], rng.start.line + 1
+        block = block_at(v.src, line)
+        card = card_at(block, line) if block else None
+        if card is None or card.free or is_long(block, v.nav.long_deck):
+            return []
+        text = ruler(fields_between(block, line, line, v.nav.params, v.nav.long_deck) or [])
+        if text is None:
+            return []
+        eol = "\r\n" if "\r\n" in (ls.ws.source(path) or "")[:65536] else "\n"
+        at = types.Range(types.Position(line - 1, 0), types.Position(line - 1, 0))
+        return [types.CodeAction("Insert field ruler", kind=types.CodeActionKind.RefactorRewrite,
+                                 edit=types.WorkspaceEdit(changes={uri: [types.TextEdit(at, text + eol)]}))]
     return guarded(ls, run) or []

@@ -336,3 +336,29 @@ def outline(src: SourceFile, params: dict, long_deck: bool) -> list[Entry] | int
         name, detail = _label(b, params, long_deck)
         out.append(Entry(name, detail, b.line, b.cards[-1].line if b.cards else b.line))
     return out
+
+
+MAX_HINTS = 2000  # spec §5.6
+
+
+def hints(src: SourceFile, first: int, last: int, params: dict, long_deck: bool) -> list[tuple[int, int, str]]:
+    out: list[tuple[int, int, str]] = []
+    i = max(bisect.bisect_right(src.blocks, first, key=lambda b: b.line) - 1, 0)
+    for b in src.blocks[i:]:
+        if b.line > last or len(out) >= MAX_HINTS:
+            break
+        fields = fields_between(b, first, last, params, long_deck) or []
+        out += [(f.line, f.start, f.name) for f in fields]
+    return out[:MAX_HINTS]
+
+
+def ruler(fields: list[Field]) -> str | None:
+    """A `$#` comment naming each field over its columns, as pre-processors write it. None without fixed columns."""
+    if not fields or any("offset" not in f.spec for f in fields):
+        return None
+    text = ""
+    for f in sorted(fields, key=lambda f: f.spec["offset"]):
+        w, at = f.spec["width"], f.spec["offset"]
+        name = f.name[:w - 3] if at == 0 else f.name[:w - 1]  # "$#" takes the first slot's first two columns
+        text = text.ljust(at) + name.rjust(w)
+    return "$#" + text[2:]
