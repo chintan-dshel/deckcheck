@@ -345,3 +345,15 @@ if os.environ.get("DECKCHECK_TEST_HOOKS") == "1":  # tests only: hold the lock t
                 time.sleep(seconds)
         threading.Thread(target=hold, daemon=True).start()
         return {"held": held.wait(5)}
+
+
+@server.feature(types.TEXT_DOCUMENT_DEFINITION)
+def definition(ls: DeckServer, params: types.DefinitionParams) -> list[types.Location] | None:
+    path = _path(params.text_document.uri)
+    return features.definition(ls, path, params.position) if path else None
+
+
+@server.feature(types.TEXT_DOCUMENT_REFERENCES)
+def references(ls: DeckServer, params: types.ReferenceParams) -> list[types.Location] | None:
+    path = _path(params.text_document.uri)
+    return features.references(ls, path, params.position, params.context.include_declaration) if path else None
