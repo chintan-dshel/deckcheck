@@ -1,4 +1,5 @@
 import os
+import time
 from array import array
 from pathlib import Path
 
@@ -86,7 +87,7 @@ def test_target_unchecked_negative_and_unknown_sign():
 
 def test_target_fallback_kind_under_another_offset():
     # SET_PART falls back to PART; under idsoff without idpoff the two shift differently: a use, never checked
-    assert target(fld("psid", 5, link="SET_PART"), {}, {"idsoff": 10}) == Target("SET_PART", 15, "possible")
+    assert target(fld("psid", 5, link="SET_PART"), {}, {"idsoff": 10}) == Target("SET_PART", 15, "offset mix")
 
 
 PARAM = "*KEYWORD\n*PARAMETER\n" + f"{'I m':<10}{1:>10}" + "\n"   # adds two lines: the part card moves to line 8
@@ -259,6 +260,36 @@ def test_outline_over_the_cap_returns_the_count(tmp_path):
     assert outline(src, {}, False) == MAX_OUTLINE + 2      # *KEYWORD is a block too; *END ends the reading
     at_cap = "*KEYWORD\n" + ("*DEFINE_CURVE\n" + i10(1) + "\n") * (MAX_OUTLINE - 1) + "*END\n"
     assert len(outline(read_file(tmp_path / "ok.k", at_cap), {}, False)) == MAX_OUTLINE
+
+
+def test_mixed_transform_offsets_never_resolve_to_a_part(tmp_path):
+    # review I2: idsoff 100, idpoff 0: a part set id 7 is SET_PART 107 or PART 7; deckcheck doesn't referee which
+    main = ("*KEYWORD\n*PART\np7\n" + i10(7, 1, 1) + "\n*PART\np107\n" + i10(107, 1, 1) + "\n*SECTION_SHELL\n"
+            + i10(1, 2) + "\n" + i10(1.0, 1.0, 1.0, 1.0) + "\n*MAT_ELASTIC\n" + i10(1, "7.85E-9", "210000.0", 0.3)
+            + "\n*INCLUDE_TRANSFORM\nsub.k\n" + i10(0, 0, 0, 0, 100) + "\n" + i10(0) + "\n\n\n*END\n")
+    sub = "*KEYWORD\n*CONTACT_AUTOMATIC_SINGLE_SURFACE\n" + i10(7, 0, 2, 0) + "\n" + i10(0.1) + "\n\n*END\n"
+    main_k = model(tmp_path, main, files={"sub.k": sub})
+    nav = nav_of(main_k)
+    fi, fields, f = at(nav, main_k.parent / "sub.k", 3, 9)
+    assert f.name == "ssid" and subject(nav, fi, fields, f) is None
+    text = explain(nav, fi, fields, f)
+    assert "can't resolve" in text and "*PART at" not in text
+
+
+def test_a_use_deckcheck_does_not_check_is_never_called_undefined(tmp_path):
+    main = model(tmp_path, MAIN.replace(i10(1, 1, 1), i10(1, 1, -99)))   # a sign LS-DYNA gives a meaning to
+    nav = nav_of(main)
+    text = explain(nav, *at(nav, main, 6, 29))
+    assert "is not defined" not in text and "not checked" in text
+
+
+def test_outline_of_a_huge_one_id_block_is_fast(tmp_path):
+    # review I4: the label read every card of a block with one id, looking for a second
+    rows = "".join(i10(n, n + 1, n + 2, n + 3, n + 4, n + 5, n + 6, n + 7) + "\n" for n in range(1, 300_001))
+    src = read_file(tmp_path / "set.k", "*KEYWORD\n*SET_NODE_LIST\n" + i10(1) + "\n" + rows + "*END\n")
+    t = time.perf_counter()
+    got = outline(src, {}, False)
+    assert time.perf_counter() - t < 0.1 and got[1].name == "*SET_NODE_LIST 1"
 
 
 def test_hints_name_each_field_in_the_range(tmp_path):

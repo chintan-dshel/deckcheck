@@ -96,7 +96,10 @@ def _publish(ls: DeckServer, main: Path, result: Result | None, error, reason: s
     else:
         ls.results[k] = result.diagnostics
         ls.checked_at[k] = result.started
-        ls.nav[k] = result.nav
+        if k in ls.ws._caches:
+            ls.nav[k] = result.nav
+        else:  # released in the check's own clean-up (no open file): its parse is gone, so is its navigation
+            _forget(ls, [k])
         if _refreshes_hints(ls):  # hints asked for before this check are redrawn
             ls.workspace_inlay_hint_refresh(None)
         for u in previous - set(ls.results[k]):
@@ -239,6 +242,7 @@ def did_open(ls: DeckServer, params: types.DidOpenTextDocumentParams) -> None:
         ls.ws.open(path, params.text_document.text)
         ls.edited.discard(_key(path))
         if _unchanged_since_checked(ls, path):
+            ls.runner.request(path, "close")  # no check, but the worker compares its text with the disk (M2c)
             return
     _request(ls, params.text_document.uri, "open")
 
@@ -334,7 +338,8 @@ def active(ls: DeckServer, params) -> dict | None:
 
 @server.feature("deckcheck/ping")
 def ping(ls: DeckServer, params) -> dict:
-    return {"ok": True, "active": ls.runner.active, "caches": len(ls.ws._caches), "mb": rss_bytes() / 2**20}
+    return {"ok": True, "active": ls.runner.active, "caches": len(ls.ws._caches), "navs": len(ls.nav),
+            "mb": rss_bytes() / 2**20}
 
 
 @server.feature(types.TEXT_DOCUMENT_HOVER)

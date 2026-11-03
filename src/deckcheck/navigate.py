@@ -241,8 +241,9 @@ def _plural(n: int, word: str) -> str:
     return f"{n:,} {word}" + ("" if n == 1 else "s")
 
 
-def explain(nav: NavIndex, fi: int, fields: list[Field], f: Field | None) -> str | None:
-    """Structure and resolved references only; no descriptions (spec §2, §5.2)."""
+def explain(nav: NavIndex, fi: int, fields: list[Field], f: Field | None, current=None) -> str | None:
+    """Structure and resolved references only; no descriptions (spec §2, §5.2). `current(fi)`: whether a file of
+    the model still has the parse the check made (a target in a file edited since is not pointed at)."""
     if f is None:
         return None
     spec = f.spec
@@ -265,8 +266,9 @@ def explain(nav: NavIndex, fi: int, fields: list[Field], f: Field | None) -> str
     s = subject(nav, fi, fields, f)
     if s is None:
         t = target(f, _row(fields, f), _file_offsets(nav.tree, fi))
-        if t.how in ("unmapped", "unknown", "not an id", "offset"):
-            lines.append(f"a reference deckcheck can't resolve ({t.how})")
+        if t.how in ("unmapped", "unknown", "not an id", "offset", "offset mix"):
+            why = "transform offsets of its kinds differ" if t.how == "offset mix" else t.how
+            lines.append(f"a reference deckcheck can't resolve ({why})")
         return "\n\n".join(lines)
     kind, id_, is_def = s
     if isinstance(f.value, int) and abs(f.value) != id_:
@@ -281,8 +283,12 @@ def explain(nav: NavIndex, fi: int, fields: list[Field], f: Field | None) -> str
             lines.append("some uses can't be placed: " + "; ".join(why[:3]))
         return "\n\n".join(lines)
     found = nav.definitions(kind, id_)
+    held = [l for l in found if current is None or current(l.fi)]
     if found:
-        lines += [f"{f.name} → {kind} {id_}, {_where(nav, l)}" for l in found]
+        lines += [f"{f.name} → {kind} {id_}, {_where(nav, l)}" for l in held]
+        lines += [f"{f.name} → {kind} {id_} in {l.path.name}, changed since the last check" for l in found if l not in held]
+    elif target(f, _row(fields, f), _file_offsets(nav.tree, fi)).how == "possible":
+        lines.append(f"{kind} {id_} not found; not checked: deckcheck doesn't check this reference")
     elif f.spec.get("link_when") == "unchecked":
         lines.append(f"{kind} {id_} is not defined: LS-DYNA accepts this, but the reference has no effect")
     elif nav.checked(kind):
@@ -303,6 +309,7 @@ def explain_keyword(block: Block) -> str:
 
 MAX_OUTLINE = 10_000  # spec §5.5: above this, no outline, so the panel can't stall
 TITLE_FIELDS = ("title", "heading")
+LABEL_CARDS = 20  # a label reads the block's first cards only: a 300,000-card set has its id and title up front
 
 
 class Entry(NamedTuple):
@@ -318,7 +325,8 @@ def _label(block: Block, params: dict, long_deck: bool) -> tuple[str, str]:
         return name, "not in deckcheck's keyword data"
     idf = next((f for _, f in definers().get(block.resolved.name, ())), None)
     ids, title = [], None
-    for f in read_fields(block, params, long_deck, frozenset({idf, *TITLE_FIELDS} - {None})):
+    head = Block(block.name, block.line, block.resolved, block.cards[:LABEL_CARDS], block.text)
+    for f in read_fields(head, params, long_deck, frozenset({idf, *TITLE_FIELDS} - {None})):
         if f.name == idf:
             ids.append(f.value)
             if len(ids) > 1:

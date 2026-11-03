@@ -33,6 +33,7 @@ class SourceFile:
     path: Path
     blocks: list[Block]
     end_line: int | None
+    from_disk: bool = True  # read from disk as Latin-1, or from the editor's text: how its columns map (M2c)
 
 
 def _split(text: str) -> list[str]:
@@ -95,11 +96,11 @@ def read_file(path: Path, text: str | None = None) -> SourceFile:
         if line.startswith("*"):
             name = _name(line)
             if name == "END" and STOP_AT_END:
-                return SourceFile(path, blocks, n)
+                return SourceFile(path, blocks, n, text is None)
             blocks.append(Block(name, n, resolve(line), text=line))
         elif blocks:
             blocks[-1].cards.append(Card(n, line))
-    return SourceFile(path, blocks, None)
+    return SourceFile(path, blocks, None, text is None)
 
 
 def _stream(path: Path):

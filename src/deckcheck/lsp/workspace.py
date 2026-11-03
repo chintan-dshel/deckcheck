@@ -43,6 +43,18 @@ def drain_index(ix) -> None:
         drain(getattr(ix, name))
 
 
+def _shows_disk(path: Path, text: str | None) -> bool:
+    """The editor's text is the file on disk as VS Code decodes it by default (UTF-8, a BOM dropped). Anything else,
+    or a file that can't be read, counts as changed: the parse is dropped, as before M2c."""
+    if text is None:  # closed before it was compared: nothing in the editor changed it
+        return True
+    try:
+        raw = path.read_bytes()
+    except OSError:
+        return False
+    return raw.removeprefix(b"\xef\xbb\xbf").decode("utf-8", errors="replace") == text
+
+
 @dataclass
 class Settings:
     main_decks: list[Path] = field(default_factory=list)
@@ -69,6 +81,8 @@ class Workspace:
         self._mains: dict[str, Path] = {}
         self._caches: dict[str, dict[str, SourceFile]] = {}
         self._drops: set[str] = set()
+        self._verify: dict[str, Path] = {}  # opened files whose editor text is not yet compared with the disk
+        self._pristine: set[str] = set()     # open files whose editor text is the disk's, unedited since
         self._light: dict[str, SourceFile] = {}  # include-only parses, kept across scans until their file changes
         self._dirty = True
         self._lock = threading.Lock()
@@ -76,17 +90,30 @@ class Workspace:
 
     # the editor's text
     def open(self, path: Path, text: str) -> None:
-        self.change(path, text)
+        """An opened file usually shows what is on disk: its parse is kept unless the worker finds the text differs
+        (apply_drops). Dropping it on open left an include opened after its check without navigation (M2c)."""
+        with self._lock:
+            k = _key(_norm(path))
+            self._overlay[k] = text
+            self._verify[k] = _norm(path)
 
     def change(self, path: Path, text: str) -> None:
         with self._lock:
-            self._overlay[_key(_norm(path))] = text
+            k = _key(_norm(path))
+            self._overlay[k] = text
+            self._verify.pop(k, None)
+            self._pristine.discard(k)
         self.drop_file(path)
 
     def close(self, path: Path) -> None:
         with self._lock:
-            self._overlay.pop(_key(_norm(path)), None)
-        self.drop_file(path)
+            k = _key(_norm(path))
+            self._overlay.pop(k, None)
+            unchanged = k in self._pristine  # shown as on disk and never edited: the parse holds
+            self._pristine.discard(k)
+            self._verify.pop(k, None)
+        if not unchanged:
+            self.drop_file(path)
 
     def source(self, path: Path) -> str | None:
         return self._overlay.get(_key(_norm(path)))
@@ -104,8 +131,18 @@ class Workspace:
             self._drops.add(_key(_norm(path)))
 
     def apply_drops(self) -> None:
-        """Worker thread: free the parses of changed files, a chunk at a time."""
+        """Worker thread: compare opened files with the disk, then free the parses of changed files, a chunk at a
+        time."""
         with self.reading:  # the drops are taken under it too: parsed() must not see a stale parse as current
+            with self._lock:
+                verify, self._verify = self._verify, {}
+            for k, path in verify.items():
+                same = _shows_disk(path, self._overlay.get(k))
+                with self._lock:
+                    if same:
+                        self._pristine.add(k)
+                    else:
+                        self._drops.add(k)
             with self._lock:
                 drops, self._drops = self._drops, set()
             for k in drops:
@@ -120,7 +157,7 @@ class Workspace:
         """The model's parse of a file, unless the file changed since (a drop not yet applied counts)."""
         k = _key(_norm(path))
         with self._lock:
-            if k in self._drops:
+            if k in self._drops or k in self._verify:
                 return None
             return self._caches.get(_key(_norm(main)), {}).get(k)
 

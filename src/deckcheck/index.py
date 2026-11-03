@@ -130,7 +130,7 @@ def _shift(kind: str, offs: dict[str, int] | None) -> int | None:
 class Target(NamedTuple):
     kind: str | None
     id: int | None
-    how: str  # none, unmapped, unknown, not an id, offset, possible, unchecked, checked
+    how: str  # none, unmapped, unknown, not an id, offset, offset mix, possible, unchecked, checked
 
 
 def target(f: Field, row: dict[str, Field], offs: dict[str, int] | None) -> Target:
@@ -162,8 +162,9 @@ def _target(f: Field, row: dict[str, Field], offs: dict[str, int] | None) -> tup
     if shift is None:
         return kind, None, "offset"
     if any(_shift(k, offs) != shift for k in LOOKUP.get(kind, (kind,))):
-        # a fallback kind shifted by another offset (SET_PART -> PART): not refereed, so a use, never checked
-        return kind, abs(v) + shift, "possible"
+        # a fallback kind shifted by another offset (SET_PART -> PART): not refereed, so a use, never checked, and
+        # navigation can't say which of the two it means
+        return kind, abs(v) + shift, "offset mix"
     if spec.get("link_when") == "unchecked":  # LS-DYNA accepts a missing target here: a use, never dangling
         return kind, abs(v) + shift, "unchecked"
     if spec.get("link_when") == "negative":
@@ -272,7 +273,7 @@ class Index:
             self._record(kind, id_, fi, f.start, f.end, f.line, f"{key}.{f.name}")
         elif how == "none":
             pass
-        elif how == "possible":
+        elif how in ("possible", "offset mix"):
             self.possible.setdefault(kind, set()).add(id_)
         elif how == "unchecked":
             self.possible.setdefault(kind, set()).add(id_)

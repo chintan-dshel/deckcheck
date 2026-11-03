@@ -1,6 +1,7 @@
 """M2c request handlers' bodies (M2 spec §5.2-5.6): answers from the last check's index and parse, or nothing
 (spec §3). A request never waits: if the worker is freeing parses, the answer is nothing."""
 import functools
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -23,7 +24,19 @@ class View:
     nav: NavIndex
     fi: int
     src: SourceFile
-    disk: bool
+    disk: bool                      # the parse was read from disk: how its columns map to the editor's
+    current: Callable[[int], bool]  # a file of the model still has the parse the check made: its lines hold
+
+
+def _current(ls, main: Path, nav: NavIndex) -> Callable[[int], bool]:
+    seen: dict[int, bool] = {}
+
+    def ok(fi: int) -> bool:
+        if fi not in seen:
+            node = nav.tree.files[fi]
+            seen[fi] = ls.ws.parsed(main, node.path) is node.source
+        return seen[fi]
+    return ok
 
 
 def views(ls, path: Path) -> list[View]:
@@ -36,7 +49,7 @@ def views(ls, path: Path) -> list[View]:
             continue
         src = nav.tree.files[fi].source
         if ls.ws.parsed(m, path) is src:
-            out.append(View(nav, fi, src, not ls.ws.synced(path)))
+            out.append(View(nav, fi, src, src.from_disk, _current(ls, m, nav)))
     return out
 
 
@@ -68,7 +81,7 @@ def hover(ls, path: Path, position: types.Position) -> types.Hover | None:
         if fields is None:
             return None
         f = hit(fields, m1_column(card.text, position.character, v.disk))
-        text = explain(v.nav, v.fi, fields, f)
+        text = explain(v.nav, v.fi, fields, f, v.current)
         if text is None:
             return None
         rng = types.Range(types.Position(line - 1, utf16_column(card.text, f.start, v.disk)),
@@ -78,11 +91,12 @@ def hover(ls, path: Path, position: types.Position) -> types.Hover | None:
 
 
 def location(ls, nav: NavIndex, loc) -> types.Location:
-    text = line_text(nav.tree.files[loc.fi].source, loc.line) or ""
+    src = nav.tree.files[loc.fi].source
+    text = line_text(src, loc.line) or ""
     if text.isascii():  # most lines: the columns are the same (a find-references can return tens of thousands)
         start, end = loc.start, loc.end
     else:
-        disk = not ls.ws.synced(loc.path)
+        disk = src.from_disk
         start, end = utf16_column(text, loc.start, disk), utf16_column(text, loc.end, disk)
     return types.Location(_uri(loc.path), types.Range(types.Position(loc.line - 1, start),
                                                       types.Position(loc.line - 1, end)))
@@ -120,7 +134,7 @@ def _unique(locations: list[types.Location]) -> list[types.Location]:
 def definition(ls, path: Path, position: types.Position) -> list[types.Location] | None:
     def run():
         found = [location(ls, v.nav, l) for v, (kind, id_, _) in _subjects(ls, path, position)
-                 for l in v.nav.definitions(kind, id_)]
+                 for l in v.nav.definitions(kind, id_) if v.current(l.fi)]
         return _unique(found) or None
     return guarded(ls, run)
 
@@ -131,9 +145,10 @@ def references(ls, path: Path, position: types.Position, include_declaration: bo
         for v, (kind, id_, is_def) in _subjects(ls, path, position):
             # a reference's uses are the uses of the definition it resolves to (a part set id may mean the part)
             target = kind if is_def else v.nav.owner(kind, id_)
-            found += [location(ls, v.nav, l) for l in v.nav.uses(target, id_)]
+            # a file edited since the check: its lines may have moved, so nothing in it is pointed at
+            found += [location(ls, v.nav, l) for l in v.nav.uses(target, id_) if v.current(l.fi)]
             if include_declaration:
-                found += [location(ls, v.nav, l) for l in v.nav.definitions(target, id_)]
+                found += [location(ls, v.nav, l) for l in v.nav.definitions(target, id_) if v.current(l.fi)]
         return _unique(found) or None
     return guarded(ls, run)
 
@@ -190,7 +205,7 @@ def inlay_hints(ls, path: Path, rng: types.Range) -> list[types.InlayHint] | Non
 def ruler_action(ls, path: Path, rng: types.Range, uri: str) -> list[types.CodeAction]:
     def run():
         vs = views(ls, path)
-        if not vs or vs[0].disk:  # an unsynced file: its line endings aren't known (D8)
+        if not vs or not ls.ws.synced(path):  # an unsynced file: its line endings aren't known (D8)
             return []
         v, line = vs[0], rng.start.line + 1
         block = block_at(v.src, line)

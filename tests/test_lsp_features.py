@@ -189,6 +189,70 @@ async def test_no_ruler_on_a_comma_separated_card(tmp_path):
         assert not await code_actions(client, main, 6, 0)
 
 
+async def eventually(f, seconds=10.0):
+    end = time.monotonic() + seconds
+    while (got := await f()) is None and time.monotonic() < end:
+        await asyncio.sleep(0.1)
+    return got
+
+
+async def test_a_file_opened_after_the_check_navigates(tmp_path):
+    # review C1: opening an include after the check (F12 from main.k) dropped its parse, and no check followed
+    main = model(tmp_path)
+    mat = tmp_path / "mat.k"
+    async with session(tmp_path) as client:
+        open_doc(client, main)
+        await published(client, uri(main))
+        open_doc(client, mat)
+        h = await eventually(lambda: hover(client, mat, 3, 9))
+        assert h is not None and "Defines MAT 1" in h.contents.value
+        assert spans(await references(client, mat, 3, 9)) == [(uri(main), 6, 29, 30)]
+        client.text_document_did_close(types.DidCloseTextDocumentParams(types.TextDocumentIdentifier(uri(mat))))
+        d = await eventually(lambda: definition(client, main, 6, 29))
+        assert spans(d) == [(uri(mat), 3, 9, 10)]
+
+
+async def test_a_disk_file_opened_later_keeps_its_columns(tmp_path):
+    # part.k checked from disk (a UTF-8 é is two Latin-1 characters to M1), then opened: the editor shows one character
+    model(tmp_path, "*KEYWORD\n*INCLUDE\nmat.k\n*INCLUDE\npart.k\n*END\n",
+          files={"mat.k": MAT, "part.k": "*KEYWORD\n*PART\nplate\n" + "Ã©" + i10(1, 1, 1)[2:]
+                 + "\n*SECTION_SHELL\n" + i10(1, 2) + "\n*END\n"})
+    part = tmp_path / "part.k"
+    async with session(tmp_path) as client:
+        open_doc(client, tmp_path / "mat.k")
+        await published(client, uri(tmp_path / "mat.k"))
+        open_doc(client, part)
+        h = await eventually(lambda: hover(client, part, 4, 28))
+        assert h is not None and "**mid**" in h.contents.value and h.range.start.character == 28
+
+
+async def test_a_target_file_edited_since_the_check_is_not_pointed_at(tmp_path):
+    # review I1: definition into mat.k after mat.k gained two lines pointed at its old line 3
+    main = model(tmp_path)
+    mat = tmp_path / "mat.k"
+    async with session(tmp_path) as client:
+        open_doc(client, main)
+        open_doc(client, mat)
+        await published(client, uri(main))
+        client.text_document_did_change(types.DidChangeTextDocumentParams(
+            types.VersionedTextDocumentIdentifier(version=2, uri=uri(mat)),
+            [types.TextDocumentContentChangeWholeDocument("$ a\n$ b\n" + MAT)]))
+        d = await definition(client, main, 6, 29)
+        assert (uri(mat), 3, 9, 10) not in spans(d or [])
+        assert "mat.k:3" not in ((await hover(client, main, 6, 29)) or types.Hover("")).contents.value
+
+
+async def test_a_released_model_keeps_no_navigation_index(tmp_path):
+    # review I3: a model released in its own check's clean-up had its index installed after it was forgotten
+    main = model(tmp_path)
+    async with session(tmp_path) as client:
+        client.protocol.notify("deckcheck/check", {"uri": uri(main)})   # no open file: released after the check
+        await published(client, uri(main))
+        await asyncio.sleep(0.5)
+        reply = await client.protocol.send_request_async("deckcheck/ping", {})
+        assert (reply["navs"] if isinstance(reply, dict) else reply.navs) == 0
+
+
 @pytest.mark.parametrize("kind", ["long_line", "binary", "nul"])
 async def test_features_on_hostile_files(tmp_path, kind):
     body = {"long_line": b"*KEYWORD\n*NODE\n" + b"1" * 2**20 + b"\n*END\n",
