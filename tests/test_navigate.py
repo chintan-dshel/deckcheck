@@ -1,10 +1,14 @@
 import os
+from array import array
 from pathlib import Path
 
 from deckcheck.conditions import UNKNOWN
 from deckcheck.fields import Field
 from deckcheck.includes import resolve_tree
 from deckcheck.index import Target, build, target
+from deckcheck.navigate import Table
+
+TORTURE = Path(__file__).parent / "torture"
 
 
 def i10(*vals):
@@ -89,3 +93,43 @@ PARAM = "*KEYWORD\n*PARAMETER\n" + f"{'I m':<10}{1:>10}" + "\n"   # adds two lin
 def test_build_keeps_params_and_long_deck(tmp_path):
     ix = build(resolve_tree(model(tmp_path, MAIN.replace("*KEYWORD\n", PARAM, 1))))
     assert ix.params == {"M": 1} and ix.long_deck is False
+
+
+def test_find_ignores_matches_across_two_ids():
+    # 1 << 56 then 0: the bytes of id 1 appear at offset 7, inside the first two ids
+    t = Table(bytearray(array("q", [1 << 56, 0, 1]).tobytes()), array("H", [0, 0, 0]), array("q", [0, 0, 0]))
+    assert list(t.find(1)) == [2]
+
+
+def test_definitions_and_uses_across_includes(tmp_path):
+    main = model(tmp_path)
+    nav = nav_of(main)
+    mat = main.parent / "mat.k"
+    assert [(l.path, l.line, l.start, l.end) for l in nav.definitions("MAT", 1)] == [(mat, 3, 9, 10)]
+    assert [(l.path, l.line, l.start, l.end) for l in nav.uses("MAT", 1)] == [(main, 6, 29, 30)]
+    assert [(l.line, l.start) for l in nav.uses("NODE", 3)] == [(16, 39)]
+    assert nav.definitions("MAT", 2) == [] and nav.checked("MAT")
+
+
+def test_a_duplicate_has_every_definition(tmp_path):
+    main = model(tmp_path, files={"mat.k": MAT.replace("*END\n", "*MAT_ELASTIC\n" + i10(1, 1.0, 1.0, 0.3) + "\n*END\n")})
+    assert [l.line for l in nav_of(main).definitions("MAT", 1)] == [3, 5]
+
+
+def test_a_part_set_id_without_a_set_resolves_to_the_part(tmp_path):
+    nav = nav_of(model(tmp_path))
+    assert [l.line for l in nav.definitions("SET_PART", 1)] == [6]
+
+
+def test_transform_definition_and_uses():
+    case = Path(os.path.abspath(TORTURE / "inc_transform"))
+    nav = nav_of(case / "main.k")
+    mesh = case / "mesh.k"
+    assert [(l.path, l.line, l.start) for l in nav.definitions("NODE", 101)] == [(mesh, 3, 7)]
+    assert [(l.path, l.line, l.start) for l in nav.uses("NODE", 101)] == [(mesh, 8, 23)]
+    assert nav.definitions("NODE", 1) == []
+
+
+def test_uses_complete_names_what_it_could_not_place(tmp_path):
+    nav = nav_of(model(tmp_path, MAIN.replace(i10(1, 1, 1), i10(1, 1, -1))))  # a negative mid: a possible use
+    assert nav.uses_complete("MAT") != [] and nav.uses_complete("SECTION") == []
