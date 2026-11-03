@@ -7,6 +7,26 @@ references that LS-DYNA accepts but ignores. It reads the deck only: it never ru
 Findings appear as squiggles in the deck and in the Problems panel. When you open an include file, deckcheck checks
 the whole model it belongs to, so a material defined in another include is not reported as missing.
 
+## Navigate a model
+
+Once a model has been checked, deckcheck also finds your way around it, across its include files:
+- **Hover** a field: its name, columns and type, the value as read, and what an id refers to (`mid → MAT 1,
+  *MAT_ELASTIC at mat.k:3`). On a definition, how many uses it has. No descriptions from the keyword manual.
+- **Go to Definition** (F12, or Ctrl+click) on an id jumps to what defines it, in whichever include it is.
+- **Find All References** (Shift+F12) on an id or its definition lists every use in the model.
+- The **Outline** panel lists the file's keywords, each with its id and title.
+- **Field names** inline: hold Ctrl+Alt to see each field's name over its value.
+- **Insert field ruler**: on a fixed-column card, the lightbulb (Ctrl+.) adds a `$#` comment line naming the
+  columns above it.
+
+Navigation answers from the last check and never waits for one. So:
+- before a model's first check (a big model: after "click to check"), and in a file edited since its last check,
+  there is nothing until the next check. The outline of a file up to 2 MB follows your edits.
+- deep in a long list-style block, such as a node set more than 2,000 lines below its keyword, hover shows nothing.
+  Node and element tables work at any depth.
+- a file with more than 10,000 keywords gets no outline; the panel says why.
+- the field ruler is not offered on comma-separated cards, long-format cards, or files larger than 20 MB.
+
 ## Requirements
 
 Python 3.11 or newer. Nothing else: deckcheck and its language server ship inside the extension. deckcheck uses

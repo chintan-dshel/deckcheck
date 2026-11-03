@@ -130,7 +130,10 @@ If VS Code was open during the install, reload its window (Command Palette > **D
 
 Opening an include file checks the whole model it belongs to. Small models are re-checked as you type; a big model
 (a full vehicle) is checked when you save it or click "big model, click to check" in the status bar, never just by
-opening it. The extension's README lists its settings and how it stays out of the editor's way.
+opening it. Once checked, a model can be navigated across its include files: hover a field for its name and what
+its id refers to, go to a definition, find every reference, browse the Outline, and show field names inline. The
+[extension's README](editors/vscode/README.md) covers navigation, its settings and how it stays out of the
+editor's way.
 
 ### Do no harm, measured
 

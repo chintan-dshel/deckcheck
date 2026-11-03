@@ -15,6 +15,16 @@ async function until<T>(f: () => T | undefined, ms = 60_000): Promise<T> {
   }
 }
 
+async function untilAsync<T>(f: () => Promise<T | undefined>, ms = 60_000): Promise<T> {
+  const end = Date.now() + ms;
+  for (;;) {
+    const v = await f();
+    if (v) return v;
+    if (Date.now() > end) throw new Error("timed out");
+    await new Promise((r) => setTimeout(r, 100));
+  }
+}
+
 async function open(rel: string) {
   const doc = await vscode.workspace.openTextDocument(path.join(WS, rel));
   await vscode.window.showTextDocument(doc);
@@ -28,6 +38,19 @@ const tests: [string, () => Promise<void>][] = [
     const uri = await open("seeded_mistakes/main.k");
     await until(() => codes(uri).includes("DC001") || undefined);
     assert.ok(codes(uri).includes("DC002") && codes(uri).includes("DC004"));
+  }],
+  ["hoverAndDefinitionAcrossIncludes", async () => {
+    const uri = await open("part.k");
+    await until(() => ext().exports.lastStatusMain().endsWith("main.k") || undefined, 30_000);
+    const at = new vscode.Position(3, 29);                      // part.k line 4: the part card, mid's value
+    const hovers = await untilAsync(async () => {
+      const h = await vscode.commands.executeCommand<vscode.Hover[]>("vscode.executeHoverProvider", uri, at);
+      return h.length ? h : undefined;
+    });
+    const text = hovers.flatMap((h) => h.contents).map((c) => typeof c === "string" ? c : c.value).join("\n");
+    assert.ok(text.includes("MAT 1"), text);
+    const defs = await vscode.commands.executeCommand<vscode.Location[]>("vscode.executeDefinitionProvider", uri, at);
+    assert.ok(defs[0].uri.fsPath.endsWith("mat.k") && defs[0].range.start.line === 2);
   }],
   ["explicitCheckOfABigModelEndsWithASummary", async () => {
     // runs before other models are opened: the status names the model last announced (deferred to M2c)
