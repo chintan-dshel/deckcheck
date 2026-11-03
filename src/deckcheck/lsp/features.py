@@ -1,5 +1,6 @@
 """M2c request handlers' bodies (M2 spec §5.2-5.6): answers from the last check's index and parse, or nothing
 (spec §3). A request never waits: if the worker is freeing parses, the answer is nothing."""
+import functools
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -78,10 +79,18 @@ def hover(ls, path: Path, position: types.Position) -> types.Hover | None:
 
 def location(ls, nav: NavIndex, loc) -> types.Location:
     text = line_text(nav.tree.files[loc.fi].source, loc.line) or ""
-    disk = not ls.ws.synced(loc.path)
-    return types.Location(from_fs_path(str(loc.path)), types.Range(
-        types.Position(loc.line - 1, utf16_column(text, loc.start, disk)),
-        types.Position(loc.line - 1, utf16_column(text, loc.end, disk))))
+    if text.isascii():  # most lines: the columns are the same (a find-references can return tens of thousands)
+        start, end = loc.start, loc.end
+    else:
+        disk = not ls.ws.synced(loc.path)
+        start, end = utf16_column(text, loc.start, disk), utf16_column(text, loc.end, disk)
+    return types.Location(_uri(loc.path), types.Range(types.Position(loc.line - 1, start),
+                                                      types.Position(loc.line - 1, end)))
+
+
+@functools.lru_cache(maxsize=4096)
+def _uri(path: Path) -> str:
+    return from_fs_path(str(path))
 
 
 def _subjects(ls, path: Path, position: types.Position) -> list[tuple[View, tuple[str, int, bool]]]:

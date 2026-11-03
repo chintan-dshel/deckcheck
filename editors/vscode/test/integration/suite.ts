@@ -1,5 +1,7 @@
 import * as vscode from "vscode";
 import path from "node:path";
+import fs from "node:fs";
+import readline from "node:readline";
 import assert from "node:assert/strict";
 
 const WS = process.env.DECKCHECK_WS!;
@@ -305,7 +307,51 @@ const harmTests: [string, () => Promise<void>][] = [
       ` off ${median(off[LARGEST]).toFixed(0)} ms (on ${busy.map((x) => x.toFixed(0)).join(" ")})`);
     assert.deepEqual(slower, []);
   }],
+  ["navigationDuringYarisCheck", async () => {
+    // M2c: a navigation request never waits for a check; after it, references to the most-used part within 1 s
+    await openMs(MAIN);                                      // stays open: the model's parse is kept after its check
+    await ext().exports.client()!.sendNotification("deckcheck/check", { uri: vscode.Uri.file(MAIN).toString() });
+    await new Promise((r) => setTimeout(r, 5000));           // the full check is running
+    const times: number[] = [];
+    for (let i = 0; i < 20; i++) {
+      const t = performance.now();
+      await vscode.commands.executeCommand("vscode.executeHoverProvider", vscode.Uri.file(MAIN), new vscode.Position(2, 0));
+      times.push(performance.now() - t);
+    }
+    console.log(`     hover during a Yaris check: worst ${Math.max(...times).toFixed(1)} ms`);
+    assert.ok(Math.max(...times) < 100, `worst ${Math.max(...times)} ms`);
+    await until(() => (ext().exports.lastStatusMain().endsWith("combine.key")
+      && ext().exports.lastState() === "checks on save") || undefined, 300_000);
+    const [line, col] = await mostUsedPart(LARGEST);
+    const t = performance.now();
+    const refs = await ext().exports.client()!.sendRequest("textDocument/references", {
+      textDocument: { uri: vscode.Uri.file(LARGEST).toString() }, position: { line: line - 1, character: col },
+      context: { includeDeclaration: false } }) as unknown[] | null;
+    const ms = performance.now() - t;
+    console.log(`     references to the most-used part after the check: ${refs?.length ?? 0} in ${ms.toFixed(0)} ms`);
+    assert.ok(refs && refs.length > 0 && ms < 1000, `${refs?.length} in ${ms.toFixed(0)} ms`);
+  }],
 ];
+
+// (line, column) of the first shell of the part with the most shells: the deck text streamed, as the Python test does
+async function mostUsedPart(file: string): Promise<[number, number]> {
+  const counts = new Map<string, number>(), first = new Map<string, [number, number]>();
+  let block = "", n = 0;
+  const lines = readline.createInterface({ input: fs.createReadStream(file, { encoding: "latin1" }), crlfDelay: Infinity });
+  for await (const raw of lines) {
+    n++;
+    if (raw.startsWith("*")) block = (raw.slice(1).split(/\s+/)[0] ?? "").toUpperCase();
+    else if (block === "ELEMENT_SHELL" && !raw.startsWith("$") && !raw.includes(",")) {
+      const slot = raw.slice(8, 16), pid = slot.trim();
+      if (/^\d+$/.test(pid)) {
+        counts.set(pid, (counts.get(pid) ?? 0) + 1);
+        if (!first.has(pid)) first.set(pid, [n, 8 + slot.length - slot.trimStart().length]);
+      }
+    }
+  }
+  const best = [...counts].reduce((a, b) => (b[1] > a[1] ? b : a))[0];
+  return first.get(best)!;
+}
 
 export async function run(): Promise<void> {
   await ext().activate();

@@ -15,7 +15,7 @@ from pygls.uris import from_fs_path, to_fs_path
 from deckcheck import __version__
 from deckcheck.includes import _key, _norm
 from deckcheck.lsp import features
-from deckcheck.lsp.__main__ import start_watchdog
+from deckcheck.lsp.__main__ import rss_bytes, start_watchdog
 from deckcheck.lsp.convert import merge, to_lsp
 from deckcheck.lsp.runner import Runner
 from deckcheck.lsp.workspace import Settings, Workspace, drain_index
@@ -334,7 +334,7 @@ def active(ls: DeckServer, params) -> dict | None:
 
 @server.feature("deckcheck/ping")
 def ping(ls: DeckServer, params) -> dict:
-    return {"ok": True, "active": ls.runner.active, "caches": len(ls.ws._caches)}
+    return {"ok": True, "active": ls.runner.active, "caches": len(ls.ws._caches), "mb": rss_bytes() / 2**20}
 
 
 @server.feature(types.TEXT_DOCUMENT_HOVER)

@@ -1,7 +1,8 @@
 # deckcheck M2: VS Code extension — design
 
 Status: approved 2026-10-30; M2a done 2026-10-30 (`docs/m2a-server-squiggles.md`); M2b done 2026-10-31
-(`docs/m2b-extension.md`). Binds M2a, M2b and M2c. Parent spec:
+(`docs/m2b-extension.md`); M2c done 2026-11-03 (`docs/m2c-navigation.md`; its plan's D3 amends §5.5, D4 amends
+§4.3). Binds M2a, M2b and M2c. Parent spec:
 `docs/specs/2026-10-27-deckcheck-design.md` (§8 front doors, §12 edge-case register).
 
 ## 1. Goal and bracketing

@@ -151,10 +151,14 @@ def card_at(block: Block, line: int) -> Card | None:
 
 
 def line_text(src: SourceFile, line: int) -> str | None:
-    b = block_at(src, line)
-    if b is None:
+    i = bisect.bisect_right(src.blocks, line, key=lambda b: b.line) - 1
+    if i < 0:
         return None
-    return b.text if line == b.line else card_at(b, line).text
+    b = src.blocks[i]
+    if line == b.line:
+        return b.text
+    c = card_at(b, line)
+    return c.text if c is not None else None
 
 
 def _row_cards(block: Block) -> int:

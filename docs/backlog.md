@@ -18,7 +18,11 @@ Status: **open**, **done** (with where), or **pinned** (waiting on Chintan).
 | Item | Why | Status |
 |---|---|---|
 | Client status as a per-model state machine (`logic.ts`), status bar follows the active file's model | both M2b.1 state bugs and the recurring "status names the last model announced" lived in loose module variables | done (branch client-state: `StatusBoard`; fresh review: 3 Important fixed) |
-| M2c: hover, go to definition, find references, outline, field ruler hints | spec stage M2c | open |
+| M2c: hover, go to definition, find references, outline, field ruler hints | spec stage M2c | done (branch m2c, `docs/m2c-navigation.md`) |
+| Manual "Navigate a model" section and roadmap "M2 done" | the manual and roadmap live on unmerged docs-manual; M2c documented navigation in the extension README only | open (after docs-manual merges) |
+| Navigation deep in non-uniform blocks (D5) | hover reads at most 2,000 cards of a non-table block (`*SET_NODE_LIST`) | open |
+| Navigation while a big model is edited (D1) | answers only from the last check; a big model edited is unanswered until saved | open |
+| Navigation on a single huge file opened alone | an unsynced file (> maxSyncMB) with no synced file in its model loses its parse after the check, so it gets no navigation | open |
 | Notepad++: a tested NppExec recipe for the CLI, in the README | Chintan's trial: many engineers use Notepad++ | open (after M3) |
 | Other LSP editors (Neovim, Sublime, Emacs, Kate, JetBrains) | squiggles work through any LSP client; harm gate is VS Code only | open (on request) |
 | Incremental model index (live checks on big models) | trial finding 7 | declined by Chintan: save-to-check with clear messages is enough |

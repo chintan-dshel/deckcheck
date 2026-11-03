@@ -1,6 +1,8 @@
 import asyncio
 import os
+import time
 
+import pytest
 from lsprotocol import types
 
 from tests.test_lsp_server import open_doc, published, session, uri
@@ -185,3 +187,26 @@ async def test_no_ruler_on_a_comma_separated_card(tmp_path):
         open_doc(client, main)
         await published(client, uri(main))
         assert not await code_actions(client, main, 6, 0)
+
+
+@pytest.mark.parametrize("kind", ["long_line", "binary", "nul"])
+async def test_features_on_hostile_files(tmp_path, kind):
+    body = {"long_line": b"*KEYWORD\n*NODE\n" + b"1" * 2**20 + b"\n*END\n",
+            "binary": bytes(range(256)) * 4096,
+            "nul": b"*KEYWORD\n*PART\n\x00\x00\x00\n*END\n"}[kind]
+    (tmp_path / "main.k").write_bytes(body)
+    async with session(tmp_path) as client:
+        open_doc(client, tmp_path / "main.k")
+        await asyncio.sleep(2)
+        for line in (1, 2, 3):
+            t = time.monotonic()
+            await hover(client, tmp_path / "main.k", line, 5)
+            await definition(client, tmp_path / "main.k", line, 5)
+            await references(client, tmp_path / "main.k", line, 5)
+            await symbols(client, tmp_path / "main.k")
+            await code_actions(client, tmp_path / "main.k", line, 5)
+            await client.text_document_inlay_hint_async(types.InlayHintParams(
+                types.TextDocumentIdentifier(uri(tmp_path / "main.k")), types.Range(pos(1, 0), pos(40, 0))))
+            assert time.monotonic() - t < 1.0
+        reply = await client.protocol.send_request_async("deckcheck/ping", {})
+        assert (reply["ok"] if isinstance(reply, dict) else reply.ok) is True
