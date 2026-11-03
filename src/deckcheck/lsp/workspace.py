@@ -72,6 +72,7 @@ class Workspace:
         self._light: dict[str, SourceFile] = {}  # include-only parses, kept across scans until their file changes
         self._dirty = True
         self._lock = threading.Lock()
+        self.reading = threading.Lock()  # held while parses are freed; requests never wait for it
 
     # the editor's text
     def open(self, path: Path, text: str) -> None:
@@ -104,29 +105,42 @@ class Workspace:
 
     def apply_drops(self) -> None:
         """Worker thread: free the parses of changed files, a chunk at a time."""
-        with self._lock:
-            drops, self._drops = self._drops, set()
-        for k in drops:
-            self._light.pop(k, None)
-        for cache in list(self._caches.values()):
+        with self.reading:  # the drops are taken under it too: parsed() must not see a stale parse as current
+            with self._lock:
+                drops, self._drops = self._drops, set()
             for k in drops:
-                src = cache.pop(k, None)
-                if src is not None:
-                    drain_source(src)
+                self._light.pop(k, None)
+            for cache in list(self._caches.values()):
+                for k in drops:
+                    src = cache.pop(k, None)
+                    if src is not None:
+                        drain_source(src)
+
+    def parsed(self, main: Path, path: Path) -> SourceFile | None:
+        """The model's parse of a file, unless the file changed since (a drop not yet applied counts)."""
+        k = _key(_norm(path))
+        with self._lock:
+            if k in self._drops:
+                return None
+            return self._caches.get(_key(_norm(main)), {}).get(k)
 
     def open_models(self) -> set[str]:
         open_files = set(self._overlay)
         return {m for m in self._caches if self._reach.get(m, {m}) & open_files}
 
-    def release_closed(self) -> None:
-        """Worker thread: free the parse caches of models with no open file (M2 spec §6)."""
+    def release_closed(self) -> list[str]:
+        """Worker thread: free the parse caches of models with no open file (M2 spec §6). Returns their keys."""
         keep = self.open_models()
-        for m in list(self._caches):
-            if m not in keep:
-                cache = self._caches.pop(m)
-                for src in cache.values():
-                    drain_source(src)
-                drain(cache)
+        released = []
+        with self.reading:
+            for m in list(self._caches):
+                if m not in keep:
+                    cache = self._caches.pop(m)
+                    for src in cache.values():
+                        drain_source(src)
+                    drain(cache)
+                    released.append(m)
+        return released
 
     # main decks
     def mark_dirty(self) -> None:

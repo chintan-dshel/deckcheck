@@ -20,6 +20,18 @@ def utf16_column(line: str, col: int, from_disk: bool) -> int:
     return len(prefix.encode("utf-16-le")) // 2
 
 
+def m1_column(line: str, character: int, from_disk: bool) -> int:
+    """The M1 column of an editor position: the first column whose UTF-16 position reaches it."""
+    lo, hi = 0, len(line)
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if utf16_column(line, mid, from_disk) < character:
+            lo = mid + 1
+        else:
+            hi = mid
+    return lo
+
+
 def _lines(source, wanted: set[int]) -> dict[int, str]:
     """The text of only the lines that carry a finding: a dict of every line of a 5-million-card mesh would add
     hundreds of MB for one finding."""

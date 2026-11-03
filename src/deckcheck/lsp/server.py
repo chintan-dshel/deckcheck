@@ -2,6 +2,8 @@
 (spec §3). Results are published from the runner's thread through the event loop."""
 import asyncio
 import gc
+import os
+import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -12,10 +14,12 @@ from pygls.uris import from_fs_path, to_fs_path
 
 from deckcheck import __version__
 from deckcheck.includes import _key, _norm
+from deckcheck.lsp import features
 from deckcheck.lsp.__main__ import start_watchdog
 from deckcheck.lsp.convert import merge, to_lsp
 from deckcheck.lsp.runner import Runner
 from deckcheck.lsp.workspace import Settings, Workspace, drain_index
+from deckcheck.navigate import NavIndex, build_nav
 from deckcheck.rules import check
 
 
@@ -28,6 +32,7 @@ class DeckServer(LanguageServer):
     checked_at: dict[str, float]
     edited: set[str]
     checking: dict[str, tuple[float, float]]  # model key -> (wall-clock start, estimated seconds)
+    nav: dict[str, NavIndex]  # model key -> the last check's navigation index (M2c)
 
 
 server = DeckServer("deckcheck", __version__)
@@ -48,6 +53,7 @@ class Result:
     not_checked: list[dict]
     started: float  # wall-clock time the check began: files not modified since then are what it checked
     summary: dict   # what was covered and found, shown when the engineer asked (trial finding 6)
+    nav: object = None  # NavIndex, built in the worker
 
 
 def _status(ls: DeckServer, main: Path, state: str, items: list[dict], **extra) -> None:
@@ -78,11 +84,13 @@ def _publish(ls: DeckServer, main: Path, result: Result | None, error, reason: s
     if error is not None or result is None:
         ls.results[k] = {u: [] for u in previous}
         ls.checked_at.pop(k, None)
+        ls.nav.pop(k, None)
         state, items = "check failed", []
         ls.window_log_message(types.LogMessageParams(types.MessageType.Error, f"deckcheck: {main}: {error!r}"))
     else:
         ls.results[k] = result.diagnostics
         ls.checked_at[k] = result.started
+        ls.nav[k] = result.nav
         for u in previous - set(ls.results[k]):
             ls.results[k][u] = []
         state, items = ("ok" if ls.runner.live(main) else "checks on save"), result.not_checked
@@ -130,10 +138,11 @@ def _check(ls: DeckServer, main: Path) -> Result:
         result = Result(to_lsp(report, ls.ws.synced),
                         [{"what": n.what, "reasons": list(n.reasons), "count": n.count} for n in report.not_checked],
                         started, summary)
+        result.nav = build_nav(report.index)
         drain_index(report.index)
         return result
     finally:
-        ls.ws.release_closed()
+        _release(ls)
         gc.freeze()
         gc.enable()
 
@@ -145,9 +154,22 @@ def _on_demand(ls: DeckServer, main: Path) -> None:
     _status(ls, main, "click to check", [])
 
 
+def _forget(ls: DeckServer, released: list[str]) -> None:
+    for k in released:
+        ls.nav.pop(k, None)
+
+
+def _release(ls: DeckServer) -> None:
+    """Worker thread: a closed model's parsed files (about 1 GB for the Yaris) are freed, a chunk at a time, and
+    its navigation index is forgotten."""
+    released = ls.ws.release_closed()
+    if released:
+        ls.loop.call_soon_threadsafe(_forget, ls, released)
+
+
 def _prepare(ls: DeckServer) -> None:
     ls.ws.apply_drops()
-    ls.ws.release_closed()  # a closed model's parsed files (about 1 GB for the Yaris) are freed, a chunk at a time
+    _release(ls)
     ls.ws.ensure_scanned()
 
 
@@ -162,7 +184,7 @@ def initialize(ls: DeckServer, params: types.InitializeParams) -> None:
     ls.loop = asyncio.get_running_loop()
     ls.ws = Workspace(folders, settings)
     ls.results, ls.names = {}, {}
-    ls.checked_at, ls.edited, ls.checking = {}, set(), {}
+    ls.checked_at, ls.edited, ls.checking, ls.nav = {}, set(), {}, {}
     on_loop = ls.loop.call_soon_threadsafe
     ls.runner = Runner(models=ls.ws.models_for, check=lambda m: _check(ls, m),
                        publish=lambda m, r, e, why: on_loop(_publish, ls, m, r, e, why),
@@ -303,3 +325,23 @@ def active(ls: DeckServer, params) -> dict | None:
 @server.feature("deckcheck/ping")
 def ping(ls: DeckServer, params) -> dict:
     return {"ok": True, "active": ls.runner.active, "caches": len(ls.ws._caches)}
+
+
+@server.feature(types.TEXT_DOCUMENT_HOVER)
+def hover(ls: DeckServer, params: types.HoverParams) -> types.Hover | None:
+    path = _path(params.text_document.uri)
+    return features.hover(ls, path, params.position) if path else None
+
+
+if os.environ.get("DECKCHECK_TEST_HOOKS") == "1":  # tests only: hold the lock the worker holds while freeing parses
+    @server.feature("deckcheck/testHoldReading")
+    def hold_reading(ls: DeckServer, params) -> dict:
+        seconds = params["seconds"] if isinstance(params, dict) else params.seconds
+        held = threading.Event()
+
+        def hold():
+            with ls.ws.reading:
+                held.set()
+                time.sleep(seconds)
+        threading.Thread(target=hold, daemon=True).start()
+        return {"held": held.wait(5)}

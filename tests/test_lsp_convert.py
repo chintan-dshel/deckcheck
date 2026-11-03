@@ -3,7 +3,7 @@ from pathlib import Path
 from lsprotocol import types
 from pygls.uris import from_fs_path
 
-from deckcheck.lsp.convert import merge, to_lsp, utf16_column
+from deckcheck.lsp.convert import m1_column, merge, to_lsp, utf16_column
 from deckcheck.rules import check
 
 TORTURE = Path(__file__).parent / "torture"
@@ -52,3 +52,10 @@ def test_line_texts_are_collected_only_for_lines_with_findings():
     from deckcheck.lsp.convert import _lines
     src = check(TORTURE / "seeded_mistakes" / "main.k").tree.files[0].source
     assert set(_lines(src, {8, 11})) == {8, 11}
+
+
+def test_m1_column_inverts_utf16_column():
+    disk = "é é".encode("utf-8").decode("latin-1") + "   1"   # what M1 read from a UTF-8 file
+    for col in range(len(disk) + 1):
+        assert m1_column(disk, utf16_column(disk, col, True), True) <= col
+    assert m1_column("abc", 2, False) == 2 and m1_column("ab", 9, False) == 2

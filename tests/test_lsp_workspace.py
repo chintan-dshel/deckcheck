@@ -155,3 +155,25 @@ def test_model_size_sums_every_file_it_reaches(tmp_path):
     ws = _ws(tmp_path)
     want = sum((tmp_path / n).stat().st_size for n in ("main.k", "mat.k")) / 2**20
     assert abs(ws.model_mb(_norm(tmp_path / "main.k")) - want) < 1e-9
+
+
+def test_parsed_is_none_once_a_file_changes(tmp_path):
+    from deckcheck.includes import resolve_tree
+    from tests.test_navigate import model
+    main = model(tmp_path)
+    ws = Workspace([tmp_path], Settings())
+    ws.ensure_scanned()
+    resolve_tree(main, cache=ws.cache_for(main))
+    assert ws.parsed(main, main) is not None
+    ws.change(main, main.read_text())
+    assert ws.parsed(main, main) is None
+
+
+def test_release_closed_returns_what_it_freed(tmp_path):
+    from deckcheck.includes import resolve_tree
+    from tests.test_navigate import model
+    main = model(tmp_path)
+    ws = Workspace([tmp_path], Settings())
+    ws.ensure_scanned()
+    resolve_tree(main, cache=ws.cache_for(main))
+    assert ws.release_closed() == [_key(_norm(main))]

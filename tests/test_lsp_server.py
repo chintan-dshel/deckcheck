@@ -18,11 +18,11 @@ CASES = sorted(p.parent.name for p in TORTURE.glob("*/expected.toml"))
 
 
 @asynccontextmanager
-async def session(folder: Path, **options):
+async def session(folder: Path, env: dict | None = None, **options):
     client = make_test_lsp_client()
     client.statuses = []
     client.feature("deckcheck/status")(lambda ls, params: ls.statuses.append(params))
-    await client.start_io(sys.executable, "-m", "deckcheck.lsp")
+    await client.start_io(sys.executable, "-m", "deckcheck.lsp", env=env)
     await client.initialize_session(types.InitializeParams(
         capabilities=client_capabilities("visual-studio-code"),
         workspace_folders=[types.WorkspaceFolder(uri=from_fs_path(os.path.abspath(folder)), name="ws")],
