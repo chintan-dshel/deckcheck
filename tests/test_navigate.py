@@ -6,7 +6,9 @@ from deckcheck.conditions import UNKNOWN
 from deckcheck.fields import Field
 from deckcheck.includes import resolve_tree
 from deckcheck.index import Target, build, target
-from deckcheck.navigate import Table
+from deckcheck.navigate import (READ_LIMIT, Table, block_at, explain, explain_keyword, fields_between, hit,
+                                 subject)
+from deckcheck.reader import read_file
 
 TORTURE = Path(__file__).parent / "torture"
 
@@ -133,3 +135,104 @@ def test_transform_definition_and_uses():
 def test_uses_complete_names_what_it_could_not_place(tmp_path):
     nav = nav_of(model(tmp_path, MAIN.replace(i10(1, 1, 1), i10(1, 1, -1))))  # a negative mid: a possible use
     assert nav.uses_complete("MAT") != [] and nav.uses_complete("SECTION") == []
+
+
+def at(nav, path, line, col):
+    fi = nav.file_index(path)
+    block = block_at(nav.tree.files[fi].source, line)
+    fields = fields_between(block, line, line, nav.params, nav.long_deck)
+    return fi, fields, hit(fields, col)
+
+
+def test_the_field_under_a_column(tmp_path):
+    main = model(tmp_path)
+    nav = nav_of(main)
+    _, fields, f = at(nav, main, 6, 29)
+    assert [x.name for x in fields][:3] == ["pid", "secid", "mid"] and f.name == "mid"
+    assert at(nav, main, 16, 23)[2].name == "n1"
+
+
+def test_padding_and_blank_fields(tmp_path):
+    main = model(tmp_path)
+    nav = nav_of(main)
+    assert at(nav, main, 6, 25)[2] is None            # spaces before mid's value
+    assert at(nav, main, 6, 35)[2].name == "eosid"    # blank: hit across its whole 10-wide slot
+
+
+def test_a_row_deep_in_a_big_table_is_read_alone(tmp_path):
+    nodes = "".join(i8(n) + f"{0.0:>16}" * 3 + "\n" for n in range(1, 50_001))
+    main = model(tmp_path, "*KEYWORD\n*NODE\n" + nodes + "*END\n", files={})
+    nav = nav_of(main)
+    block = block_at(nav.tree.files[0].source, 40_002)
+    fields = fields_between(block, 40_002, 40_002, nav.params, nav.long_deck)
+    assert fields[0].name == "nid" and fields[0].value == 40_000 and fields[0].line == 40_002
+
+
+def test_deep_in_a_non_uniform_block_says_nothing(tmp_path):
+    rows = "".join(i10(n) + "\n" for n in range(1, READ_LIMIT + 1000))
+    main = model(tmp_path, "*KEYWORD\n*SET_NODE_LIST\n" + i10(1) + "\n" + rows + "*END\n", files={})
+    nav = nav_of(main)
+    block = block_at(nav.tree.files[0].source, 5)
+    assert fields_between(block, 5, 5, nav.params, nav.long_deck) is not None
+    assert fields_between(block, READ_LIMIT + 500, READ_LIMIT + 500, nav.params, nav.long_deck) is None
+
+
+def test_subject_of_a_reference_and_a_definition(tmp_path):
+    main = model(tmp_path)
+    nav = nav_of(main)
+    fi, fields, f = at(nav, main, 6, 29)
+    assert subject(nav, fi, fields, f) == ("MAT", 1, False)
+    fi, fields, f = at(nav, main, 6, 9)
+    assert subject(nav, fi, fields, f) == ("PART", 1, True)
+
+
+def test_hover_on_a_resolved_reference(tmp_path):
+    main = model(tmp_path)
+    nav = nav_of(main)
+    text = explain(nav, *at(nav, main, 6, 29))
+    assert "**mid**" in text and "columns 21-30" in text and "integer" in text
+    assert "mid → MAT 1, *MAT_ELASTIC at mat.k:3" in text
+
+
+def test_hover_on_a_definition_counts_its_uses(tmp_path):
+    main = model(tmp_path)
+    nav = nav_of(main)
+    text = explain(nav, *at(nav, main.parent / "mat.k", 3, 9))
+    assert "Defines MAT 1" in text and "1 use" in text
+
+
+def test_hover_on_a_dangling_and_an_ignored_reference(tmp_path):
+    main = model(tmp_path, MAIN.replace(i10(1, 1, 1), i10(1, 1, 99)))
+    nav = nav_of(main)
+    assert "MAT 99 is not defined" in explain(nav, *at(nav, main, 6, 29))
+    case = Path(os.path.abspath(TORTURE / "spc_set_none"))
+    nav = nav_of(case / "main.k")
+    assert "LS-DYNA accepts this, but the reference has no effect" in explain(nav, *at(nav, case / "main.k", 22, 9))
+
+
+def test_hover_on_a_blank_field_gives_its_default(tmp_path):
+    main = model(tmp_path)
+    nav = nav_of(main)
+    assert "blank" in explain(nav, *at(nav, main, 6, 35)) and "default: 0" in explain(nav, *at(nav, main, 6, 35))
+
+
+def test_hover_value_as_read_after_a_parameter(tmp_path):
+    main = model(tmp_path, MAIN.replace("*KEYWORD\n", PARAM, 1).replace(i10(1, 1, 1), i10(1, 1, "&m")))
+    nav = nav_of(main)
+    text = explain(nav, *at(nav, main, 8, 28))         # "&m" right-aligned in mid's slot: columns 28-29
+    assert "&m = 1" in text and "MAT 1" in text
+
+
+def test_hover_in_a_transformed_file():
+    case = Path(os.path.abspath(TORTURE / "inc_transform"))
+    nav = nav_of(case / "main.k")
+    text = explain(nav, *at(nav, case / "mesh.k", 8, 23))
+    assert "NODE 101" in text and "offset 100" in text and "mesh.k:3" in text
+
+
+def test_hover_on_a_keyword_line(tmp_path):
+    main = model(tmp_path)
+    nav = nav_of(main)
+    assert explain_keyword(block_at(nav.tree.files[0].source, 4)).startswith("*PART")
+    src = read_file(tmp_path / "x.k", "*KEYWORD\n*NOT_A_KEYWORD\n1\n")
+    assert "not in deckcheck's keyword data; passed through" in explain_keyword(block_at(src, 2))
