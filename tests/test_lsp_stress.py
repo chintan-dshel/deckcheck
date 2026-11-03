@@ -207,6 +207,7 @@ async def _timed(coro) -> tuple[object, float]:
     return got, (time.perf_counter() - t) * 1000
 
 
+@STRESS  # timings: run alone (in the default suite, other tests' servers share the four cores)
 @pytest.mark.corpus
 async def test_navigation_on_the_yaris():
     main = Path(os.path.abspath(fetch(_entry("ccsa-yaris"))))
