@@ -33,7 +33,7 @@ class SourceFile:
     path: Path
     blocks: list[Block]
     end_line: int | None
-    from_disk: bool = True  # read from disk as Latin-1, or from the editor's text: how its columns map (M2c)
+    from_disk: bool = field(default=True, compare=False)  # read from disk as Latin-1, or from the editor's text: how its columns map (M2c)
 
 
 def _split(text: str) -> list[str]:

@@ -225,7 +225,7 @@ async def test_navigation_on_the_yaris():
         _, t_outline2 = await _timed(symbols(client, sets))
         hints, t_hints = await _timed(client.text_document_inlay_hint_async(types.InlayHintParams(
             types.TextDocumentIdentifier(uri(big)), types.Range(pos(line, 0), pos(line + 60, 0)))))
-        reply = await client.protocol.send_request_async("deckcheck/ping", {})
+        reply = await client.protocol.send_request_async("deckcheck/ping", {"memory": True})
         mb = reply["mb"] if isinstance(reply, dict) else reply.mb
         print(f"yaris nav: part {pid} (first shell at line {line}): hover {t_hover:.0f} ms, definition "
               f"{t_def:.0f} ms, references {len(r or [])} in {t_refs:.0f} ms; outline {len(o)} entries in "

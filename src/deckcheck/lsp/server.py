@@ -338,8 +338,11 @@ def active(ls: DeckServer, params) -> dict | None:
 
 @server.feature("deckcheck/ping")
 def ping(ls: DeckServer, params) -> dict:
-    return {"ok": True, "active": ls.runner.active, "caches": len(ls.ws._caches), "navs": len(ls.nav),
-            "mb": rss_bytes() / 2**20}
+    reply = {"ok": True, "active": ls.runner.active, "caches": len(ls.ws._caches), "navs": len(ls.nav)}
+    memory = params.get("memory") if isinstance(params, dict) else getattr(params, "memory", None)
+    if memory:  # only when asked: measuring takes up to 150 ms on Windows, and the ping times the protocol thread
+        reply["mb"] = rss_bytes() / 2**20
+    return reply
 
 
 @server.feature(types.TEXT_DOCUMENT_HOVER)
