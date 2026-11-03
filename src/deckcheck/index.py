@@ -127,6 +127,54 @@ def _shift(kind: str, offs: dict[str, int] | None) -> int | None:
     return offs.get(OFFSET_FIELD[kind], 0) if kind in OFFSET_FIELD else None
 
 
+class Target(NamedTuple):
+    kind: str | None
+    id: int | None
+    how: str  # none, unmapped, unknown, not an id, offset, possible, unchecked, checked
+
+
+def target(f: Field, row: dict[str, Field], offs: dict[str, int] | None) -> Target:
+    """Where a reference field points, by the rules LS-DYNA was asked about."""
+    return Target._make(_target(f, row, offs))
+
+
+def _target(f: Field, row: dict[str, Field], offs: dict[str, int] | None) -> tuple:
+    """target() as a plain tuple: Index._reference runs it per reference, and a NamedTuple there cost 13 % of a
+    Yaris check."""
+    spec, v = f.spec, f.value
+    if "link_by" in spec:
+        t = row.get(spec["link_by"])
+        ok = t is not None and isinstance(t.value, (int, str))  # a type number, or a row name (SET_*_GENERAL)
+        kind = spec["link_map"].get(str(t.value).strip().upper()) if ok else None
+        if kind is None and v is not None and v != 0:  # a type deckcheck doesn't map: a use it can't place
+            return None, None, "unmapped"
+    else:
+        kind = spec.get("link")
+    if kind is None or v is None or v == 0:
+        return kind, None, "none"
+    if v is UNKNOWN:
+        return kind, None, "unknown"
+    if isinstance(v, float) and v.is_integer():  # an id in a float field (airbag cn)
+        v = int(v)
+    if not isinstance(v, int) or abs(v) > ID_MAX:
+        return kind, None, "not an id"
+    shift = _shift(kind, offs)
+    if shift is None:
+        return kind, None, "offset"
+    if any(_shift(k, offs) != shift for k in LOOKUP.get(kind, (kind,))):
+        # a fallback kind shifted by another offset (SET_PART -> PART): not refereed, so a use, never checked
+        return kind, abs(v) + shift, "possible"
+    if spec.get("link_when") == "unchecked":  # LS-DYNA accepts a missing target here: a use, never dangling
+        return kind, abs(v) + shift, "unchecked"
+    if spec.get("link_when") == "negative":
+        if v > 0:
+            return kind, None, "none"
+        v = -v
+    elif v < 0:  # a sign LS-DYNA gives a meaning deckcheck doesn't know: counts as a use, is never checked
+        return kind, -v + shift, "possible"
+    return kind, v + shift, "checked"
+
+
 @dataclass
 class Index:
     tree: Tree
@@ -142,6 +190,8 @@ class Index:
     failures: list[tuple[int, int, str]] = field(default_factory=list)        # file index, block line, what failed
     blank_defs: list[tuple[str, str, int, bool]] = field(default_factory=list)  # kind, keyword, packed loc, is 0
     names: list[str] = field(default_factory=list)
+    params: dict = field(default_factory=dict)
+    long_deck: bool = False
     _name_ids: dict[str, int] = field(default_factory=dict)
 
     def where(self, loc: int) -> tuple[Path, int, int, int]:
@@ -215,47 +265,28 @@ class Index:
             seen[id_] = loc
 
     def _reference(self, f: Field, row: dict[str, Field], fi: int, offs, key: str) -> None:
-        spec, v = f.spec, f.value
-        if "link_by" in spec:
-            t = row.get(spec["link_by"])
-            ok = t is not None and isinstance(t.value, (int, str))  # a type number, or a row name (SET_*_GENERAL)
-            kind = spec["link_map"].get(str(t.value).strip().upper()) if ok else None
-            if kind is None and v is not None and v != 0:  # a type deckcheck doesn't map: a use it can't place
-                for k in set(spec["link_map"].values()):
-                    self._uncertain(self.uncertain_uses, k, f"{self._at(fi, f.line)}: {spec['link_by']} not mapped")
-                return
+        if f.value is None or f.value == 0:  # most reference fields are blank: skip the call (_target says "none")
+            return
+        kind, id_, how = _target(f, row, offs)
+        if how == "checked":
+            self._record(kind, id_, fi, f.start, f.end, f.line, f"{key}.{f.name}")
+        elif how == "none":
+            pass
+        elif how == "possible":
+            self.possible.setdefault(kind, set()).add(id_)
+        elif how == "unchecked":
+            self.possible.setdefault(kind, set()).add(id_)
+            self.unchecked.append((kind, id_, pack(fi, f.line, f.start, f.end), f"{key}.{f.name}"))
         else:
-            kind = spec.get("link")
-        if kind is None or v is None or v == 0:
-            return
-        if v is UNKNOWN:
-            self._uncertain(self.uncertain_uses, kind, f"{self._at(fi, f.line)}: reference not known")
-            return
-        if isinstance(v, float) and v.is_integer():  # an id in a float field (airbag cn)
-            v = int(v)
-        if not isinstance(v, int) or abs(v) > ID_MAX:
-            self._uncertain(self.uncertain_uses, kind, f"{self._at(fi, f.line)}: reference not an id")
-            return
-        shift = _shift(kind, offs)
-        if shift is None:
-            self._uncertain(self.uncertain_uses, kind, "transform offset not refereed")
-            return
-        if any(_shift(k, offs) != shift for k in LOOKUP.get(kind, (kind,))):
-            # a fallback kind shifted by another offset (SET_PART -> PART): not refereed, so a use, never checked
-            self.possible.setdefault(kind, set()).add(abs(v) + shift)
-            return
-        if spec.get("link_when") == "unchecked":  # LS-DYNA accepts a missing target here: a use, never dangling
-            self.possible.setdefault(kind, set()).add(abs(v) + shift)
-            self.unchecked.append((kind, abs(v) + shift, pack(fi, f.line, f.start, f.end), f"{key}.{f.name}"))
-            return
-        if spec.get("link_when") == "negative":
-            if v > 0:
-                return
-            v = -v
-        elif v < 0:  # a sign LS-DYNA gives a meaning deckcheck doesn't know: counts as a use, is never checked
-            self.possible.setdefault(kind, set()).add(-v + shift)
-            return
-        self._record(kind, v + shift, fi, f.start, f.end, f.line, f"{key}.{f.name}")
+            where = self._at(fi, f.line)  # only for the rare uncertain cases: an f-string per reference costs seconds
+            if how == "unmapped":
+                for k in set(f.spec["link_map"].values()):
+                    self._uncertain(self.uncertain_uses, k, f"{where}: {f.spec['link_by']} not mapped")
+            elif how == "offset":
+                self._uncertain(self.uncertain_uses, kind, "transform offset not refereed")
+            else:
+                self._uncertain(self.uncertain_uses, kind,
+                                f"{where}: reference not known" if how == "unknown" else f"{where}: reference not an id")
 
     def _record(self, kind: str, id_: int, fi: int, start: int, end: int, line: int, name: str) -> None:
         if name not in self._name_ids:
@@ -290,6 +321,7 @@ def build(tree: Tree) -> Index:
             ix.blind.add(f"{p.file.name}:{p.line} {p.kind} *{p.name}")
     params = collect(tree)
     long_deck = _long_deck(tree)
+    ix.params, ix.long_deck = params, long_deck
     for fi, node in enumerate(tree.files):
         offs = _file_offsets(tree, fi)
         for block in node.source.blocks:
