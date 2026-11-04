@@ -112,6 +112,20 @@ Status: **open**, **done** (with where), or **pinned** (waiting on Chintan).
 - open: "Check this model now" prompts about every dirty large tab in the window, not only the model's
 - open: an edit during a big model's own check: "save to check" is overwritten by the result's status
 
+### M2c (navigation, branch m2c)
+- open: a fallback target is labelled with the reference's kind ("ssid → SET_PART 1, *PART at ..."), not the kind it resolved to
+- open: hover on a heavily used definition builds every location to count its uses (about 100 ms for 40k uses); `uses_complete` sorts the whole set per hover
+- open: `ls.outlines` keeps outlines of replaced parses until that file's next outline request
+- open: the `*KEYWORD` outline row shows "0 cards"; the ruler is offered even when a `$#` ruler already sits above the card
+- open: `Table.find` steps byte by byte in Python past a misaligned match (small ids next to multiples of 256)
+- ruling: `index.target()` wraps a plain-tuple `_target()`; the index skips blank fields before calling it (a NamedTuple per reference cost 13 % of a Yaris check; now +2 %)
+- ruling: the outline lists `*KEYWORD` first (one extra row per outline)
+- ruling: references gated at 1 s in VS Code, 1.5 s through the Python test client (a slower LSP client may exceed 1 s on a part with ~40k uses)
+- ruling: the Yaris navigation timing test runs only with `DECKCHECK_STRESS=1`
+- ruling: a file closed before its editor text was compared with the disk loses its parse until the next check
+- ruling: hover answers from the first model of a file in two models (definition and references combine both)
+- ruling: the harm gate's one +254 ms run on the 169 MB include read as noise (three other runs −143, +49, −9 ms)
+
 ### Client status board (branch client-state)
 - open: `stop(false)` from the language client's close handler runs outside the serial chain; its `forgetModels()` can wipe a newer client's records for a moment
 - open: a check discarded as stale keeps its first start time and estimate until the re-run reports ("longer than estimated")

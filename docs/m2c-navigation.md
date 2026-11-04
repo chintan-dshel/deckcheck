@@ -56,15 +56,42 @@ budget. The Yaris check itself: 64.3 s before M2c, 65.6 s after (+2 %; see the f
 |---|---|---|---|
 | Open the small deck, on vs off | ≤ 10 % or ≤ 20 ms | 42 vs 41 ms | 44 vs 42 ms; 43 vs 39 ms |
 | Open the Yaris main deck, idle | ≤ 10 % or ≤ 20 ms | 47 vs 41 ms | 48 vs 47 ms; 48 vs 43 ms |
-| Open the 169 MB include, idle, paired median difference | ≤ 10 % or ≤ 20 ms | −12 ms | **+254 ms on 1,180 ms (fail)**; −143 ms on 1,437 ms; +49 ms on 1,384 ms |
-| An editor command during a Yaris check | < 100 ms | 1.5 ms | 1.3 ms; 1.1 ms |
-| Hover during a Yaris check (new) | < 100 ms | n/a | 14 ms; 17 ms |
+| Open the 169 MB include, idle, paired median difference | ≤ 10 % or ≤ 20 ms | −12 ms | **+254 ms on 1,180 ms (fail)**; −143 ms on 1,437 ms; +49 ms on 1,384 ms; −9 ms on 1,330 ms (after the review fixes) |
+| An editor command during a Yaris check | < 100 ms | 1.5 ms | 1.3 ms; 1.1 ms; 1.3 ms |
+| Hover during a Yaris check (new) | < 100 ms | n/a | 14 ms; 17 ms; 14 ms |
 
-The 169 MB line failed once. The first full run measured +254 ms. The same test run alone measured −143 ms, and a
-second full run measured +49 ms. Single opens of that file range from 0.9 to 2.4 s with deckcheck on or off. Nothing
-M2c adds runs while that file opens: it is never synced, so VS Code sends no requests for it, and the server is
-freshly resumed and idle. I read the failure as the noise this gate's pairing was built against, not as a cost; two of
-three runs pass. A further full run would settle it if you want more than that.
+The 169 MB line failed once, on the first full run (+254 ms). The same test run alone measured −143 ms, and two more
+full runs measured +49 ms and −9 ms. Single opens of that file range from 0.9 to 2.6 s with deckcheck on or off.
+Nothing M2c adds runs while that file opens: it is never synced, so VS Code sends no requests for it, and the server
+is freshly resumed and idle. I read the failure as the noise this gate's pairing was built against, not as a cost;
+three of four runs pass, and the last run, on the final code, passes every line.
+
+After the review fixes, alone: hover 12 ms, definition 9 ms, references 37,158 in 964 ms through the Python client and
+581 ms in VS Code, outline 16 ms (5 ms repeated), 610 hints in 16 ms.
+
+## Final review and its fixes
+
+A fresh reviewer read the whole branch. It said "not ready" and found one Critical and four Important issues. Each
+was reproduced by a test that failed first, then fixed:
+- **An include opened after its check got no navigation** (Critical). Opening a file dropped its parse, and no check
+  followed, so after F12 into `mat.k` nothing worked in `mat.k`. Now the parse is kept when the editor shows the
+  file as it is on disk: the worker compares the two, and drops the parse only if they differ. Each parse records
+  whether it was read from disk or from the editor, so its columns map the right way either way.
+- **Definition and references pointed at old lines** of another file edited since the check. Targets in such a file
+  are now left out, and hover says the file changed.
+- **A part set id under mixed `*INCLUDE_TRANSFORM` offsets resolved to a wrong part.** It now reads "a reference
+  deckcheck can't resolve (transform offsets of its kinds differ)". The checker's results are unchanged. Hover also
+  no longer says "is not defined" about a use deckcheck doesn't check.
+- **A model released in its own check's clean-up kept its navigation index** (about 160 MB on the Yaris).
+- **The outline read every card of a block with one id**: 450 ms for two 100,000-card blocks. A label now reads the
+  first 20 cards.
+
+The suite run after the fixes also caught two problems of my own:
+- Task 9 made every ping measure process memory, which takes up to 190 ms on Windows. Memory is now measured only on
+  request.
+- A parse's new origin flag took part in equality.
+
+Six minor findings are in the backlog.
 
 ## Rulings made during the build (cost if wrong)
 
@@ -84,6 +111,12 @@ three runs pass. A further full run would settle it if you want more than that.
    The reading deep in a 1.5 M-node block was measured directly instead. Backlog item.
 8. Small fixes to the plan's test code, none to behaviour: LSP types built with keyword arguments, replies read as
    dict or object, the hover's Markdown read through its value.
+9. The Yaris navigation timing test runs only with `DECKCHECK_STRESS=1`, alone. In the default suite, other tests'
+   servers share the four cores, and it measured 1.5 s.
+10. Closing a file whose editor text was not yet compared with the disk drops its parse, as before M2c. Keeping it
+    would be a guess. Cost: such a file loses its parse until the next check.
+11. Hover answers from the first model of a file that is in two models; definition and references combine both.
+    Cost: where the two models resolve an id differently, hover shows one of them.
 
 ## Decisions D1–D8
 
