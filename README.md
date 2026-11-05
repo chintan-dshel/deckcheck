@@ -4,6 +4,11 @@ deckcheck checks keyword decks for LS-DYNA before you run them. It finds danglin
 that don't fit their field, missing or circular include files, unused materials and sections, and references that
 LS-DYNA accepts but ignores. It reads the deck only. It never runs the solver and makes no physics judgments.
 
+deckcheck is a work in progress (version 0.1.0). The [user manual](docs/manual/README.md) shows the VS Code
+extension step by step, and the [roadmap](docs/roadmap.md) says what is coming next.
+
+![deckcheck in VS Code: squiggles on three mistakes, and the same findings in the Problems panel](docs/manual/images/squiggles-and-problems.png)
+
 ## Install
 
 After the first release:
@@ -132,8 +137,8 @@ Opening an include file checks the whole model it belongs to. Small models are r
 (a full vehicle) is checked when you save it or click "big model, click to check" in the status bar, never just by
 opening it. Once checked, a model can be navigated across its include files: hover a field for its name and what
 its id refers to, go to a definition, find every reference, browse the Outline, and show field names inline. The
-[extension's README](editors/vscode/README.md) covers navigation, its settings and how it stays out of the
-editor's way.
+[user manual](docs/manual/README.md) covers installing, the status bar, commands, settings and troubleshooting, with
+screenshots; the [extension's README](editors/vscode/README.md) covers navigation.
 
 ### Do no harm, measured
 

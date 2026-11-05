@@ -32,6 +32,10 @@ Status: **open**, **done** (with where), or **pinned** (waiting on Chintan).
 | Cancel for a running check | a check can't be interrupted without M1 core changes; Pause stops it | open |
 | Remote, WSL and Codespaces workspaces | untested | open |
 | Debloat pass (dead code, duplicate logic) | 21-day reminder due | open |
+| User manual and public roadmap (`docs/manual/`, `docs/roadmap.md`) | Chintan, 2026-11-01: ready for the public repo, shows it is a work in progress | done (branch docs-manual) |
+| Extension icon | the extension page shows VS Code's generic placeholder (manual screenshot) | open (release prep) |
+| Extension README links to the manual | relative links break inside a .vsix; needs the public GitHub URL | open (release prep) |
+| Screenshot rig in the repo | the manual's screenshots were made by a throwaway driver extension + capture script (session scratch); re-shooting after a UI change means rebuilding it | open (if screenshots go stale) |
 
 ## Deferred minors
 
