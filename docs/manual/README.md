@@ -20,10 +20,11 @@ physics judgments.
 6. [Commands](#6-commands)
 7. [Settings](#7-settings)
 8. [Reading a finding](#8-reading-a-finding)
-9. [It stays out of your way](#9-it-stays-out-of-your-way)
-10. [Troubleshooting](#10-troubleshooting)
-11. [Command line and other editors](#11-command-line-and-other-editors)
-12. [Known limits](#12-known-limits)
+9. [Navigate a model](#9-navigate-a-model)
+10. [It stays out of your way](#10-it-stays-out-of-your-way)
+11. [Troubleshooting](#11-troubleshooting)
+12. [Command line and other editors](#12-command-line-and-other-editors)
+13. [Known limits](#13-known-limits)
 
 ## 1. Install
 
@@ -137,7 +138,7 @@ The deckcheck item at the bottom left always describes the model of the file in 
 | `deckcheck: edited, save to check` | You edited a big model; save to check it again. |
 | `deckcheck: starting` | Finding Python and starting up; a few seconds. |
 | `deckcheck: paused` | Paused for this workspace, or `deckcheck.enable` is off. |
-| `deckcheck: paused (needs more than 2048 MB)` | The model needs more memory than allowed; see [Troubleshooting](#10-troubleshooting). |
+| `deckcheck: paused (needs more than 2048 MB)` | The model needs more memory than allowed; see [Troubleshooting](#11-troubleshooting). |
 | `deckcheck: no Python` | No Python 3.11 or newer was found; see [Install](#11-python). |
 | `deckcheck: stopped` | deckcheck stopped after repeated failures. **Show output** has the details. |
 
@@ -215,7 +216,33 @@ menu lists each one with the reason. For example:
 - a keyword deckcheck doesn't know yet;
 - a `*PARAMETER` it can't resolve.
 
-## 9. It stays out of your way
+## 9. Navigate a model
+
+Once a model has been checked, deckcheck also finds your way around it, across all its include files:
+
+| To | Do | You get |
+|---|---|---|
+| See what a field is | Hover over it | Its name, columns and type, the value as read (`&m = 1` after a `*PARAMETER`), and what an id refers to: `mid → MAT 1, *MAT_ELASTIC at mat.k:3`. On a definition: how many uses it has. |
+| Jump to a definition | F12, or Ctrl+click the id | The keyword that defines it, in whichever include file it is. |
+| List every use | Shift+F12 on an id or its definition | Every reference to it in the model. |
+| See a file's keywords | The **Outline** panel (Explorer side bar) | One entry per keyword, with its id and title. |
+| See field names over the values | Hold Ctrl+Alt | The name of each field, inline, while the keys are held. |
+| Add a column ruler | The lightbulb (Ctrl+.) on a card > **Insert field ruler** | A `$#` comment line above the card naming each column. |
+
+Hover shows structure and what ids resolve to, never descriptions from the keyword manual. Ids shifted by
+`*INCLUDE_TRANSFORM` are followed; where deckcheck can't tell which id is meant, hover says so instead of guessing.
+
+Navigation answers from the last check and never makes you wait for one:
+- Before a model's first check there is nothing yet. A big model is first checked when you save or click
+  **Check this model now**.
+- In a file edited since the last check, navigation waits for the next check, so it never points at lines that have
+  moved. The outline of a file up to 2 MB follows your edits as you type.
+- Deep in a long list-style block, such as a node set more than 2,000 lines below its keyword, hover shows nothing.
+  Node and element tables work at any depth.
+- A file with more than 10,000 keywords gets no outline; the Outline panel says why.
+- The ruler is not offered on comma-separated cards, long-format cards, or files over 20 MB.
+
+## 10. It stays out of your way
 
 deckcheck must never make opening, scrolling or editing a deck worse. Every release is measured on the 1 GB CCSA
 Toyota Yaris model:
@@ -226,7 +253,7 @@ Toyota Yaris model:
 It never takes part in drawing the file. Its work runs in a separate, low-priority process with a memory budget.
 The [project README](../../README.md#do-no-harm-measured) has the measurements and why the rule is set where it is.
 
-## 10. Troubleshooting
+## 11. Troubleshooting
 
 | What you see | What to do |
 |---|---|
@@ -239,7 +266,7 @@ The [project README](../../README.md#do-no-harm-measured) has the measurements a
 | A file in the folder is checked as its own model when it shouldn't be | Set `deckcheck.mainDecks`, or exclude the file with `deckcheck.exclude`. |
 | Something looks wrong | Status bar > **Show output** has deckcheck's log. Please report it with that log; leave out deck contents you can't share. |
 
-## 11. Command line and other editors
+## 12. Command line and other editors
 
 deckcheck also runs from a terminal, with the same checks: `deckcheck main.k`. It suits scripts and CI (text or
 JSON output, exit code 1 on errors). See the [project README](../../README.md#usage).
@@ -248,7 +275,7 @@ Other editors are not supported yet. A tested recipe for Notepad++ (run the comm
 on the [roadmap](../roadmap.md). Editors that speak the Language Server Protocol (Neovim, Sublime Text, Emacs,
 JetBrains) can probably use deckcheck's server, but that is untested.
 
-## 12. Known limits
+## 13. Known limits
 
 - No physics checks: units, time step, contact settings and material sanity are not checked yet.
 - Long-format decks (`*KEYWORD LONG=Y`) are only partly read; the affected blocks are listed as not checked.

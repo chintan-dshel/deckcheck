@@ -11,15 +11,15 @@ Status: **open**, **done** (with where), or **pinned** (waiting on Chintan).
 | Item | Status |
 |---|---|
 | Release: PyPI (CLI) and Open VSX / Marketplace (extension) | pinned: Chintan sleeping on it (2026-10-31). Needs his explicit yes and his trial first |
-| Re-trial of M2b.1 (TRIAL.md steps 2-5, ~10 min) | pinned: next time at the laptop |
+| Re-trial of M2b.1 (TRIAL.md steps 2-5, ~10 min) | done 2026-11-05: all checked, no feedback |
 | Private GitHub remote | done 2026-10-31: github.com/chintan-dshel/deckcheck (private), main pushed |
 
 ## Product backlog (larger items)
 | Item | Why | Status |
 |---|---|---|
 | Client status as a per-model state machine (`logic.ts`), status bar follows the active file's model | both M2b.1 state bugs and the recurring "status names the last model announced" lived in loose module variables | done (branch client-state: `StatusBoard`; fresh review: 3 Important fixed) |
-| M2c: hover, go to definition, find references, outline, field ruler hints | spec stage M2c | done (branch m2c, `docs/m2c-navigation.md`) |
-| Manual "Navigate a model" section and roadmap "M2 done" | the manual and roadmap live on unmerged docs-manual; M2c documented navigation in the extension README only | open (after docs-manual merges) |
+| M2c: hover, go to definition, find references, outline, field ruler hints | spec stage M2c | done (merged 2026-11-05, `docs/m2c-navigation.md`) |
+| Manual "Navigate a model" section and roadmap "M2 done" | the manual and roadmap live on unmerged docs-manual; M2c documented navigation in the extension README only | done (main, 2026-11-05: manual §9, roadmap) |
 | Navigation deep in non-uniform blocks (D5) | hover reads at most 2,000 cards of a non-table block (`*SET_NODE_LIST`) | open |
 | Navigation while a big model is edited (D1) | answers only from the last check; a big model edited is unanswered until saved | open |
 | Navigation on a single huge file opened alone | an unsynced file (> maxSyncMB) with no synced file in its model loses its parse after the check, so it gets no navigation | open |
