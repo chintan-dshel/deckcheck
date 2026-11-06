@@ -7,6 +7,9 @@ references that LS-DYNA accepts but ignores. It reads the deck only: it never ru
 Findings appear as squiggles in the deck and in the Problems panel. When you open an include file, deckcheck checks
 the whole model it belongs to, so a material defined in another include is not reported as missing.
 
+The [user manual](https://github.com/chintan-dshel/deckcheck/blob/main/docs/manual/README.md) covers everything below step by step, with screenshots; the
+[roadmap](https://github.com/chintan-dshel/deckcheck/blob/main/docs/roadmap.md) says what is coming next.
+
 ## Navigate a model
 
 Once a model has been checked, deckcheck also finds your way around it, across its include files:

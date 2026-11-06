@@ -6,3 +6,4 @@ __pycache__/
 bakeoff/scratch/
 .superpowers/
 .venv-extract/
+dist/

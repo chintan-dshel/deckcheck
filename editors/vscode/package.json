@@ -5,6 +5,22 @@
   "version": "0.1.0",
   "publisher": "deckcheck",
   "license": "Apache-2.0",
+  "icon": "images/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chintan-dshel/deckcheck"
+  },
+  "homepage": "https://github.com/chintan-dshel/deckcheck/blob/main/docs/manual/README.md",
+  "bugs": {
+    "url": "https://github.com/chintan-dshel/deckcheck/issues"
+  },
+  "keywords": [
+    "ls-dyna",
+    "keyword deck",
+    "linter",
+    "finite element",
+    "cae"
+  ],
   "engines": {
     "vscode": "^1.91.0"
   },
@@ -121,7 +137,7 @@
     "bundle": "python scripts/bundle_libs.py",
     "test:vscode": "npm run bundle && npm run compile && node out/test/integration/run.js",
     "test:clean": "npm run package && node out/test/integration/clean.js",
-    "package": "npm run bundle && npm run compile && vsce package --allow-missing-repository"
+    "package": "npm run bundle && npm run compile && vsce package"
   },
   "dependencies": {
     "vscode-languageclient": "10.1.2",

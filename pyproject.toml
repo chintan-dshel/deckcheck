@@ -6,23 +6,49 @@ build-backend = "hatchling.build"
 name = "deckcheck"
 version = "0.1.0"
 description = "A linter for LS-DYNA keyword decks"
+readme = "README.md"
 license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "Chintan Shelat" }]
 requires-python = ">=3.11"
 dependencies = []
+keywords = ["ls-dyna", "keyword deck", "linter", "finite element", "cae", "language server"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Manufacturing",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Quality Assurance",
+]
+
+[project.urls]
+Homepage = "https://github.com/chintan-dshel/deckcheck"
+Documentation = "https://github.com/chintan-dshel/deckcheck/blob/main/docs/manual/README.md"
+Issues = "https://github.com/chintan-dshel/deckcheck/issues"
+Changelog = "https://github.com/chintan-dshel/deckcheck/blob/main/CHANGELOG.md"
 
 [project.scripts]
 deckcheck = "deckcheck.cli:main"
 
 [project.optional-dependencies]
-bakeoff = ["dynars==1.1.0", "psutil>=5.9"]
 lsp = ["pygls==2.1.1"]
-dev = ["pytest>=8", "pytest-lsp==1.0.1"]
+dev = ["pytest>=8", "pytest-lsp==1.0.1", "psutil>=5.9", "dynars==1.1.0"]  # dynars: the M0 parser study only
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/deckcheck"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "NOTICE" = "deckcheck/NOTICE"
+
+[tool.hatch.build.targets.sdist]
+include = ["/src/deckcheck", "/README.md", "/CHANGELOG.md", "/LICENSE", "/NOTICE", "/pyproject.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
