@@ -20,6 +20,9 @@ passes its own tests and measurements.
 
 ## What works today (0.1.0)
 
+Install the command line with `pip install deckcheck`, and the extension from the VS Code Marketplace or Open VSX
+(search for **deckcheck**).
+
 **Checks** (the same in the command line and the editor):
 - References to ids that are never defined, and required references left blank or 0 (DC001).
 - The same id defined twice (DC002).
@@ -46,8 +49,6 @@ human body model and the CCSA Toyota Yaris) and catch every planted mistake in m
 
 ## Next
 
-- **First public release:** the command line on PyPI (`pip install deckcheck`) and the extension on Open VSX, then
-  the VS Code Marketplace.
 - **More required references:** blank or 0 references in solids, beams and other element and part keywords, each
   confirmed against LS-DYNA first.
 - **Notepad++:** a tested recipe for running the command line from Notepad++ and jumping to the findings.

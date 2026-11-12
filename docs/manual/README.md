@@ -44,11 +44,8 @@ that extension, then `py -3` or `python3` on your PATH.
 
 ### 1.2 The extension
 
-**After the first release:** open the Extensions view (Ctrl+Shift+X), search for **deckcheck** and click Install.
-
-**Until then**, install it from a `.vsix` file, either way:
-- In VS Code: Command Palette (Ctrl+Shift+P) > **Extensions: Install from VSIX...** and pick the file.
-- In a terminal: `code --install-extension deckcheck-0.1.0.vsix`
+Open the Extensions view (Ctrl+Shift+X), search for **deckcheck** and click Install. In VSCodium, Cursor and other
+editors that use Open VSX, the same search finds it.
 
 If VS Code was open while you installed, reload the window once (Command Palette > **Developer: Reload Window**).
 An open window doesn't start a newly installed extension.

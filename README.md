@@ -11,16 +11,8 @@ extension step by step, and the [roadmap](https://github.com/chintan-dshel/deckc
 
 ## Install
 
-After the first release:
-
 ```
 pip install deckcheck
-```
-
-Until then, from a clone of this repository:
-
-```
-pip install .
 ```
 
 deckcheck needs Python 3.11 or newer and nothing else.
@@ -120,16 +112,10 @@ An empty footer, apart from the DC005 scope line, means every check ran on the w
 
 ## In VS Code
 
-`editors/vscode/` holds a VS Code extension that shows the same findings as squiggles while you edit. It needs only
-Python 3.11 or newer: deckcheck and its language server ship inside it. Until it is published, build and install it
-locally:
-
-```
-cd editors/vscode
-npm install
-npm run package
-code --install-extension deckcheck-0.1.0.vsix
-```
+The deckcheck extension shows the same findings as squiggles while you edit. Install it from VS Code's Extensions
+view: search for **deckcheck**. VSCodium, Cursor and other editors find it on
+[Open VSX](https://open-vsx.org/extension/deckcheck/deckcheck). It needs only Python 3.11 or newer: deckcheck and its
+language server ship inside it.
 
 If VS Code was open during the install, reload its window (Command Palette > **Developer: Reload Window**).
 
